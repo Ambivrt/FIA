@@ -18,6 +18,10 @@ export interface AppConfig {
   linkedinAccessToken: string;
   ga4CredentialsPath: string;
   bufferAccessToken: string;
+  supabaseUrl: string;
+  supabaseServiceRoleKey: string;
+  supabaseAnonKey: string;
+  gatewayApiPort: number;
 }
 
 export function loadConfig(): AppConfig {
@@ -40,5 +44,9 @@ export function loadConfig(): AppConfig {
     linkedinAccessToken: process.env.LINKEDIN_ACCESS_TOKEN || "",
     ga4CredentialsPath: process.env.GA4_CREDENTIALS_PATH || "",
     bufferAccessToken: process.env.BUFFER_ACCESS_TOKEN || "",
+    supabaseUrl: process.env.SUPABASE_URL || "",
+    supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+    supabaseAnonKey: process.env.SUPABASE_ANON_KEY || "",
+    gatewayApiPort: parseInt(process.env.GATEWAY_API_PORT || "3001", 10),
   };
 }
