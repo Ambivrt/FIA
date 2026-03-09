@@ -3,8 +3,8 @@ slug: strategy
 version: 1.0.0
 routing:
   default: gemini-pro
-  research: perplexity
-  trend_analysis: perplexity
+  research: google-search
+  trend_analysis: google-search
 system_context:
   - SKILL.md
 task_context:

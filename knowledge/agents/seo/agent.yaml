@@ -2,7 +2,7 @@ name: SEO Agent
 slug: seo
 version: 1.0.0
 routing:
-  default: perplexity
+  default: google-search
   bulk_optimization: gemini-flash
   content_recommendations: gemini-pro
 system_context:
