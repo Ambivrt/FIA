@@ -1,0 +1,19 @@
+name: Lead Agent
+slug: lead
+version: 1.0.0
+routing:
+  default: gemini-flash
+  nurture_sequences: gemini-pro
+system_context:
+  - SKILL.md
+task_context:
+  nurture_email:
+    - context/templates/nurture-email.md
+tools:
+  - hubspot
+autonomy: autonomous
+escalation_threshold: 3
+sample_review_rate: 0.0
+score_threshold_mql: 75
+writable:
+  - memory/scoring-calibration.json

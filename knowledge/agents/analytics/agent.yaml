@@ -1,0 +1,26 @@
+name: Analytics Agent
+slug: analytics
+version: 1.0.0
+routing:
+  default: gemini-flash
+  insights: gemini-pro
+  report_writing: gemini-pro
+system_context:
+  - SKILL.md
+task_context:
+  morning_pulse:
+    - context/templates/morning-pulse.md
+  weekly_report:
+    - context/templates/weekly-report.md
+  quarterly_review:
+    - context/templates/quarterly-review.md
+tools:
+  - "gws:analytics"
+  - "gws:sheets"
+  - "gws:drive"
+  - hubspot
+autonomy: autonomous
+escalation_threshold: 3
+sample_review_rate: 0.0
+writable:
+  - memory/baseline-metrics.json

@@ -1,0 +1,16 @@
+name: Brand Agent
+slug: brand
+version: 1.0.0
+routing:
+  default: gemini-pro
+system_context:
+  - SKILL.md
+  - context/review-checklist.md
+task_context: {}
+tools: []
+autonomy: autonomous
+escalation_threshold: 3
+sample_review_rate: 0.0
+has_veto: true
+writable:
+  - memory/rejection-patterns.json

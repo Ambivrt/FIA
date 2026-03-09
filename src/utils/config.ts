@@ -22,6 +22,7 @@ export interface AppConfig {
   hubspotApiKey: string;
   linkedinAccessToken: string;
   ga4CredentialsPath: string;
+  perplexityApiKey: string;
   bufferAccessToken: string;
   gatewayApiPort: number;
 }
@@ -50,6 +51,7 @@ export function loadConfig(): AppConfig {
     hubspotApiKey: process.env.HUBSPOT_API_KEY || "",
     linkedinAccessToken: process.env.LINKEDIN_ACCESS_TOKEN || "",
     ga4CredentialsPath: process.env.GA4_CREDENTIALS_PATH || "",
+    perplexityApiKey: process.env.PERPLEXITY_API_KEY || "",
     bufferAccessToken: process.env.BUFFER_ACCESS_TOKEN || "",
     gatewayApiPort: parseInt(process.env.GATEWAY_API_PORT || "3001", 10),
   };
