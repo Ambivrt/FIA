@@ -1,12 +1,15 @@
 import { App } from "@slack/bolt";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { AppConfig } from "../utils/config";
 import { Logger } from "../gateway/logger";
 import { KillSwitch } from "../utils/kill-switch";
 import { updateTaskStatus, createApproval } from "../supabase/task-writer";
 import { logActivity } from "../supabase/activity-writer";
+import { createAgent, getAllAgentSlugs } from "../agents/agent-factory";
 
 export function registerCommands(
   app: App,
+  config: AppConfig,
   logger: Logger,
   supabase: SupabaseClient | null,
   killSwitch: KillSwitch | null
@@ -131,15 +134,42 @@ export function registerCommands(
 
       case "run": {
         const agentSlug = args[1];
-        const taskDesc = args.slice(2).join(" ");
+        const taskType = args[2] || "default";
+        const taskDesc = args.slice(3).join(" ") || `Manuellt triggad: ${taskType}`;
         if (!agentSlug) {
-          await respond({ response_type: "ephemeral", text: "Usage: `/fia run <agent> <task description>`" });
+          const validSlugs = getAllAgentSlugs().join(", ");
+          await respond({ response_type: "ephemeral", text: `Usage: \`/fia run <agent> [task-type] [description]\`\nAgenter: ${validSlugs}` });
+          return;
+        }
+        if (!supabase) {
+          await respond({ response_type: "ephemeral", text: ":x: Supabase krävs för att köra agenter." });
           return;
         }
         await respond({
           response_type: "ephemeral",
-          text: `:rocket: Triggering *${agentSlug}* agent${taskDesc ? `: ${taskDesc}` : ""}`,
+          text: `:rocket: Startar *${agentSlug}* agent (${taskType})...`,
         });
+        // Execute async – don't block the Slack response
+        (async () => {
+          try {
+            const agent = createAgent(agentSlug, config, logger, supabase);
+            const result = await agent.execute({
+              type: taskType,
+              title: taskDesc,
+              input: taskDesc,
+              priority: "normal",
+            });
+            await app.client.chat.postMessage({
+              channel: command.channel_id,
+              text: `:white_check_mark: *${agentSlug}* klar (${result.status}). Task: \`${result.taskId}\``,
+            });
+          } catch (err) {
+            await app.client.chat.postMessage({
+              channel: command.channel_id,
+              text: `:x: *${agentSlug}* misslyckades: ${(err as Error).message}`,
+            });
+          }
+        })();
         break;
       }
 

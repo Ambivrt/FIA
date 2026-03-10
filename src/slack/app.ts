@@ -6,6 +6,12 @@ import { KillSwitch } from "../utils/kill-switch";
 import { registerCommands } from "./commands";
 import { registerHandlers } from "./handlers";
 
+let slackAppInstance: App | null = null;
+
+export function getSlackApp(): App | null {
+  return slackAppInstance;
+}
+
 export async function createSlackApp(
   config: AppConfig,
   logger: Logger,
@@ -20,10 +26,11 @@ export async function createSlackApp(
     logLevel: LogLevel.WARN,
   });
 
-  registerCommands(app, logger, supabase ?? null, killSwitch ?? null);
+  registerCommands(app, config, logger, supabase ?? null, killSwitch ?? null);
   registerHandlers(app, logger);
 
   await app.start();
+  slackAppInstance = app;
   logger.info("Slack app started (Socket Mode)", { action: "slack_start", status: "success" });
 
   return app;

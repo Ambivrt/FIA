@@ -6,6 +6,8 @@ import { AgentManifest } from "../agent-loader";
 import { BaseAgent } from "../base-agent";
 import { createApproval, updateTaskStatus } from "../../supabase/task-writer";
 import { logActivity } from "../../supabase/activity-writer";
+import { getSlackApp } from "../../slack/app";
+import { sendEscalation } from "../../slack/handlers";
 
 export interface ReviewRequest {
   taskId: string;
@@ -152,6 +154,18 @@ export class BrandAgent extends BaseAgent {
       action: "escalated",
       status: "escalated",
     });
+
+    // Notify Orchestrator via Slack
+    const slackApp = getSlackApp();
+    if (slackApp) {
+      await sendEscalation(
+        slackApp,
+        this.logger,
+        sourceAgent,
+        taskId,
+        `${this.manifest.escalation_threshold} avslag i rad. Senaste feedback: ${lastFeedback}`
+      );
+    }
   }
 
   private async writeRejectionPattern(
