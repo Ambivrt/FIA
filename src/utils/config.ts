@@ -8,8 +8,7 @@ export interface AppConfig {
   knowledgeDir: string;
   anthropicApiKey: string;
   geminiApiKey: string;
-  googleSearchApiKey: string;
-  googleSearchCx: string;
+  serperApiKey: string;
   slackBotToken: string;
   slackAppToken: string;
   slackSigningSecret: string;
@@ -36,8 +35,7 @@ export function loadConfig(): AppConfig {
     knowledgeDir: process.env.KNOWLEDGE_DIR || path.join(process.cwd(), "knowledge"),
     anthropicApiKey: process.env.ANTHROPIC_API_KEY || "",
     geminiApiKey: process.env.GEMINI_API_KEY || "",
-    googleSearchApiKey: process.env.GOOGLE_SEARCH_API_KEY || "",
-    googleSearchCx: process.env.GOOGLE_SEARCH_CX || "",
+    serperApiKey: process.env.SERPER_API_KEY || "",
     slackBotToken: process.env.SLACK_BOT_TOKEN || "",
     slackAppToken: process.env.SLACK_APP_TOKEN || "",
     slackSigningSecret: process.env.SLACK_SIGNING_SECRET || "",
