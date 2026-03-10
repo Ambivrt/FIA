@@ -1,0 +1,38 @@
+name: Content Agent
+slug: content
+version: 1.0.0
+routing:
+  default: gemini-pro
+  metadata: gemini-flash
+  alt_text: gemini-flash
+  ab_variants: gemini-flash
+  images: nano-banana-2
+system_context:
+  - SKILL.md
+  - context/tone-examples.md
+task_context:
+  blog_post:
+    - context/templates/blog-post.md
+    - context/few-shot/blog-good.md
+    - context/few-shot/blog-bad.md
+  linkedin:
+    - context/templates/linkedin-post.md
+    - context/few-shot/linkedin-good.md
+    - context/few-shot/linkedin-bad.md
+  newsletter:
+    - context/templates/newsletter.md
+  case_study:
+    - context/templates/case-study.md
+  whitepaper:
+    - context/templates/whitepaper.md
+tools:
+  - wordpress
+  - buffer
+  - "gws:drive"
+  - "gws:docs"
+autonomy: autonomous
+escalation_threshold: 3
+sample_review_rate: 0.2
+writable:
+  - memory/learnings.json
+  - memory/feedback-log.json

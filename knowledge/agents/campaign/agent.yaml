@@ -1,0 +1,26 @@
+name: Campaign Agent
+slug: campaign
+version: 1.0.0
+routing:
+  default: gemini-pro
+  ab_variants: gemini-flash
+  segmentation: gemini-flash
+system_context:
+  - SKILL.md
+task_context:
+  email_sequence:
+    - context/templates/email-sequence.md
+  ad_copy:
+    - context/templates/ad-copy.md
+  landing_page:
+    - context/templates/landing-page.md
+tools:
+  - hubspot
+  - linkedin
+  - buffer
+autonomy: autonomous
+escalation_threshold: 3
+sample_review_rate: 0.33
+budget_limit_sek: 10000
+writable:
+  - memory/ab-test-results.json

@@ -1,0 +1,27 @@
+name: Strategy Agent
+slug: strategy
+version: 1.0.0
+routing:
+  default: gemini-pro
+  research: google-search
+  trend_analysis: google-search
+system_context:
+  - SKILL.md
+  - context/planning-framework.md
+task_context:
+  quarterly_plan:
+    - context/templates/quarterly-plan.md
+  monthly_plan:
+    - context/templates/monthly-plan.md
+  campaign_brief:
+    - context/templates/campaign-brief.md
+tools:
+  - "gws:analytics"
+  - "gws:calendar"
+  - "gws:sheets"
+  - hubspot
+autonomy: semi-autonomous
+escalation_threshold: 1
+sample_review_rate: 1.0
+writable:
+  - memory/campaign-history.json

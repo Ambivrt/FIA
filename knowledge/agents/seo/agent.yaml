@@ -1,0 +1,23 @@
+name: SEO Agent
+slug: seo
+version: 1.0.0
+routing:
+  default: google-search
+  bulk_optimization: gemini-flash
+  content_recommendations: gemini-pro
+system_context:
+  - SKILL.md
+  - context/geo-guidelines.md
+task_context:
+  seo_audit:
+    - context/templates/seo-audit.md
+tools:
+  - "gws:analytics"
+  - "gws:sheets"
+  - wordpress
+autonomy: autonomous
+escalation_threshold: 3
+sample_review_rate: 0.0
+writable:
+  - memory/keyword-rankings.json
+  - memory/opportunities.json
