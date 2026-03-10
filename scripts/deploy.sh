@@ -40,7 +40,7 @@
 # DEPLOY-ORDNING (kör dessa kommandon i ordning):
 #
 #   1. SSH till GCP-instans:
-#      gcloud compute ssh fia-gateway --zone=europe-north1-b --project=ffcg-fia
+#      gcloud compute ssh fia-gateway --zone=europe-north1-b --tunnel-through-iap
 #
 #   2. Ladda ner deploy-scriptet (första gången):
 #      curl -fsSL https://raw.githubusercontent.com/Ambivrt/FIA/main/scripts/deploy.sh -o deploy.sh
