@@ -1,7 +1,16 @@
 import { App } from "@slack/bolt";
+import { SupabaseClient } from "@supabase/supabase-js";
 import { Logger } from "../gateway/logger";
+import { KillSwitch } from "../utils/kill-switch";
+import { updateTaskStatus, createApproval } from "../supabase/task-writer";
+import { logActivity } from "../supabase/activity-writer";
 
-export function registerCommands(app: App, logger: Logger): void {
+export function registerCommands(
+  app: App,
+  logger: Logger,
+  supabase: SupabaseClient | null,
+  killSwitch: KillSwitch | null
+): void {
   app.command("/fia", async ({ command, ack, respond }) => {
     await ack();
 
@@ -14,27 +23,53 @@ export function registerCommands(app: App, logger: Logger): void {
     });
 
     switch (subcommand) {
-      case "status":
-        await respond({
-          response_type: "ephemeral",
-          text: ":robot_face: *FIA Gateway Status*\nGateway is running. Use the Dashboard for detailed agent status.",
-        });
+      case "status": {
+        let statusText = ":robot_face: *FIA Gateway Status*\nGateway is running.";
+
+        if (killSwitch) {
+          const ks = killSwitch.getStatus();
+          statusText += ks.active
+            ? "\n:octagonal_sign: Kill switch is *ACTIVE*."
+            : "\n:white_check_mark: Kill switch is inactive.";
+        }
+
+        if (supabase) {
+          const { data: agents } = await supabase
+            .from("agents")
+            .select("name, slug, status")
+            .order("name");
+
+          if (agents?.length) {
+            statusText += "\n\n*Agents:*";
+            for (const a of agents) {
+              const icon = a.status === "active" ? ":large_green_circle:" : a.status === "paused" ? ":double_vertical_bar:" : ":red_circle:";
+              statusText += `\n${icon} ${a.name} (${a.status})`;
+            }
+          }
+        }
+
+        await respond({ response_type: "ephemeral", text: statusText });
         break;
+      }
 
       case "kill":
+        if (killSwitch) {
+          await killSwitch.activate("slack");
+        }
         await respond({
           response_type: "in_channel",
           text: ":octagonal_sign: *Kill switch activated.* All publishing agents paused.",
         });
-        logger.warn("Kill switch activated via Slack", { action: "kill_switch", status: "success" });
         break;
 
       case "resume":
+        if (killSwitch) {
+          await killSwitch.deactivate("slack");
+        }
         await respond({
           response_type: "in_channel",
           text: ":white_check_mark: *Kill switch deactivated.* Agents resuming normal operations.",
         });
-        logger.info("Kill switch deactivated via Slack", { action: "kill_resume", status: "success" });
         break;
 
       case "approve": {
@@ -43,10 +78,25 @@ export function registerCommands(app: App, logger: Logger): void {
           await respond({ response_type: "ephemeral", text: "Usage: `/fia approve <task-id>`" });
           return;
         }
-        await respond({
-          response_type: "ephemeral",
-          text: `:white_check_mark: Task \`${taskId}\` approved.`,
-        });
+        if (supabase) {
+          try {
+            await updateTaskStatus(supabase, taskId, "approved");
+            await createApproval(supabase, {
+              task_id: taskId,
+              reviewer_type: "orchestrator",
+              decision: "approved",
+              feedback: args.slice(2).join(" ") || undefined,
+            });
+            await logActivity(supabase, {
+              action: "task_approved",
+              details_json: { task_id: taskId, source: "slack" },
+            });
+          } catch (err) {
+            await respond({ response_type: "ephemeral", text: `:x: Failed to approve: ${(err as Error).message}` });
+            return;
+          }
+        }
+        await respond({ response_type: "ephemeral", text: `:white_check_mark: Task \`${taskId}\` approved.` });
         break;
       }
 
@@ -57,10 +107,25 @@ export function registerCommands(app: App, logger: Logger): void {
           await respond({ response_type: "ephemeral", text: "Usage: `/fia reject <task-id> <feedback>`" });
           return;
         }
-        await respond({
-          response_type: "ephemeral",
-          text: `:x: Task \`${taskId}\` rejected. Feedback: ${feedback}`,
-        });
+        if (supabase) {
+          try {
+            await updateTaskStatus(supabase, taskId, "rejected");
+            await createApproval(supabase, {
+              task_id: taskId,
+              reviewer_type: "orchestrator",
+              decision: "rejected",
+              feedback,
+            });
+            await logActivity(supabase, {
+              action: "task_rejected",
+              details_json: { task_id: taskId, feedback, source: "slack" },
+            });
+          } catch (err) {
+            await respond({ response_type: "ephemeral", text: `:x: Failed to reject: ${(err as Error).message}` });
+            return;
+          }
+        }
+        await respond({ response_type: "ephemeral", text: `:x: Task \`${taskId}\` rejected. Feedback: ${feedback}` });
         break;
       }
 

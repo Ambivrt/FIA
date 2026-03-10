@@ -2,7 +2,11 @@ import { loadConfig } from "./utils/config";
 import { createLogger } from "./gateway/logger";
 import { createSupabaseClient } from "./supabase/client";
 import { startHeartbeat } from "./supabase/heartbeat";
+import { startCommandListener } from "./supabase/command-listener";
 import { createSlackApp } from "./slack/app";
+import { createApiServer, startApiServer } from "./api/server";
+import { startScheduler } from "./gateway/scheduler";
+import { KillSwitch } from "./utils/kill-switch";
 
 async function main(): Promise<void> {
   const config = loadConfig();
@@ -23,10 +27,13 @@ async function main(): Promise<void> {
     logger.warn("Supabase not configured – skipping", { action: "supabase_init" });
   }
 
+  // --- Kill Switch ---
+  const killSwitch = new KillSwitch(supabase, logger);
+
   // --- Slack ---
   if (config.slackBotToken && config.slackAppToken) {
     try {
-      await createSlackApp(config, logger);
+      await createSlackApp(config, logger, supabase, killSwitch);
       logger.info("Slack app connected", { action: "slack_init" });
     } catch (err) {
       logger.error("Slack app failed to start", {
@@ -37,6 +44,22 @@ async function main(): Promise<void> {
   } else {
     logger.warn("Slack not configured – skipping", { action: "slack_init" });
   }
+
+  // --- REST API ---
+  if (supabase) {
+    const app = createApiServer(config, logger, supabase, killSwitch);
+    startApiServer(app, config.gatewayApiPort, logger);
+  } else {
+    logger.warn("REST API not started – Supabase required", { action: "api_init" });
+  }
+
+  // --- Command Listener (Supabase Realtime) ---
+  if (supabase) {
+    startCommandListener(supabase, logger, killSwitch);
+  }
+
+  // --- Scheduler ---
+  startScheduler(config, logger, supabase, killSwitch);
 
   logger.info("FIA Gateway ready", {
     action: "gateway_ready",

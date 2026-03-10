@@ -1,12 +1,16 @@
 import { App, LogLevel } from "@slack/bolt";
+import { SupabaseClient } from "@supabase/supabase-js";
 import { AppConfig } from "../utils/config";
 import { Logger } from "../gateway/logger";
+import { KillSwitch } from "../utils/kill-switch";
 import { registerCommands } from "./commands";
 import { registerHandlers } from "./handlers";
 
 export async function createSlackApp(
   config: AppConfig,
-  logger: Logger
+  logger: Logger,
+  supabase?: SupabaseClient | null,
+  killSwitch?: KillSwitch
 ): Promise<App> {
   const app = new App({
     token: config.slackBotToken,
@@ -16,7 +20,7 @@ export async function createSlackApp(
     logLevel: LogLevel.WARN,
   });
 
-  registerCommands(app, logger);
+  registerCommands(app, logger, supabase ?? null, killSwitch ?? null);
   registerHandlers(app, logger);
 
   await app.start();
