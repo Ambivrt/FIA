@@ -6,6 +6,8 @@ routing:
 system_context:
   - SKILL.md
   - context/review-checklist.md
+  - context/few-shot/review-approved.md
+  - context/few-shot/review-rejected.md
 task_context: {}
 tools: []
 autonomy: autonomous

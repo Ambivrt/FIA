@@ -4,6 +4,7 @@ import { AppConfig } from "../utils/config";
 import { Logger } from "./logger";
 import { KillSwitch } from "../utils/kill-switch";
 import { logActivity } from "../supabase/activity-writer";
+import { createAgent } from "../agents/agent-factory";
 
 interface ScheduleEntry {
   expression: string;
@@ -68,7 +69,25 @@ export function startScheduler(
         });
       }
 
-      // Agent execution will be wired here when agents are fully implemented
+      // Execute agent task
+      if (supabase) {
+        try {
+          const agentInstance = createAgent(entry.agent, config, logger, supabase);
+          await agentInstance.execute({
+            type: entry.task,
+            title: entry.description,
+            input: `Schemalagd uppgift: ${entry.description}`,
+            priority: "normal",
+          });
+        } catch (err) {
+          logger.error(`Scheduler: agent execution failed: ${(err as Error).message}`, {
+            action: "schedule_error",
+            agent: entry.agent,
+            task: entry.task,
+            error: (err as Error).message,
+          });
+        }
+      }
     });
   }
 

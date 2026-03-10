@@ -9,11 +9,16 @@ routing:
   images: nano-banana-2
 system_context:
   - SKILL.md
+  - context/tone-examples.md
 task_context:
   blog_post:
     - context/templates/blog-post.md
+    - context/few-shot/blog-good.md
+    - context/few-shot/blog-bad.md
   linkedin:
     - context/templates/linkedin-post.md
+    - context/few-shot/linkedin-good.md
+    - context/few-shot/linkedin-bad.md
   newsletter:
     - context/templates/newsletter.md
   case_study:

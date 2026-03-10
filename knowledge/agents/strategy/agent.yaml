@@ -7,6 +7,7 @@ routing:
   trend_analysis: google-search
 system_context:
   - SKILL.md
+  - context/planning-framework.md
 task_context:
   quarterly_plan:
     - context/templates/quarterly-plan.md
