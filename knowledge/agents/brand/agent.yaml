@@ -2,7 +2,7 @@ name: Brand Agent
 slug: brand
 version: 1.0.0
 routing:
-  default: gemini-pro
+  default: claude-opus
 system_context:
   - SKILL.md
   - context/review-checklist.md

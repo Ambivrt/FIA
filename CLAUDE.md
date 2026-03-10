@@ -21,9 +21,9 @@ Gateway är källan till sanning. Den skriver agentdata till Supabase, och dashb
 - **Språk:** TypeScript
 - **Meddelandegränssnitt:** Slack API (Bolt SDK, Socket Mode)
 - **Schemaläggning:** node-cron
-- **LLM-primär:** Google Gemini API (Gemini 2.5 Pro + Gemini 2.5 Flash)
-- **Bildgenerering:** Nano Banana 2 (Gemini 3.1 Flash Image) via Gemini API
-- **Realtidssökning:** Perplexity Sonar API
+- **LLM-primär:** Anthropic Claude API (Claude Opus 4.6 + Claude Sonnet 4.6)
+- **LLM-bildgenerering:** Nano Banana 2 (Gemini 3.1 Flash Image) via Gemini API
+- **Realtidssökning:** Serper API (Google search results)
 - **Integrationer:** MCP-servrar (Slack, gws CLI, WordPress, HubSpot, LinkedIn)
 - **Google Workspace:** gws CLI (@googleworkspace/cli) via MCP – enhetlig åtkomst till Drive, Gmail, Calendar, Sheets, Docs, GA4
 - **Kunskapsbas:** Filbaserad (agent.yaml-manifest, markdown, JSON), ingen vektordatabas i v1
@@ -50,25 +50,29 @@ Gateway är källan till sanning. Den skriver agentdata till Supabase, och dashb
 - **Auth:** Supabase Auth (e-post/lösenord + Google OAuth, Forefront-domän)
 - **Realtid:** Supabase Realtime (postgres_changes) för live-uppdateringar
 
-### LLM-modeller (multi-modell-routing)
+### LLM-modeller (Claude-first, multi-modell-routing)
 
 | Modell | Användning i FIA | Pris (per 1M tokens) |
 |--------|-------------------|----------------------|
-| Gemini 2.5 Pro | Primär: allt innehåll, strategi, analys, Brand Agent-granskning. Full varumärkeskontext i systemprompt. | $1.25–2.50 in / $10–15 ut |
-| Gemini 2.5 Flash | Volymuppgifter: metadata, alt-texter, A/B-testvarianter, lead scoring, dataextraktion, klassificering | $0.15 in / $0.60 ut |
+| Claude Opus 4.6 | Primär: allt innehåll, strategi, analys, Brand Agent-granskning. Full varumärkeskontext i systemprompt. Överlägsen på nyanserad svensk text och varumärkesröst. | $15 in / $75 ut |
+| Claude Sonnet 4.6 | Volymuppgifter: metadata, alt-texter, A/B-testvarianter, lead scoring, dataextraktion, klassificering | $3 in / $15 ut |
 | Nano Banana 2 (Gemini 3.1 Flash Image) | Bildgenerering: social media-grafik, blogg-illustrationer, annonskreativ. Stark på text i bild, character consistency, 4K output. | ~$0.04/bild (Flash-nivå) |
-| Perplexity Sonar API | Realtidssökning: omvärldsbevakning, trendspaning, SEO-analys, faktakontroll | $1 in / $5 ut |
+| Serper API | Realtidssökning: omvärldsbevakning, trendspaning, SEO-analys, faktakontroll | $0.001/sökning |
 
 **Routinglogik:** Varje agents agent.yaml definierar ett routing-fält som mappar uppgiftstyp till modell. Gatewayen läser detta vid laddning – ingen hårdkodning av modellval i kod.
 
-**Gemini-specifika fördelar:**
+**Claude-first-strategi:** Anthropic Claude är primär LLM-leverantör för alla text- och analysuppgifter. Gemini behålls enbart för bildgenerering (Nano Banana 2) då Claude saknar bildgenereringsförmåga.
 
-- **Stort kontextfönster:** Gemini 2.5 Pro stödjer upp till 1M tokens input – hela varumärkesplattformen + historik ryms utan trunkering.
-- **Context caching:** Statisk varumärkeskontext cachas och reducerar kostnad med ~75% vid upprepade anrop (1 timme TTL).
-- **Nano Banana 2 via samma API:** Bildgenerering sker via Gemini API (generateContent med responseModalities: ["IMAGE"]), ingen separat bild-API behövs.
-- **Nativ Google Workspace-integration:** Gemini + gws CLI ger sömlös koppling till hela Google-ekosystemet.
+**Claude-specifika fördelar:**
 
-**Multi-modell-strategi (framtid):** Arkitekturen är modell-agnostisk. router.ts kan utökas med Anthropic Claude eller OpenAI GPT som fallback/alternativ utan att ändra agentdefinitioner – enbart routing-fältet i agent.yaml behöver uppdateras.
+- **Nyanserad svensk text:** Opus 4.6 levererar konsekvent varumärkesröst med Forefronts tonalitet – modiga, hängivna, lustfyllda.
+- **Instruktionsföljning:** Exceptionell på att följa komplexa guardrails och granskningskriterier (Brand Agent).
+- **200K kontextfönster:** Tillräckligt för varumärkesplattform + historik + task_context i ett anrop.
+- **Strukturerade outputs:** Pålitlig JSON-generering för metadata, scoring och rapporter.
+
+**Gemini-roll (begränsad):** Nano Banana 2 (bildgenerering) via Gemini API. Gemini API-nyckel krävs fortfarande.
+
+**Multi-modell-strategi:** Arkitekturen är modell-agnostisk. router.ts kan utökas med Gemini Pro/Flash eller OpenAI GPT som fallback/alternativ utan att ändra agentdefinitioner – enbart routing-fältet i agent.yaml behöver uppdateras.
 
 ### GCP-hosting
 
@@ -86,7 +90,7 @@ Gateway är källan till sanning. Den skriver agentdata till Supabase, och dashb
 - **OS:** Ubuntu 24 LTS
 - **Disk:** 20 GB SSD (kunskapsbas + loggar)
 - **Estimerad kostnad:** ~$15–25/mån (jämfört med Hetzner CX21 ~$5/mån – dyrare, men ekosystemfördelarna väger upp)
-- **Firewall:** Enbart utgående trafik tillåten (Slack Socket Mode, Supabase, Gemini API). Ingen inkommande exponering.
+- **Firewall:** Enbart utgående trafik tillåten (Slack Socket Mode, Supabase, Anthropic API, Gemini API). Ingen inkommande exponering.
 
 #### Autentisering och IAM
 
@@ -373,21 +377,21 @@ Referenstabell (härlett från agent.yaml-manifesten):
 
 | Agent | Uppgift | Modell |
 |-------|---------|--------|
-| Content Agent | Alla texter, kopia | Gemini 2.5 Pro |
-| Content Agent | Metadata, alt-texter, A/B-varianter | Gemini 2.5 Flash |
+| Content Agent | Alla texter, kopia | Claude Opus 4.6 |
+| Content Agent | Metadata, alt-texter, A/B-varianter | Claude Sonnet 4.6 |
 | Content Agent | Bildgenerering | Nano Banana 2 |
-| Brand Agent | All granskning | Gemini 2.5 Pro (alltid) |
-| Strategy Agent | Planering, ramverk | Gemini 2.5 Pro |
-| Strategy Agent | Research, omvärldsbevakning | Perplexity Sonar |
-| Campaign Agent | Kampanjstrategi, slutgiltig kopia | Gemini 2.5 Pro |
-| Campaign Agent | A/B-varianter, segmentering | Gemini 2.5 Flash |
-| SEO Agent | Sökanalys, trendspaning | Perplexity Sonar |
-| SEO Agent | Bulkoptimering | Gemini 2.5 Flash |
-| SEO Agent | Innehållsrekommendationer | Gemini 2.5 Pro |
-| Lead Agent | Scoring, klassificering | Gemini 2.5 Flash |
-| Lead Agent | Nurture-sekvenser | Gemini 2.5 Pro |
-| Analytics Agent | Dataextraktion | Gemini 2.5 Flash |
-| Analytics Agent | Insikter, rapportskrivning | Gemini 2.5 Pro |
+| Brand Agent | All granskning | Claude Opus 4.6 (alltid) |
+| Strategy Agent | Planering, ramverk | Claude Opus 4.6 |
+| Strategy Agent | Research, omvärldsbevakning | Serper (Google Search) |
+| Campaign Agent | Kampanjstrategi, slutgiltig kopia | Claude Opus 4.6 |
+| Campaign Agent | A/B-varianter, segmentering | Claude Sonnet 4.6 |
+| SEO Agent | Sökanalys, trendspaning | Serper (Google Search) |
+| SEO Agent | Bulkoptimering | Claude Sonnet 4.6 |
+| SEO Agent | Innehållsrekommendationer | Claude Opus 4.6 |
+| Lead Agent | Scoring, klassificering | Claude Sonnet 4.6 |
+| Lead Agent | Nurture-sekvenser | Claude Opus 4.6 |
+| Analytics Agent | Dataextraktion | Claude Sonnet 4.6 |
+| Analytics Agent | Insikter, rapportskrivning | Claude Opus 4.6 |
 
 ### Context caching
 
@@ -847,10 +851,10 @@ version: 1.2.0
 
 # Modellval per uppgiftstyp (styr routern – ingen hårdkodning i kod)
 routing:
-  default: gemini-pro
-  metadata: gemini-flash
-  alt_text: gemini-flash
-  ab_variants: gemini-flash
+  default: claude-opus
+  metadata: claude-sonnet
+  alt_text: claude-sonnet
+  ab_variants: claude-sonnet
   images: nano-banana-2
 
 # Filer som alltid laddas i systemprompt (ordning spelar roll, prompt-cachas)
@@ -958,9 +962,9 @@ name: Strategy Agent
 slug: strategy
 version: 1.0.0
 routing:
-  default: gemini-pro
-  research: perplexity
-  trend_analysis: perplexity
+  default: claude-opus
+  research: google-search
+  trend_analysis: google-search
 system_context:
   - SKILL.md
   - context/planning-framework.md
@@ -985,10 +989,10 @@ name: Content Agent
 slug: content
 version: 1.0.0
 routing:
-  default: gemini-pro
-  metadata: gemini-flash
-  alt_text: gemini-flash
-  ab_variants: gemini-flash
+  default: claude-opus
+  metadata: claude-sonnet
+  alt_text: claude-sonnet
+  ab_variants: claude-sonnet
   images: nano-banana-2
 system_context: [SKILL.md, context/tone-examples.md]
 task_context:
@@ -1013,9 +1017,9 @@ name: Campaign Agent
 slug: campaign
 version: 1.0.0
 routing:
-  default: gemini-pro
-  ab_variants: gemini-flash
-  segmentation: gemini-flash
+  default: claude-opus
+  ab_variants: claude-sonnet
+  segmentation: claude-sonnet
 system_context: [SKILL.md]
 task_context:
   email_sequence: [context/templates/email-sequence.md]
@@ -1039,8 +1043,8 @@ slug: seo
 version: 1.0.0
 routing:
   default: perplexity
-  bulk_optimization: gemini-flash
-  content_recommendations: gemini-pro
+  bulk_optimization: claude-sonnet
+  content_recommendations: claude-opus
 system_context: [SKILL.md, context/geo-guidelines.md]
 task_context:
   seo_audit: [context/templates/seo-audit.md]
@@ -1060,8 +1064,8 @@ name: Lead Agent
 slug: lead
 version: 1.0.0
 routing:
-  default: gemini-flash
-  nurture_sequences: gemini-pro
+  default: claude-sonnet
+  nurture_sequences: claude-opus
 system_context: [SKILL.md, context/templates/scoring-rules.md]
 task_context:
   nurture_email: [context/templates/nurture-email.md]
@@ -1082,9 +1086,9 @@ name: Analytics Agent
 slug: analytics
 version: 1.0.0
 routing:
-  default: gemini-flash
-  insights: gemini-pro
-  report_writing: gemini-pro
+  default: claude-sonnet
+  insights: claude-opus
+  report_writing: claude-opus
 system_context: [SKILL.md]
 task_context:
   morning_pulse: [context/templates/morning-pulse.md]
@@ -1106,7 +1110,7 @@ name: Brand Agent
 slug: brand
 version: 1.0.0
 routing:
-  default: gemini-pro
+  default: claude-opus
 system_context: [SKILL.md, context/review-checklist.md, context/few-shot/review-approved.md, context/few-shot/review-rejected.md]
 task_context: {}
 tools: []
@@ -1118,7 +1122,7 @@ writable: [memory/rejection-patterns.json]
 ```
 
 - **Guardrail:** `has_veto: true` – vetorätt. Tre avslag i rad eskalerar automatiskt. Rejection-patterns identifierar återkommande kvalitetsbrister.
-- **Notering:** Använder alltid Gemini 2.5 Pro – tonalitetsgranskning kräver full språkförståelse.
+- **Notering:** Använder alltid Claude Opus 4.6 – tonalitetsgranskning kräver full språkförståelse och nyanserad varumärkesröst.
 
 ### Autonominivåer per innehållstyp
 

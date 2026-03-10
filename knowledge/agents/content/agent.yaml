@@ -2,10 +2,10 @@ name: Content Agent
 slug: content
 version: 1.0.0
 routing:
-  default: gemini-pro
-  metadata: gemini-flash
-  alt_text: gemini-flash
-  ab_variants: gemini-flash
+  default: claude-opus
+  metadata: claude-sonnet
+  alt_text: claude-sonnet
+  ab_variants: claude-sonnet
   images: nano-banana-2
 system_context:
   - SKILL.md

@@ -2,7 +2,7 @@ name: Strategy Agent
 slug: strategy
 version: 1.0.0
 routing:
-  default: gemini-pro
+  default: claude-opus
   research: google-search
   trend_analysis: google-search
 system_context:
