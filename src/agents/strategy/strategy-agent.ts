@@ -18,7 +18,7 @@ export class StrategyAgent extends BaseAgent {
   }
 
   async execute(task: AgentTask): Promise<AgentResult> {
-    // Research tasks: first search, then summarize with gemini-pro
+    // Research tasks: first search, then summarize with claude-opus
     if (task.type === "research" || task.type === "trend_analysis") {
       return this.executeResearch(task);
     }
@@ -31,7 +31,7 @@ export class StrategyAgent extends BaseAgent {
     // Step 1: Search via google-search routing
     const searchResponse = await this.callLLM(task.type, task.input);
 
-    // Step 2: Summarize search results with gemini-pro
+    // Step 2: Summarize search results with claude-opus
     const summarizePrompt = [
       `Sammanfatta och analysera följande sökresultat för Forefront.`,
       `Ursprunglig fråga: ${task.input}`,
