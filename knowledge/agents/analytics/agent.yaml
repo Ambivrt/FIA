@@ -2,9 +2,9 @@ name: Analytics Agent
 slug: analytics
 version: 1.0.0
 routing:
-  default: gemini-flash
-  insights: gemini-pro
-  report_writing: gemini-pro
+  default: claude-sonnet
+  insights: claude-opus
+  report_writing: claude-opus
 system_context:
   - SKILL.md
 task_context:

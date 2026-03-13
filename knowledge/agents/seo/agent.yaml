@@ -3,8 +3,8 @@ slug: seo
 version: 1.0.0
 routing:
   default: google-search
-  bulk_optimization: gemini-flash
-  content_recommendations: gemini-pro
+  bulk_optimization: claude-sonnet
+  content_recommendations: claude-opus
 system_context:
   - SKILL.md
   - context/geo-guidelines.md

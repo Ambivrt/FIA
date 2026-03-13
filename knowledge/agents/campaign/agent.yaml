@@ -2,9 +2,9 @@ name: Campaign Agent
 slug: campaign
 version: 1.0.0
 routing:
-  default: gemini-pro
-  ab_variants: gemini-flash
-  segmentation: gemini-flash
+  default: claude-opus
+  ab_variants: claude-sonnet
+  segmentation: claude-sonnet
 system_context:
   - SKILL.md
 task_context:

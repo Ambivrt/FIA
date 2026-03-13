@@ -2,8 +2,8 @@ name: Lead Agent
 slug: lead
 version: 1.0.0
 routing:
-  default: gemini-flash
-  nurture_sequences: gemini-pro
+  default: claude-sonnet
+  nurture_sequences: claude-opus
 system_context:
   - SKILL.md
 task_context:
