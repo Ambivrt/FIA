@@ -393,9 +393,9 @@ Referenstabell (härlett från agent.yaml-manifesten):
 | Analytics Agent | Dataextraktion | Claude Sonnet 4.6 |
 | Analytics Agent | Insikter, rapportskrivning | Claude Opus 4.6 |
 
-### Context caching
+### Context caching (PLANERAD)
 
-Använd Gemini API:ts context caching på varumärkeskontexten (platform.md, tonality.md etc.) som läggs i systempromptens statiska del. Cachade kontexter har 1 timmes TTL som standard och reducerar kostnaden för upprepade anrop med ~75%.
+Planerad optimering: Använd Anthropic prompt caching för varumärkeskontexten (platform.md, tonality.md etc.) som läggs i systempromptens statiska del. Reducerar kostnaden för upprepade anrop. Implementera som optimering efter att agentpipelinen är verifierad.
 
 ### Loggning (KRITISK – granska manuellt)
 
@@ -547,7 +547,7 @@ CREATE TABLE tasks (
   status text NOT NULL DEFAULT 'queued',  -- queued | in_progress | awaiting_review | approved | rejected | published
   priority text NOT NULL DEFAULT 'normal', -- low | normal | high | urgent
   content_json jsonb,                     -- Uppgiftens payload (text, bilder, metadata)
-  model_used text,                        -- gemini-pro | gemini-flash | nano-banana-2 | perplexity
+  model_used text,                        -- claude-opus | claude-sonnet | nano-banana-2 | google-search
   tokens_used integer,
   cost_sek numeric,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -1388,17 +1388,37 @@ npm run test:brand   # Enbart Brand Agent-tester
 
 ## Pågående arbete
 
-- [ ] Fas 1: Gateway-skelett och Slack-integration
-- [ ] Fas 1: Supabase-uppsättning (datamodell, RLS, seed, klient)
-- [ ] Fas 1: LLM-klienter och modell-router
-- [ ] Fas 1: Kontexthantering och varumärkeskontext
-- [ ] Fas 1: Content Agent + Brand Agent (med Supabase task-skrivning)
-- [ ] Fas 1: REST API (Gateway-sidan, för Dashboard-kommandon)
-- [ ] Fas 1: WordPress MCP-wrapper
-- [ ] Fas 1: Schemaläggning och kill switch (dual: Slack + Dashboard)
-- [ ] Fas 1: FIA Dashboard MVP (Lovable – auth, agentpuls, godkännandekö, kill switch)
+### Deploy 0.1 – klart (2026-03-12)
+
+- [x] Fas 1: Gateway-skelett och Slack-integration
+- [x] Fas 1: Supabase-uppsättning (datamodell, RLS, seed, klient)
+- [x] Fas 1: LLM-klienter och modell-router
+- [x] Fas 1: Kontexthantering och varumärkeskontext
+- [x] Fas 1: Content Agent + Brand Agent (med Supabase task-skrivning)
+- [x] Fas 1: REST API (Gateway-sidan, för Dashboard-kommandon)
+- [x] Fas 1: Schemaläggning och kill switch (dual: Slack + Dashboard)
+- [x] Fas 1: Claude API-integration (Opus 4.6 + Sonnet 4.6) – alla agenter migrerade från Gemini
+
+### Pågår
+
+- [ ] Fas 1: Testsvit (router, agent-loader, brand-agent, logger)
+- [ ] Fas 1: End-to-end-verifiering Content Agent + Brand Agent
 - [ ] Fas 1: 10 innehållsenheter producerade och granskade
-- [ ] Fas 2: Strategy, Campaign, SEO, Lead, Analytics agenter
-- [ ] Fas 2: LinkedIn, GA4, HubSpot MCP-wrappers
-- [ ] Fas 2: Dashboard: rapportsida, agentdetalj, ledningsgrupp-vy, push-notifieringar
-- [ ] Fas 2: Första agentdrivna kampanjen
+- [ ] Fas 1: FIA Dashboard MVP (Lovable – auth, agentpuls, godkännandekö, kill switch)
+
+### Fas 2
+
+- [ ] Google Workspace CLI (gws MCP) kopplat till agenter
+- [ ] MCP-wrappers: HubSpot, LinkedIn, Buffer
+- [ ] Content staging: standardiserat content_json-schema, Zod-validering
+- [ ] GA4 Analytics API-integration (direkta API-anrop)
+- [ ] Övriga agenter kopplade till externa system
+- [ ] Dashboard: rapportsida, agentdetalj, ledningsgrupp-vy
+- [ ] Första agentdrivna kampanjen
+
+### Fas 3
+
+- [ ] Feedback-tabell i Supabase (migration + RLS)
+- [ ] feedback-aggregator.ts: genererar feedback-summary.json per agent
+- [ ] review-rate-adjuster.ts: dynamisk sample_review_rate
+- [ ] avoid-example-extractor.ts: few-shot "avoid"-exempel

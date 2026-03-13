@@ -19,7 +19,7 @@ export class AnalyticsAgent extends BaseAgent {
   }
 
   async execute(task: AgentTask): Promise<AgentResult> {
-    // Use report_writing routing for weekly/quarterly reports (maps to gemini-pro)
+    // Use report_writing routing for weekly/quarterly reports (maps to claude-opus)
     const effectiveType = this.getEffectiveTaskType(task.type);
     const result = await super.execute({ ...task, type: effectiveType });
 
@@ -31,7 +31,7 @@ export class AnalyticsAgent extends BaseAgent {
   }
 
   private getEffectiveTaskType(taskType: string): string {
-    // Map report tasks to report_writing routing for gemini-pro
+    // Map report tasks to report_writing routing for claude-opus
     if (taskType === "weekly_report" || taskType === "quarterly_review") {
       return "report_writing";
     }
