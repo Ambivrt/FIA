@@ -1,7 +1,6 @@
 import { AppConfig } from "../utils/config";
 import { LLMRequest, LLMResponse, ModelAlias, MODEL_MAP, ImageGenerationRequest, ImageGenerationResponse, SearchResult } from "../llm/types";
 import { callClaude } from "../llm/claude";
-import { callGemini } from "../llm/gemini";
 import { searchGoogle } from "../llm/google-search";
 import { generateImage } from "../llm/nano-banana";
 import { Logger } from "./logger";
@@ -14,7 +13,7 @@ export interface AgentRouting {
 export interface RouteResult {
   alias: ModelAlias;
   modelId: string;
-  provider: "claude" | "gemini" | "google-search" | "nano-banana";
+  provider: "claude" | "google-search" | "nano-banana";
 }
 
 export function resolveRoute(routing: AgentRouting, taskType: string): RouteResult {
@@ -29,7 +28,7 @@ export function resolveRoute(routing: AgentRouting, taskType: string): RouteResu
   } else if (alias === "nano-banana-2") {
     provider = "nano-banana";
   } else {
-    provider = "gemini";
+    throw new Error(`Unknown model alias: ${alias}`);
   }
 
   return { alias, modelId, provider };
@@ -52,8 +51,6 @@ export async function routeRequest(
   switch (route.provider) {
     case "claude":
       return callClaude(config, route.modelId, request);
-    case "gemini":
-      return callGemini(config, route.modelId as any, request);
     case "google-search": {
       // Google Search returns search results, not a generative response.
       // Wrap results as an LLM-style response for uniform handling.
