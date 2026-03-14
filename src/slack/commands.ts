@@ -57,9 +57,19 @@ export function registerCommands(
 
         if (taskQueue) {
           const qs = taskQueue.getStatus();
-          statusText += `\n\n*Task Queue:*`;
-          statusText += qs.paused ? " :double_vertical_bar: PAUSED" : "";
-          statusText += `\n  Queued: ${qs.queued} | Running: ${qs.running}/${qs.maxConcurrency} | Completed: ${qs.completed} | Failed: ${qs.failed}`;
+          statusText += `\n\n*Task Queue:*${qs.paused ? " :double_vertical_bar: PAUSAD" : ""}`;
+          statusText += `\n:card_index_dividers: Köade: *${qs.queued}* | Körs: *${qs.running}*/${qs.maxConcurrency} | Klara: *${qs.completed}* | Misslyckade: *${qs.failed}*`;
+          if (qs.items.length > 0) {
+            for (const item of qs.items.slice(0, 5)) {
+              const icon = item.status === "running" ? ":arrow_forward:" : ":hourglass_flowing_sand:";
+              statusText += `\n  ${icon} ${item.agentSlug} (${item.priority})`;
+            }
+            if (qs.items.length > 5) {
+              statusText += `\n  _...och ${qs.items.length - 5} till. Kör \`/fia queue\` för fullständig lista._`;
+            }
+          }
+        } else {
+          statusText += "\n\n*Task Queue:* _Ej aktiv_";
         }
 
         await respond({ response_type: "ephemeral", text: statusText });
@@ -234,15 +244,39 @@ export function registerCommands(
         break;
       }
 
+      case "queue": {
+        if (!taskQueue) {
+          await respond({ response_type: "ephemeral", text: ":x: Task queue ej aktiv (Supabase krävs)." });
+          break;
+        }
+        const qs = taskQueue.getStatus();
+        const lines = [
+          `:card_index_dividers: *Task Queue*${qs.paused ? " :double_vertical_bar: PAUSAD" : ""}`,
+          `  Köade: *${qs.queued}* | Körs: *${qs.running}*/${qs.maxConcurrency} | Klara: *${qs.completed}* | Misslyckade: *${qs.failed}*`,
+        ];
+        if (qs.items.length > 0) {
+          lines.push("", "*Aktiva och köade tasks:*");
+          for (const item of qs.items) {
+            const icon = item.status === "running" ? ":arrow_forward:" : ":hourglass_flowing_sand:";
+            lines.push(`  ${icon} \`${item.id}\` – ${item.agentSlug} (${item.priority})`);
+          }
+        } else {
+          lines.push("", "_Inga tasks i kön._");
+        }
+        await respond({ response_type: "ephemeral", text: lines.join("\n") });
+        break;
+      }
+
       default: {
         const helpLines = [
           "*FIA Commands:*",
-          "  `/fia status` – Systemstatus, agenter och kill switch",
-          "  `/fia kill` – Aktivera kill switch (pausar alla publiceringsagenter)",
-          "  `/fia resume` – Avaktivera kill switch",
+          "  `/fia status` – Systemstatus, agenter, kö och kill switch",
+          "  `/fia queue` – Detaljerad kö-status",
+          "  `/fia kill` – Aktivera kill switch (pausar agenter och dränerar kön)",
+          "  `/fia resume` – Avaktivera kill switch (återupptar kön)",
           "  `/fia approve <task-id>` – Godkänn uppgift",
           "  `/fia reject <task-id> <feedback>` – Avslå uppgift med feedback",
-          "  `/fia run <agent> <task-type> [description]` – Trigga agent manuellt",
+          "  `/fia run <agent> <task-type> [description]` – Köa agent-uppgift",
           "",
           "*Agenter och uppgiftstyper:*",
         ];
