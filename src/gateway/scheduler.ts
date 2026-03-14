@@ -3,6 +3,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { AppConfig } from "../utils/config";
 import { Logger } from "./logger";
 import { KillSwitch } from "../utils/kill-switch";
+import { TaskQueue } from "./task-queue";
 import { logActivity } from "../supabase/activity-writer";
 import { createAgent } from "../agents/agent-factory";
 import { getSlackApp } from "../slack/app";
@@ -43,7 +44,8 @@ export function startScheduler(
   config: AppConfig,
   logger: Logger,
   supabase: SupabaseClient | null,
-  killSwitch: KillSwitch
+  killSwitch: KillSwitch,
+  taskQueue: TaskQueue | null = null
 ): void {
   for (const entry of SCHEDULE) {
     cron.schedule(entry.expression, async () => {
@@ -83,33 +85,42 @@ export function startScheduler(
         details_json: { task: entry.task, description: entry.description },
       });
 
-      // Execute agent task
-      {
+      // Build progress callback for Slack + activity_log
+      const slackApp = getSlackApp();
+      const channel = AGENT_CHANNEL[entry.agent] ?? CHANNELS.orchestrator;
+
+      const onProgress: ProgressCallback = async (action, message, details) => {
+        if (slackApp) {
+          try {
+            await slackApp.client.chat.postMessage({ channel, text: message });
+          } catch (slackErr) {
+            logger.warn(`Scheduler: failed to post progress to Slack: ${(slackErr as Error).message}`, {
+              action: "slack_progress_error",
+              agent: entry.agent,
+            });
+          }
+        }
+        await logActivity(supabase, {
+          agent_id: agentRow?.id,
+          action,
+          details_json: { agent: entry.agent, scheduled: true, ...details },
+        });
+      };
+
+      if (taskQueue) {
+        // Enqueue via task queue
+        taskQueue.enqueue(entry.agent, {
+          type: entry.task,
+          title: entry.description,
+          input: `Schemalagd uppgift: ${entry.description}`,
+          priority: "normal",
+          onProgress,
+        }, "normal");
+      } else {
+        // Fallback: direct execution
         try {
           const agentInstance = createAgent(entry.agent, config, logger, supabase);
-          const slackApp = getSlackApp();
-          const channel = AGENT_CHANNEL[entry.agent] ?? CHANNELS.orchestrator;
 
-          // Progress callback: posts step-by-step updates to Slack + activity_log
-          const onProgress: ProgressCallback = async (action, message, details) => {
-            if (slackApp) {
-              try {
-                await slackApp.client.chat.postMessage({ channel, text: message });
-              } catch (slackErr) {
-                logger.warn(`Scheduler: failed to post progress to Slack: ${(slackErr as Error).message}`, {
-                  action: "slack_progress_error",
-                  agent: entry.agent,
-                });
-              }
-            }
-            await logActivity(supabase, {
-              agent_id: agentRow?.id,
-              action,
-              details_json: { agent: entry.agent, scheduled: true, ...details },
-            });
-          };
-
-          // Post start message
           if (slackApp) {
             try {
               await slackApp.client.chat.postMessage({
@@ -127,7 +138,6 @@ export function startScheduler(
             onProgress,
           });
 
-          // Post completion message
           if (slackApp) {
             try {
               await slackApp.client.chat.postMessage({
@@ -144,10 +154,7 @@ export function startScheduler(
             error: (err as Error).message,
           });
 
-          // Notify about failure in Slack
-          const slackApp = getSlackApp();
           if (slackApp) {
-            const channel = AGENT_CHANNEL[entry.agent] ?? CHANNELS.orchestrator;
             try {
               await slackApp.client.chat.postMessage({
                 channel,

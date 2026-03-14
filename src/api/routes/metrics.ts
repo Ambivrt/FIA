@@ -70,12 +70,29 @@ export function metricRoutes(supabase: SupabaseClient): Router {
 
       const costMtd = (costData ?? []).reduce((sum, t) => sum + (t.cost_sek ?? 0), 0);
 
+      // Cost previous month (for trend calculation)
+      const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+      const prevMonthStartStr = prevMonthStart.toISOString().slice(0, 10);
+      const prevMonthEndStr = prevMonthEnd.toISOString().slice(0, 10);
+
+      const { data: prevCostData } = await supabase
+        .from("tasks")
+        .select("cost_sek")
+        .gte("created_at", `${prevMonthStartStr}T00:00:00Z`)
+        .lte("created_at", `${prevMonthEndStr}T23:59:59Z`)
+        .not("cost_sek", "is", null);
+
+      const prevCost = (prevCostData ?? []).reduce((sum, t) => sum + (t.cost_sek ?? 0), 0);
+      const costTrend = prevCost > 0 ? (costMtd - prevCost) / prevCost : 0;
+
       res.json({
         data: {
           content_this_week: contentThisWeek ?? 0,
           approval_rate: Math.round(approvalRate * 100) / 100,
           pending_approvals: pendingApprovals ?? 0,
           cost_mtd_sek: Math.round(costMtd * 100) / 100,
+          cost_trend: Math.round(costTrend * 100) / 100,
         },
       });
     } catch (err) {

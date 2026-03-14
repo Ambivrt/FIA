@@ -10,6 +10,8 @@ import { routeRequest, AgentRouting } from "../gateway/router";
 import { LLMResponse } from "../llm/types";
 import { createTask, updateTaskStatus, createApproval } from "../supabase/task-writer";
 import { logActivity } from "../supabase/activity-writer";
+import { writeMetric } from "../supabase/metrics-writer";
+import { usdToSek } from "../llm/pricing";
 
 export type ProgressCallback = (
   action: string,
@@ -119,10 +121,23 @@ export abstract class BaseAgent {
         duration_ms: response.durationMs,
       });
 
+      const costSek = usdToSek(response.costUsd, this.config.usdToSek);
+
       await updateTaskStatus(this.supabase, taskId, "awaiting_review", {
         content_json: { output: response.text },
         model_used: response.model,
         tokens_used: totalTokens,
+        cost_sek: costSek,
+      });
+
+      // Write cost metric
+      await writeMetric(this.supabase, {
+        category: "cost",
+        metric_name: `agent_cost_${this.slug}`,
+        value: costSek,
+        period: "daily",
+        period_start: new Date().toISOString().slice(0, 10),
+        metadata_json: { model: response.model, task_id: taskId, cost_usd: response.costUsd },
       });
 
       this.logger.info(`${this.name} completed: ${task.title}`, {
@@ -132,6 +147,7 @@ export abstract class BaseAgent {
         model: response.model,
         tokens_in: response.tokensIn,
         tokens_out: response.tokensOut,
+        cost_usd: response.costUsd,
         duration_ms: response.durationMs,
         status: "success",
       });

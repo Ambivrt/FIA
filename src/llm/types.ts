@@ -30,6 +30,7 @@ export interface LLMResponse {
   tokensIn: number;
   tokensOut: number;
   durationMs: number;
+  costUsd: number;
 }
 
 export interface SearchResult {
@@ -48,4 +49,5 @@ export interface ImageGenerationResponse {
   mimeType: string;
   model: string;
   durationMs: number;
+  costUsd: number;
 }
