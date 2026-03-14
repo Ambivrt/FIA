@@ -202,28 +202,104 @@ export function registerCommands(
 
       default: {
         const helpLines = [
-          "*FIA Commands:*",
+          ":book: *FIA Gateway – Kommandon*",
           "",
-          "`/fia status` – Systemstatus, agenter och kill switch",
-          "`/fia kill` – Aktivera kill switch (pausar alla publiceringsagenter)",
-          "`/fia resume` – Avaktivera kill switch",
-          "`/fia approve <task-id>` – Godkänn uppgift",
-          "`/fia reject <task-id> <feedback>` – Avslå uppgift med feedback",
-          "`/fia run <agent> <task-type> [description]` – Trigga agent manuellt",
+          "*System:*",
+          "`/fia status` – Visa systemstatus, agenter och kill switch",
+          "`/fia kill` – Aktivera kill switch (pausar alla publiceringsagenter omedelbart)",
+          "`/fia resume` – Avaktivera kill switch och återuppta normal drift",
+          "",
+          "*Uppgifter:*",
+          "`/fia approve <task-id>` – Godkänn en uppgift i kö",
+          "`/fia approve <task-id> <kommentar>` – Godkänn med kommentar",
+          "`/fia reject <task-id> <feedback>` – Avslå uppgift (feedback obligatoriskt)",
+          "",
+          "*Kör agent manuellt:*",
+          "`/fia run <agent> <uppgiftstyp> [beskrivning]` – Trigga en agent",
           "",
           "*Agenter och uppgiftstyper:*",
         ];
+
+        const agentDescriptions: Record<string, Record<string, string>> = {
+          content: {
+            _desc: "Skapar allt textinnehåll och bilder. Brand Agent granskar automatiskt.",
+            blog_post: "Blogginlägg (Claude Opus)",
+            linkedin: "LinkedIn-inlägg (Claude Opus)",
+            newsletter: "Nyhetsbrev (Claude Opus)",
+            case_study: "Kundcase (Claude Opus)",
+            whitepaper: "Whitepaper (Claude Opus)",
+            metadata: "Metadata och SEO-titlar (Claude Sonnet)",
+            alt_text: "Alt-texter för bilder (Claude Sonnet)",
+            ab_variants: "A/B-testvarianter (Claude Sonnet)",
+            images: "Bildgenerering (Nano Banana 2)",
+          },
+          brand: {
+            _desc: "Granskar allt innehåll mot varumärkesriktlinjer. Vetorätt.",
+          },
+          strategy: {
+            _desc: "Planering och strategi. Alla planer kräver Orchestrator-godkännande.",
+            quarterly_plan: "Kvartalsplan (Claude Opus)",
+            monthly_plan: "Månadsplan (Claude Opus)",
+            campaign_brief: "Kampanjbrief (Claude Opus)",
+            research: "Omvärldsbevakning (Google Search)",
+            trend_analysis: "Trendanalys (Google Search)",
+          },
+          campaign: {
+            _desc: "Kampanjexekvering med budgetgräns (10 000 SEK).",
+            email_sequence: "E-postsekvens (Claude Opus)",
+            ad_copy: "Annonstexter (Claude Opus)",
+            landing_page: "Landningssida (Claude Opus)",
+            ab_variants: "A/B-varianter (Claude Sonnet)",
+            segmentation: "Målgruppssegmentering (Claude Sonnet)",
+          },
+          seo: {
+            _desc: "SEO-analys, sökoptimering och innehållsrekommendationer.",
+            seo_audit: "SEO-audit (Google Search)",
+            bulk_optimization: "Bulkoptimering (Claude Sonnet)",
+            content_recommendations: "Innehållsrekommendationer (Claude Opus)",
+          },
+          lead: {
+            _desc: "Lead scoring och nurture-sekvenser.",
+            lead_scoring: "Scoring-uppdatering (Claude Sonnet)",
+            nurture_email: "Nurture-mail (Claude Opus)",
+            nurture_sequences: "Nurture-sekvenser (Claude Opus)",
+          },
+          analytics: {
+            _desc: "Rapporter, KPI-analys och insikter.",
+            morning_pulse: "Morgonpuls (Claude Sonnet)",
+            weekly_report: "Veckorapport (Claude Opus)",
+            quarterly_review: "Kvartalsöversikt (Claude Opus)",
+            insights: "Insikter och analys (Claude Opus)",
+          },
+        };
+
         for (const slug of getAllAgentSlugs()) {
-          try {
-            const m = loadAgentManifest(config.knowledgeDir, slug);
-            const taskTypes = Object.keys(m.task_context);
-            const routingTypes = Object.keys(m.routing).filter((k) => k !== "default");
-            const allTypes = [...new Set([...taskTypes, ...routingTypes])];
-            helpLines.push(`  *${slug}* – ${allTypes.length > 0 ? allTypes.map((t) => `\`${t}\``).join(", ") : "`default`"}`);
-          } catch {
-            helpLines.push(`  *${slug}* – \`default\``);
+          const desc = agentDescriptions[slug];
+          if (desc) {
+            helpLines.push(`\n:robot_face: *${slug}* – ${desc._desc}`);
+            const types = Object.entries(desc).filter(([k]) => k !== "_desc");
+            if (types.length > 0) {
+              for (const [type, label] of types) {
+                helpLines.push(`    \`/fia run ${slug} ${type}\` – ${label}`);
+              }
+            } else {
+              helpLines.push(`    _Körs automatiskt vid innehållsgranskning_`);
+            }
+          } else {
+            helpLines.push(`\n:robot_face: *${slug}* – \`/fia run ${slug} default\``);
           }
         }
+
+        helpLines.push("");
+        helpLines.push("*Schemalagda körningar:*");
+        helpLines.push("  07:00 mån–fre  Analytics morgonpuls");
+        helpLines.push("  08:00 måndag   Strategy veckoplanering");
+        helpLines.push("  09:00 mån/ons/fre  Content schemalagt innehåll");
+        helpLines.push("  10:00 dagligen  Lead scoring-uppdatering");
+        helpLines.push("  14:00 fredag   Analytics veckorapport");
+        helpLines.push("");
+        helpLines.push("*Tips:* Kör `/fia run` utan argument för att se alla agenter.");
+
         await respond({
           response_type: "ephemeral",
           text: helpLines.join("\n"),
