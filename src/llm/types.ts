@@ -7,13 +7,13 @@ export type ModelAlias =
 export type ModelId =
   | "claude-opus-4-6"
   | "claude-sonnet-4-6"
-  | "gemini-2.0-flash-preview-image-generation"
+  | "gemini-2.5-flash-image"
   | "google-custom-search";
 
 export const MODEL_MAP: Record<ModelAlias, ModelId> = {
   "claude-opus": "claude-opus-4-6",
   "claude-sonnet": "claude-sonnet-4-6",
-  "nano-banana-2": "gemini-2.0-flash-preview-image-generation",
+  "nano-banana-2": "gemini-2.5-flash-image",
   "google-search": "google-custom-search",
 };
 
