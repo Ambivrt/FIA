@@ -138,8 +138,18 @@ export class ContentAgent extends BaseAgent {
         status: "completed",
       };
     } catch (err) {
-      await updateTaskStatus(this.supabase, taskId, "queued");
-      this.logger.error(`Image generation failed: ${(err as Error).message}`, {
+      const message = (err as Error).message;
+      await updateTaskStatus(this.supabase, taskId, "error", {
+        content_json: { error: message },
+      });
+
+      await logActivity(this.supabase, {
+        agent_id: agentRow,
+        action: "image_error",
+        details_json: { task_id: taskId, error: message },
+      });
+
+      this.logger.error(`Image generation failed: ${message}`, {
         agent: this.slug,
         task_id: taskId,
         action: "image_error",

@@ -6,6 +6,7 @@ import { KillSwitch } from "../utils/kill-switch";
 import { updateTaskStatus, createApproval } from "../supabase/task-writer";
 import { logActivity } from "../supabase/activity-writer";
 import { createAgent, getAllAgentSlugs } from "../agents/agent-factory";
+import { loadAgentManifest } from "../agents/agent-loader";
 
 export function registerCommands(
   app: App,
@@ -137,8 +138,19 @@ export function registerCommands(
         const taskType = args[2] || "default";
         const taskDesc = args.slice(3).join(" ") || `Manuellt triggad: ${taskType}`;
         if (!agentSlug) {
-          const validSlugs = getAllAgentSlugs().join(", ");
-          await respond({ response_type: "ephemeral", text: `Usage: \`/fia run <agent> [task-type] [description]\`\nAgenter: ${validSlugs}` });
+          const lines = ["*Usage:* `/fia run <agent> <task-type> [description]`\n", "*Agenter och uppgiftstyper:*"];
+          for (const slug of getAllAgentSlugs()) {
+            try {
+              const m = loadAgentManifest(config.knowledgeDir, slug);
+              const taskTypes = Object.keys(m.task_context);
+              const routingTypes = Object.keys(m.routing).filter((k) => k !== "default");
+              const allTypes = [...new Set([...taskTypes, ...routingTypes])];
+              lines.push(`  *${slug}* – ${allTypes.length > 0 ? allTypes.map((t) => `\`${t}\``).join(", ") : "`default`"}`);
+            } catch {
+              lines.push(`  *${slug}* – \`default\``);
+            }
+          }
+          await respond({ response_type: "ephemeral", text: lines.join("\n") });
           return;
         }
         if (!supabase) {
@@ -173,19 +185,36 @@ export function registerCommands(
         break;
       }
 
-      default:
+      default: {
+        const helpLines = [
+          "*FIA Commands:*",
+          "",
+          "`/fia status` – Systemstatus, agenter och kill switch",
+          "`/fia kill` – Aktivera kill switch (pausar alla publiceringsagenter)",
+          "`/fia resume` – Avaktivera kill switch",
+          "`/fia approve <task-id>` – Godkänn uppgift",
+          "`/fia reject <task-id> <feedback>` – Avslå uppgift med feedback",
+          "`/fia run <agent> <task-type> [description]` – Trigga agent manuellt",
+          "",
+          "*Agenter och uppgiftstyper:*",
+        ];
+        for (const slug of getAllAgentSlugs()) {
+          try {
+            const m = loadAgentManifest(config.knowledgeDir, slug);
+            const taskTypes = Object.keys(m.task_context);
+            const routingTypes = Object.keys(m.routing).filter((k) => k !== "default");
+            const allTypes = [...new Set([...taskTypes, ...routingTypes])];
+            helpLines.push(`  *${slug}* – ${allTypes.length > 0 ? allTypes.map((t) => `\`${t}\``).join(", ") : "`default`"}`);
+          } catch {
+            helpLines.push(`  *${slug}* – \`default\``);
+          }
+        }
         await respond({
           response_type: "ephemeral",
-          text: [
-            "*FIA Commands:*",
-            "`/fia status` – System status",
-            "`/fia kill` – Activate kill switch",
-            "`/fia resume` – Deactivate kill switch",
-            "`/fia approve <task-id>` – Approve task",
-            "`/fia reject <task-id> <feedback>` – Reject task",
-            "`/fia run <agent> <task>` – Trigger agent manually",
-          ].join("\n"),
+          text: helpLines.join("\n"),
         });
+        break;
+      }
     }
   });
 }

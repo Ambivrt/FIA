@@ -122,7 +122,16 @@ export abstract class BaseAgent {
       };
     } catch (err) {
       const message = (err as Error).message;
-      await updateTaskStatus(this.supabase, taskId, "queued");
+      await updateTaskStatus(this.supabase, taskId, "error", {
+        content_json: { error: message },
+      });
+
+      await logActivity(this.supabase, {
+        agent_id: agentRow,
+        action: "task_error",
+        details_json: { task_id: taskId, error: message },
+      });
+
       this.logger.error(`${this.name} failed: ${message}`, {
         agent: this.slug,
         task_id: taskId,
