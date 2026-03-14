@@ -3,6 +3,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { AppConfig } from "../utils/config";
 import { Logger } from "../gateway/logger";
 import { KillSwitch } from "../utils/kill-switch";
+import { TaskQueue } from "../gateway/task-queue";
 import { updateTaskStatus, createApproval } from "../supabase/task-writer";
 import { logActivity } from "../supabase/activity-writer";
 import { createAgent, getAllAgentSlugs } from "../agents/agent-factory";
@@ -14,7 +15,8 @@ export function registerCommands(
   config: AppConfig,
   logger: Logger,
   supabase: SupabaseClient | null,
-  killSwitch: KillSwitch | null
+  killSwitch: KillSwitch | null,
+  taskQueue: TaskQueue | null = null
 ): void {
   app.command("/fia", async ({ command, ack, respond }) => {
     await ack();
@@ -51,6 +53,13 @@ export function registerCommands(
               statusText += `\n${icon} ${a.name} (${a.status})`;
             }
           }
+        }
+
+        if (taskQueue) {
+          const qs = taskQueue.getStatus();
+          statusText += `\n\n*Task Queue:*`;
+          statusText += qs.paused ? " :double_vertical_bar: PAUSED" : "";
+          statusText += `\n  Queued: ${qs.queued} | Running: ${qs.running}/${qs.maxConcurrency} | Completed: ${qs.completed} | Failed: ${qs.failed}`;
         }
 
         await respond({ response_type: "ephemeral", text: statusText });
@@ -158,45 +167,70 @@ export function registerCommands(
           await respond({ response_type: "ephemeral", text: ":x: Supabase krävs för att köra agenter." });
           return;
         }
-        await respond({
-          response_type: "ephemeral",
-          text: `:rocket: Startar *${agentSlug}* agent (${taskType})...`,
-        });
-        // Execute async – don't block the Slack response
-        (async () => {
-          try {
-            const agent = createAgent(agentSlug, config, logger, supabase);
+        if (taskQueue) {
+          // Enqueue via task queue
+          const onProgress: ProgressCallback = async (action, message, details) => {
+            await app.client.chat.postMessage({
+              channel: command.channel_id,
+              text: message,
+            });
+            await logActivity(supabase, {
+              action,
+              details_json: { agent: agentSlug, ...details },
+            });
+          };
 
-            // Progress callback: posts to Slack + writes to activity_log
-            const onProgress: ProgressCallback = async (action, message, details) => {
+          const queueId = taskQueue.enqueue(agentSlug, {
+            type: taskType,
+            title: taskDesc,
+            input: taskDesc,
+            priority: "normal",
+            onProgress,
+          }, "normal");
+
+          await respond({
+            response_type: "ephemeral",
+            text: `:inbox_tray: *${agentSlug}* (${taskType}) köad. Queue ID: \`${queueId}\``,
+          });
+        } else {
+          // Fallback: direct execution if no queue
+          await respond({
+            response_type: "ephemeral",
+            text: `:rocket: Startar *${agentSlug}* agent (${taskType})...`,
+          });
+          (async () => {
+            try {
+              const agent = createAgent(agentSlug, config, logger, supabase);
+              const onProgress: ProgressCallback = async (action, message, details) => {
+                await app.client.chat.postMessage({
+                  channel: command.channel_id,
+                  text: message,
+                });
+                await logActivity(supabase, {
+                  action,
+                  details_json: { agent: agentSlug, ...details },
+                });
+              };
+
+              const result = await agent.execute({
+                type: taskType,
+                title: taskDesc,
+                input: taskDesc,
+                priority: "normal",
+                onProgress,
+              });
               await app.client.chat.postMessage({
                 channel: command.channel_id,
-                text: message,
+                text: `:white_check_mark: *${agentSlug}* klar (${result.status}). Task: \`${result.taskId}\``,
               });
-              await logActivity(supabase, {
-                action,
-                details_json: { agent: agentSlug, ...details },
+            } catch (err) {
+              await app.client.chat.postMessage({
+                channel: command.channel_id,
+                text: `:x: *${agentSlug}* misslyckades: ${(err as Error).message}`,
               });
-            };
-
-            const result = await agent.execute({
-              type: taskType,
-              title: taskDesc,
-              input: taskDesc,
-              priority: "normal",
-              onProgress,
-            });
-            await app.client.chat.postMessage({
-              channel: command.channel_id,
-              text: `:white_check_mark: *${agentSlug}* klar (${result.status}). Task: \`${result.taskId}\``,
-            });
-          } catch (err) {
-            await app.client.chat.postMessage({
-              channel: command.channel_id,
-              text: `:x: *${agentSlug}* misslyckades: ${(err as Error).message}`,
-            });
-          }
-        })();
+            }
+          })();
+        }
         break;
       }
 

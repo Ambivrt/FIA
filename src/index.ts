@@ -7,6 +7,7 @@ import { createSlackApp } from "./slack/app";
 import { createApiServer, startApiServer } from "./api/server";
 import { startScheduler } from "./gateway/scheduler";
 import { KillSwitch } from "./utils/kill-switch";
+import { TaskQueue } from "./gateway/task-queue";
 
 async function main(): Promise<void> {
   const config = loadConfig();
@@ -30,10 +31,20 @@ async function main(): Promise<void> {
   // --- Kill Switch ---
   const killSwitch = new KillSwitch(supabase, logger);
 
+  // --- Task Queue ---
+  let taskQueue: TaskQueue | null = null;
+  if (supabase) {
+    taskQueue = new TaskQueue(config, logger, supabase, config.queueMaxConcurrency);
+    killSwitch.setTaskQueue(taskQueue);
+    logger.info(`Task queue initialized (max concurrency: ${config.queueMaxConcurrency})`, {
+      action: "queue_init",
+    });
+  }
+
   // --- Slack ---
   if (config.slackBotToken && config.slackAppToken) {
     try {
-      await createSlackApp(config, logger, supabase, killSwitch);
+      await createSlackApp(config, logger, supabase, killSwitch, taskQueue);
       logger.info("Slack app connected", { action: "slack_init" });
     } catch (err) {
       logger.error("Slack app failed to start", {
@@ -59,7 +70,7 @@ async function main(): Promise<void> {
   }
 
   // --- Scheduler ---
-  startScheduler(config, logger, supabase, killSwitch);
+  startScheduler(config, logger, supabase, killSwitch, taskQueue);
 
   logger.info("FIA Gateway ready", {
     action: "gateway_ready",

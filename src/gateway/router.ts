@@ -3,6 +3,7 @@ import { LLMRequest, LLMResponse, ModelAlias, MODEL_MAP, ImageGenerationRequest,
 import { callClaude } from "../llm/claude";
 import { searchGoogle } from "../llm/google-search";
 import { generateImage } from "../llm/nano-banana";
+import { calculateFlatCostUsd } from "../llm/pricing";
 import { Logger } from "./logger";
 
 export interface AgentRouting {
@@ -65,6 +66,7 @@ export async function routeRequest(
         tokensIn: 0,
         tokensOut: 0,
         durationMs: Date.now() - start,
+        costUsd: calculateFlatCostUsd("google-custom-search"),
       };
     }
     default:

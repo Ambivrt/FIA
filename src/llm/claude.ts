@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { AppConfig } from "../utils/config";
 import { LLMRequest, LLMResponse } from "./types";
+import { calculateCostUsd } from "./pricing";
 
 let clientInstance: Anthropic | null = null;
 
@@ -32,11 +33,15 @@ export async function callClaude(
     .map((block) => block.text)
     .join("");
 
+  const tokensIn = response.usage.input_tokens;
+  const tokensOut = response.usage.output_tokens;
+
   return {
     text,
     model,
-    tokensIn: response.usage.input_tokens,
-    tokensOut: response.usage.output_tokens,
+    tokensIn,
+    tokensOut,
     durationMs: Date.now() - start,
+    costUsd: calculateCostUsd(model, tokensIn, tokensOut),
   };
 }

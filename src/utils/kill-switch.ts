@@ -1,6 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Logger } from "../gateway/logger";
 import { logActivity } from "../supabase/activity-writer";
+import type { TaskQueue } from "../gateway/task-queue";
 
 interface KillSwitchState {
   active: boolean;
@@ -17,10 +18,16 @@ export class KillSwitch {
     source: null,
   };
 
+  private taskQueue: TaskQueue | null = null;
+
   constructor(
     private readonly supabase: SupabaseClient | null,
     private readonly logger: Logger
   ) {}
+
+  setTaskQueue(queue: TaskQueue): void {
+    this.taskQueue = queue;
+  }
 
   async activate(source: "slack" | "api" | "realtime", userId?: string): Promise<void> {
     this.state = {
@@ -29,6 +36,16 @@ export class KillSwitch {
       activatedBy: userId ?? null,
       source,
     };
+
+    // Pause and drain task queue
+    if (this.taskQueue) {
+      this.taskQueue.pause();
+      const drained = this.taskQueue.drain();
+      this.logger.info(`Kill switch drained ${drained.length} queued tasks`, {
+        action: "kill_switch_drain",
+        details: { count: drained.length },
+      });
+    }
 
     this.logger.warn("Kill switch activated", {
       action: "kill_switch_activate",
@@ -64,6 +81,11 @@ export class KillSwitch {
       activatedBy: null,
       source: null,
     };
+
+    // Resume task queue
+    if (this.taskQueue) {
+      this.taskQueue.resume();
+    }
 
     this.logger.info("Kill switch deactivated", {
       action: "kill_switch_deactivate",

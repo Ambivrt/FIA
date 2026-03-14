@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { AppConfig } from "../utils/config";
 import { ImageGenerationRequest, ImageGenerationResponse } from "./types";
+import { calculateFlatCostUsd } from "./pricing";
 
 const IMAGE_MODEL = "gemini-2.5-flash-image";
 
@@ -33,5 +34,6 @@ export async function generateImage(
     mimeType: inlineData.mimeType || "image/png",
     model: IMAGE_MODEL,
     durationMs: Date.now() - start,
+    costUsd: calculateFlatCostUsd(IMAGE_MODEL),
   };
 }

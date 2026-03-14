@@ -3,6 +3,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { AppConfig } from "../utils/config";
 import { Logger } from "../gateway/logger";
 import { KillSwitch } from "../utils/kill-switch";
+import { TaskQueue } from "../gateway/task-queue";
 import { registerCommands } from "./commands";
 import { registerHandlers } from "./handlers";
 
@@ -16,7 +17,8 @@ export async function createSlackApp(
   config: AppConfig,
   logger: Logger,
   supabase?: SupabaseClient | null,
-  killSwitch?: KillSwitch
+  killSwitch?: KillSwitch,
+  taskQueue?: TaskQueue | null
 ): Promise<App> {
   const app = new App({
     token: config.slackBotToken,
@@ -26,7 +28,7 @@ export async function createSlackApp(
     logLevel: LogLevel.WARN,
   });
 
-  registerCommands(app, config, logger, supabase ?? null, killSwitch ?? null);
+  registerCommands(app, config, logger, supabase ?? null, killSwitch ?? null, taskQueue ?? null);
   registerHandlers(app, logger);
 
   await app.start();

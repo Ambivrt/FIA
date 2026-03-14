@@ -7,6 +7,8 @@ import { BrandAgent, ReviewRequest } from "../brand/brand-agent";
 import { routeImageRequest } from "../../gateway/router";
 import { updateTaskStatus } from "../../supabase/task-writer";
 import { logActivity } from "../../supabase/activity-writer";
+import { writeMetric } from "../../supabase/metrics-writer";
+import { usdToSek } from "../../llm/pricing";
 
 export class ContentAgent extends BaseAgent {
   readonly name = "Content Agent";
@@ -37,6 +39,7 @@ export class ContentAgent extends BaseAgent {
     const brandAgent = new BrandAgent(this.config, this.logger, this.supabase, brandManifest);
 
     let attempts = 0;
+    let accumulatedCostUsd = 0;
     const maxAttempts = this.manifest.escalation_threshold;
     const feedbackHistory: Array<{ attempt: number; feedback: string }> = [];
 
@@ -176,6 +179,9 @@ export class ContentAgent extends BaseAgent {
         duration_ms: response.durationMs,
       });
 
+      accumulatedCostUsd += response.costUsd;
+      const totalCostSek = usdToSek(accumulatedCostUsd, this.config.usdToSek);
+
       await updateTaskStatus(this.supabase, result.taskId, "awaiting_review", {
         content_json: {
           output: response.text,
@@ -184,6 +190,7 @@ export class ContentAgent extends BaseAgent {
         },
         model_used: response.model,
         tokens_used: response.tokensIn + response.tokensOut,
+        cost_sek: totalCostSek,
       });
 
       result = {
@@ -219,18 +226,30 @@ export class ContentAgent extends BaseAgent {
 
       const imageBase64 = response.imageData.toString("base64");
 
+      const costSek = usdToSek(response.costUsd, this.config.usdToSek);
+
       await updateTaskStatus(this.supabase, taskId, "approved", {
         content_json: {
           image_base64: imageBase64,
           mime_type: response.mimeType,
         },
         model_used: response.model,
+        cost_sek: costSek,
+      });
+
+      await writeMetric(this.supabase, {
+        category: "cost",
+        metric_name: "agent_cost_content",
+        value: costSek,
+        period: "daily",
+        period_start: new Date().toISOString().slice(0, 10),
+        metadata_json: { model: response.model, task_id: taskId, cost_usd: response.costUsd, type: "image" },
       });
 
       await logActivity(this.supabase, {
         agent_id: agentRow,
         action: "image_generated",
-        details_json: { task_id: taskId },
+        details_json: { task_id: taskId, cost_sek: costSek },
       });
 
       return {

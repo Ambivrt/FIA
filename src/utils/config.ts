@@ -23,6 +23,8 @@ export interface AppConfig {
   ga4CredentialsPath: string;
   bufferAccessToken: string;
   gatewayApiPort: number;
+  usdToSek: number;
+  queueMaxConcurrency: number;
 }
 
 export function loadConfig(): AppConfig {
@@ -50,5 +52,7 @@ export function loadConfig(): AppConfig {
     ga4CredentialsPath: process.env.GA4_CREDENTIALS_PATH || "",
     bufferAccessToken: process.env.BUFFER_ACCESS_TOKEN || "",
     gatewayApiPort: parseInt(process.env.GATEWAY_API_PORT || "3001", 10),
+    usdToSek: parseFloat(process.env.USD_TO_SEK || "10.5"),
+    queueMaxConcurrency: parseInt(process.env.QUEUE_MAX_CONCURRENCY || "3", 10),
   };
 }
