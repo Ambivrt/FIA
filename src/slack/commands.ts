@@ -267,16 +267,18 @@ export function registerCommands(
         break;
       }
 
+      case "help":
+      case "?":
       default: {
         const helpLines = [
           "*FIA Commands:*",
-          "  `/fia status` – Systemstatus, agenter, kö och kill switch",
-          "  `/fia queue` – Detaljerad kö-status",
-          "  `/fia kill` – Aktivera kill switch (pausar agenter och dränerar kön)",
-          "  `/fia resume` – Avaktivera kill switch (återupptar kön)",
+          "  `/fia status` – Systemstatus, agenter och kill switch",
+          "  `/fia queue` – Visa kö-status (köade och aktiva tasks)",
+          "  `/fia kill` – Aktivera kill switch (pausar alla publiceringsagenter)",
+          "  `/fia resume` – Avaktivera kill switch",
           "  `/fia approve <task-id>` – Godkänn uppgift",
           "  `/fia reject <task-id> <feedback>` – Avslå uppgift med feedback",
-          "  `/fia run <agent> <task-type> [description]` – Köa agent-uppgift",
+          "  `/fia run <agent> <task-type> [description]` – Trigga agent manuellt",
           "",
           "*Agenter och uppgiftstyper:*",
         ];
