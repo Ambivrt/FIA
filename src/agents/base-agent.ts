@@ -181,6 +181,11 @@ export abstract class BaseAgent {
         error: message,
       });
 
+      await task.onProgress?.("error", `:x: ${this.name} misslyckades: ${message}`, {
+        task_id: taskId,
+        error: message,
+      });
+
       return {
         taskId,
         output: "",
