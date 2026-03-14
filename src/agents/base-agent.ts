@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { AppConfig } from "../utils/config";
 import { Logger } from "../gateway/logger";
-import { AgentManifest, resolveAgentFiles } from "./agent-loader";
+import { AgentManifest, resolveAgentFiles, loadSkills } from "./agent-loader";
 import { loadBrandContext } from "../context/context-manager";
 import { buildSystemPrompt, buildTaskPrompt } from "../context/prompt-builder";
 import { routeRequest, AgentRouting } from "../gateway/router";
@@ -50,12 +50,14 @@ export abstract class BaseAgent {
 
   protected getSystemPrompt(): string {
     const brandContext = loadBrandContext(this.config.knowledgeDir);
-    const agentContext = resolveAgentFiles(
+    const skills = loadSkills(this.config.knowledgeDir, this.slug, this.manifest);
+    const extraFiles = this.manifest.system_context.filter((f) => f !== "SKILL.md");
+    const extraContext = resolveAgentFiles(
       this.config.knowledgeDir,
       this.slug,
-      this.manifest.system_context
+      extraFiles
     );
-    return buildSystemPrompt(brandContext, agentContext);
+    return buildSystemPrompt(brandContext, skills, extraContext || undefined);
   }
 
   protected getTaskContext(taskType: string): string {

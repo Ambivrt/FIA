@@ -1,6 +1,13 @@
 name: Content Agent
 slug: content
-version: 1.0.0
+version: 1.1.0
+skills:
+  - shared:forefront-identity
+  - shared:brand-compliance
+  - shared:swedish-tone
+  - shared:escalation-protocol
+  - agent:content-production
+  - agent:channel-adaptation
 routing:
   default: claude-opus
   metadata: claude-sonnet
@@ -8,7 +15,6 @@ routing:
   ab_variants: claude-sonnet
   images: nano-banana-2
 system_context:
-  - SKILL.md
   - context/tone-examples.md
 task_context:
   blog_post:
