@@ -22,6 +22,7 @@ export interface LLMRequest {
   userPrompt: string;
   temperature?: number;
   maxTokens?: number;
+  timeoutMs?: number;
 }
 
 export interface LLMResponse {

@@ -3,7 +3,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { AppConfig } from "../utils/config";
 import { Logger } from "../gateway/logger";
 import { KillSwitch } from "../utils/kill-switch";
-import { TaskQueue } from "../gateway/task-queue";
+import { TaskQueue, QueueCompleteCallback } from "../gateway/task-queue";
 import { updateTaskStatus, createApproval } from "../supabase/task-writer";
 import { logActivity } from "../supabase/activity-writer";
 import { createAgent, getAllAgentSlugs } from "../agents/agent-factory";
@@ -190,13 +190,29 @@ export function registerCommands(
             });
           };
 
+          const onComplete: QueueCompleteCallback = async (item, result, error) => {
+            if (error) {
+              await app.client.chat.postMessage({
+                channel: command.channel_id,
+                text: `:x: *${item.agentSlug}* misslyckades: ${error}`,
+              });
+            } else if (result) {
+              const statusIcon = result.status === "completed" ? ":white_check_mark:" :
+                result.status === "escalated" ? ":warning:" : ":x:";
+              await app.client.chat.postMessage({
+                channel: command.channel_id,
+                text: `${statusIcon} *${item.agentSlug}* klar (${result.status}). Task: \`${result.taskId}\``,
+              });
+            }
+          };
+
           const queueId = taskQueue.enqueue(agentSlug, {
             type: taskType,
             title: taskDesc,
             input: taskDesc,
             priority: "normal",
             onProgress,
-          }, "normal");
+          }, "normal", onComplete);
 
           await respond({
             response_type: "ephemeral",

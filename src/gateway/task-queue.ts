@@ -12,6 +12,12 @@ const PRIORITY_ORDER: Record<string, number> = {
   low: 3,
 };
 
+export type QueueCompleteCallback = (
+  item: QueueItem,
+  result?: AgentResult,
+  error?: string
+) => Promise<void>;
+
 export interface QueueItem {
   id: string;
   agentSlug: string;
@@ -21,6 +27,7 @@ export interface QueueItem {
   status: "queued" | "running" | "completed" | "failed";
   result?: AgentResult;
   error?: string;
+  onComplete?: QueueCompleteCallback;
 }
 
 export interface QueueStatus {
@@ -51,7 +58,8 @@ export class TaskQueue {
   enqueue(
     agentSlug: string,
     task: AgentTask,
-    priority: string = "normal"
+    priority: string = "normal",
+    onComplete?: QueueCompleteCallback
   ): string {
     const id = `q-${Date.now()}-${++this.counter}`;
     const item: QueueItem = {
@@ -61,6 +69,7 @@ export class TaskQueue {
       priority,
       enqueuedAt: new Date(),
       status: "queued",
+      onComplete,
     };
 
     this.queue.push(item);
@@ -178,6 +187,8 @@ export class TaskQueue {
         task_id: result.taskId,
         details: { queue_id: item.id, status: result.status },
       });
+
+      await item.onComplete?.(item, result);
     } catch (err) {
       item.status = "failed";
       item.error = (err as Error).message;
@@ -189,6 +200,8 @@ export class TaskQueue {
         error: item.error,
         details: { queue_id: item.id },
       });
+
+      await item.onComplete?.(item, undefined, item.error);
     } finally {
       this.running.delete(item.id);
     }
