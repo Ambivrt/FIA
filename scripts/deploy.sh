@@ -49,8 +49,8 @@
 #      bash deploy.sh
 #
 #   4. Scriptet stannar om .env saknas. Skapa den:
-#      cp ~/FIA/.env.example ~/FIA/.env
-#      nano ~/FIA/.env
+#      cp ~/fia-server/.env.example ~/fia-server/.env
+#      nano ~/fia-server/.env
 #
 #   5. Fyll i nycklarna (se REQUIRED nedan), spara, kör igen:
 #      bash deploy.sh
@@ -119,7 +119,7 @@ echo "  PM2: $(pm2 --version)"
 # --- 2. Kod ---
 echo "[2/6] Hämtar kod från main..."
 
-REPO_DIR="$HOME/FIA"
+REPO_DIR="$HOME/fia-server"
 BRANCH="main"
 
 if [ -d "$REPO_DIR" ]; then

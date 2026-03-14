@@ -89,6 +89,7 @@ Gateway är källan till sanning. Den skriver agentdata till Supabase, och dashb
 - **Region:** europe-north1-b (Finland, EU)
 - **OS:** Ubuntu 24 LTS
 - **Disk:** 20 GB SSD (kunskapsbas + loggar)
+- **Deploy-path:** `~/fia-server` (repot klonas till `$HOME/fia-server` på VPS)
 - **Estimerad kostnad:** ~$15–25/mån (jämfört med Hetzner CX21 ~$5/mån – dyrare, men ekosystemfördelarna väger upp)
 - **Firewall:** Enbart utgående trafik tillåten (Slack Socket Mode, Supabase, Anthropic API, Gemini API). Ingen inkommande exponering.
 
@@ -1374,11 +1375,19 @@ npm run dev          # ts-node med watch
 npm run build        # TypeScript → JavaScript
 npm run start        # Kör byggd version
 
-# Produktion (PM2)
+# Produktion (PM2) – på VPS: ~/fia-server
+cd ~/fia-server
 pm2 start ecosystem.config.js
 pm2 status
-pm2 logs fia
-pm2 restart fia
+pm2 logs fia-gateway
+pm2 restart fia-gateway
+
+# Deploy uppdatering (på VPS)
+cd ~/fia-server
+git pull origin main
+npm install
+npm run build
+pm2 restart fia-gateway
 
 # Tester
 npm test             # Kör alla tester
