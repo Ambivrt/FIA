@@ -40,6 +40,11 @@ export class ContentAgent extends BaseAgent {
     const maxAttempts = this.manifest.escalation_threshold;
 
     while (attempts < maxAttempts) {
+      await task.onProgress?.("brand_reviewing", `:mag: Brand Agent granskar${attempts > 0 ? ` (${attempts + 1}/${maxAttempts})` : ""}...`, {
+        task_id: result.taskId,
+        attempt: attempts + 1,
+      });
+
       const review = await brandAgent.review({
         taskId: result.taskId,
         agentSlug: this.slug,
@@ -48,16 +53,29 @@ export class ContentAgent extends BaseAgent {
       });
 
       if (review.decision === "approved") {
+        await task.onProgress?.("brand_approved", `:white_check_mark: Brand Agent godkände`, {
+          task_id: result.taskId,
+        });
         return result;
       }
 
       if (review.escalated) {
+        await task.onProgress?.("escalated", `:warning: Eskalerar till Orchestrator efter ${maxAttempts} avslag`, {
+          task_id: result.taskId,
+          feedback: review.feedback,
+        });
         result.status = "escalated";
         return result;
       }
 
       attempts++;
       if (attempts >= maxAttempts) break;
+
+      await task.onProgress?.("brand_rejected", `:arrows_counterclockwise: Brand Agent underkände (${attempts}/${maxAttempts}) — omgenererar...`, {
+        task_id: result.taskId,
+        attempt: attempts,
+        feedback: review.feedback,
+      });
 
       // Re-generate with Brand Agent feedback
       this.logger.info(`Content Agent re-generating (attempt ${attempts + 1}): ${task.title}`, {
@@ -73,7 +91,20 @@ export class ContentAgent extends BaseAgent {
         review.feedback,
       ].join("\n");
 
+      await task.onProgress?.("llm_calling", `:brain: Content Agent omgenererar med feedback...`, {
+        task_id: result.taskId,
+        attempt: attempts + 1,
+      });
+
       const response = await this.callLLM(task.type, revisedInput);
+
+      const totalTokens = response.tokensIn + response.tokensOut;
+      const durationSec = (response.durationMs / 1000).toFixed(1);
+      await task.onProgress?.("llm_complete", `:white_check_mark: Omgenererat (${totalTokens} tokens, ${durationSec}s)`, {
+        task_id: result.taskId,
+        tokens: totalTokens,
+        duration_ms: response.durationMs,
+      });
 
       await updateTaskStatus(this.supabase, result.taskId, "awaiting_review", {
         content_json: { output: response.text, revision: attempts + 1 },

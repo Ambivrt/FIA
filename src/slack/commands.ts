@@ -7,6 +7,7 @@ import { updateTaskStatus, createApproval } from "../supabase/task-writer";
 import { logActivity } from "../supabase/activity-writer";
 import { createAgent, getAllAgentSlugs } from "../agents/agent-factory";
 import { loadAgentManifest } from "../agents/agent-loader";
+import { ProgressCallback } from "../agents/base-agent";
 
 export function registerCommands(
   app: App,
@@ -165,11 +166,25 @@ export function registerCommands(
         (async () => {
           try {
             const agent = createAgent(agentSlug, config, logger, supabase);
+
+            // Progress callback: posts to Slack + writes to activity_log
+            const onProgress: ProgressCallback = async (action, message, details) => {
+              await app.client.chat.postMessage({
+                channel: command.channel_id,
+                text: message,
+              });
+              await logActivity(supabase, {
+                action,
+                details_json: { agent: agentSlug, ...details },
+              });
+            };
+
             const result = await agent.execute({
               type: taskType,
               title: taskDesc,
               input: taskDesc,
               priority: "normal",
+              onProgress,
             });
             await app.client.chat.postMessage({
               channel: command.channel_id,
