@@ -43,8 +43,21 @@ export class KillSwitch {
       const drained = this.taskQueue.drain();
       this.logger.info(`Kill switch drained ${drained.length} queued tasks`, {
         action: "kill_switch_drain",
-        details: { count: drained.length },
+        details: {
+          count: drained.length,
+          items: drained.map((d) => ({ id: d.id, agent: d.agentSlug, type: d.task.type })),
+        },
       });
+
+      if (this.supabase && drained.length > 0) {
+        await logActivity(this.supabase, {
+          action: "tasks_drained_by_kill_switch",
+          details_json: {
+            count: drained.length,
+            items: drained.map((d) => ({ queue_id: d.id, agent: d.agentSlug, task_type: d.task.type })),
+          },
+        });
+      }
     }
 
     this.logger.warn("Kill switch activated", {

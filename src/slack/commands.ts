@@ -4,7 +4,7 @@ import { AppConfig } from "../utils/config";
 import { Logger } from "../gateway/logger";
 import { KillSwitch } from "../utils/kill-switch";
 import { TaskQueue, QueueCompleteCallback } from "../gateway/task-queue";
-import { updateTaskStatus, createApproval } from "../supabase/task-writer";
+import { updateTaskStatus, createApproval, purgeOrphanedTasks } from "../supabase/task-writer";
 import { logActivity } from "../supabase/activity-writer";
 import { createAgent, getAllAgentSlugs } from "../agents/agent-factory";
 import { loadAgentManifest } from "../agents/agent-loader";
@@ -283,6 +283,32 @@ export function registerCommands(
         break;
       }
 
+      case "purge": {
+        if (!supabase) {
+          await respond({ response_type: "ephemeral", text: ":x: Supabase krävs." });
+          break;
+        }
+        try {
+          const recovered = await purgeOrphanedTasks(supabase);
+          const total = recovered.queued + recovered.inProgress;
+
+          await logActivity(supabase, {
+            action: "tasks_purged",
+            details_json: { ...recovered, source: "slack" },
+          });
+
+          await respond({
+            response_type: "in_channel",
+            text: total > 0
+              ? `:broom: *Purged ${total} stale tasks* (${recovered.queued} queued, ${recovered.inProgress} in_progress) → error.`
+              : `:white_check_mark: Inga stale tasks hittades (kollar tasks äldre än 30 min).`,
+          });
+        } catch (err) {
+          await respond({ response_type: "ephemeral", text: `:x: Purge misslyckades: ${(err as Error).message}` });
+        }
+        break;
+      }
+
       case "help":
       case "?":
       default: {
@@ -295,6 +321,7 @@ export function registerCommands(
           "  `/fia approve <task-id>` – Godkänn uppgift",
           "  `/fia reject <task-id> <feedback>` – Avslå uppgift med feedback",
           "  `/fia run <agent> <task-type> [description]` – Trigga agent manuellt",
+          "  `/fia purge` – Rensa stale queued/in_progress tasks (>30 min)",
           "",
           "*Agenter och uppgiftstyper:*",
         ];
