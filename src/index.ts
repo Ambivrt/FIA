@@ -41,6 +41,23 @@ async function main(): Promise<void> {
     });
   }
 
+  // --- Recover orphaned tasks ---
+  if (supabase) {
+    const { recoverOrphanedTasks } = await import("./supabase/task-writer");
+    const { logActivity } = await import("./supabase/activity-writer");
+    const recovered = await recoverOrphanedTasks(supabase);
+    if (recovered.queued > 0 || recovered.inProgress > 0) {
+      logger.warn(`Recovered orphaned tasks: ${recovered.queued} queued, ${recovered.inProgress} in_progress → error`, {
+        action: "task_recovery",
+        details: recovered,
+      });
+      await logActivity(supabase, {
+        action: "tasks_recovered_on_startup",
+        details_json: recovered,
+      });
+    }
+  }
+
   // --- Slack ---
   if (config.slackBotToken && config.slackAppToken) {
     try {
