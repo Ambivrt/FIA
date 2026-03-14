@@ -5,6 +5,9 @@ import { Logger } from "./logger";
 import { KillSwitch } from "../utils/kill-switch";
 import { logActivity } from "../supabase/activity-writer";
 import { createAgent } from "../agents/agent-factory";
+import { getSlackApp } from "../slack/app";
+import { CHANNELS } from "../slack/channels";
+import { ProgressCallback } from "../agents/base-agent";
 
 interface ScheduleEntry {
   expression: string;
@@ -12,6 +15,17 @@ interface ScheduleEntry {
   task: string;
   description: string;
 }
+
+/** Map agent slug to the Slack channel for progress messages */
+const AGENT_CHANNEL: Record<string, string> = {
+  content: CHANNELS.content,
+  campaign: CHANNELS.campaigns,
+  analytics: CHANNELS.analytics,
+  strategy: CHANNELS.orchestrator,
+  lead: CHANNELS.orchestrator,
+  seo: CHANNELS.orchestrator,
+  brand: CHANNELS.orchestrator,
+};
 
 const SCHEDULE: ScheduleEntry[] = [
   { expression: "0 7 * * 1-5", agent: "analytics", task: "morning_pulse", description: "Analytics morgonpuls" },
@@ -47,38 +61,81 @@ export function startScheduler(
         task: entry.task,
       });
 
-      if (supabase) {
-        const { data: agent } = await supabase
-          .from("agents")
-          .select("id, status")
-          .eq("slug", entry.agent)
-          .single();
+      if (!supabase) return;
 
-        if (agent?.status === "paused") {
-          logger.info(`Scheduler: ${entry.agent} is paused, skipping`, {
-            action: "schedule_skipped",
-            agent: entry.agent,
-          });
-          return;
-        }
+      const { data: agentRow } = await supabase
+        .from("agents")
+        .select("id, status")
+        .eq("slug", entry.agent)
+        .single();
 
-        await logActivity(supabase, {
-          agent_id: agent?.id,
-          action: "schedule_triggered",
-          details_json: { task: entry.task, description: entry.description },
+      if (agentRow?.status === "paused") {
+        logger.info(`Scheduler: ${entry.agent} is paused, skipping`, {
+          action: "schedule_skipped",
+          agent: entry.agent,
         });
+        return;
       }
 
+      await logActivity(supabase, {
+        agent_id: agentRow?.id,
+        action: "schedule_triggered",
+        details_json: { task: entry.task, description: entry.description },
+      });
+
       // Execute agent task
-      if (supabase) {
+      {
         try {
           const agentInstance = createAgent(entry.agent, config, logger, supabase);
-          await agentInstance.execute({
+          const slackApp = getSlackApp();
+          const channel = AGENT_CHANNEL[entry.agent] ?? CHANNELS.orchestrator;
+
+          // Progress callback: posts step-by-step updates to Slack + activity_log
+          const onProgress: ProgressCallback = async (action, message, details) => {
+            if (slackApp) {
+              try {
+                await slackApp.client.chat.postMessage({ channel, text: message });
+              } catch (slackErr) {
+                logger.warn(`Scheduler: failed to post progress to Slack: ${(slackErr as Error).message}`, {
+                  action: "slack_progress_error",
+                  agent: entry.agent,
+                });
+              }
+            }
+            await logActivity(supabase, {
+              agent_id: agentRow?.id,
+              action,
+              details_json: { agent: entry.agent, scheduled: true, ...details },
+            });
+          };
+
+          // Post start message
+          if (slackApp) {
+            try {
+              await slackApp.client.chat.postMessage({
+                channel,
+                text: `:rocket: Startar *${entry.agent}* agent (${entry.task})... _[schemalagd]_`,
+              });
+            } catch { /* non-critical */ }
+          }
+
+          const result = await agentInstance.execute({
             type: entry.task,
             title: entry.description,
             input: `Schemalagd uppgift: ${entry.description}`,
             priority: "normal",
+            onProgress,
           });
+
+          // Post completion message
+          if (slackApp) {
+            try {
+              await slackApp.client.chat.postMessage({
+                channel,
+                text: `:white_check_mark: *${entry.agent}* klar (${result.status}). Task: \`${result.taskId}\` _[schemalagd]_`,
+              });
+            } catch { /* non-critical */ }
+          }
         } catch (err) {
           logger.error(`Scheduler: agent execution failed: ${(err as Error).message}`, {
             action: "schedule_error",
@@ -86,6 +143,18 @@ export function startScheduler(
             task: entry.task,
             error: (err as Error).message,
           });
+
+          // Notify about failure in Slack
+          const slackApp = getSlackApp();
+          if (slackApp) {
+            const channel = AGENT_CHANNEL[entry.agent] ?? CHANNELS.orchestrator;
+            try {
+              await slackApp.client.chat.postMessage({
+                channel,
+                text: `:x: *${entry.agent}* misslyckades: ${(err as Error).message} _[schemalagd]_`,
+              });
+            } catch { /* non-critical */ }
+          }
         }
       }
     });
