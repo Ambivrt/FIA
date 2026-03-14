@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { AppConfig } from "../utils/config";
 import { ImageGenerationRequest, ImageGenerationResponse } from "./types";
 
-const IMAGE_MODEL = "gemini-2.0-flash-preview-image-generation";
+const IMAGE_MODEL = "gemini-2.5-flash-image";
 
 export async function generateImage(
   config: AppConfig,

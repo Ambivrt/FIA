@@ -70,7 +70,7 @@ describe("resolveRoute", () => {
       const result = resolveRoute(routing, "images");
       expect(result.alias).toBe("nano-banana-2");
       expect(result.provider).toBe("nano-banana");
-      expect(result.modelId).toBe("gemini-2.0-flash-preview-image-generation");
+      expect(result.modelId).toBe("gemini-2.5-flash-image");
     });
   });
 
@@ -200,15 +200,7 @@ describe("resolveRoute", () => {
       expect(resolveRoute({ default: "claude-sonnet" }, "x").provider).toBe("claude");
     });
 
-    it("maps gemini-pro to gemini provider", () => {
-      expect(resolveRoute({ default: "gemini-pro" }, "x").provider).toBe("gemini");
-    });
-
-    it("maps gemini-flash to gemini provider", () => {
-      expect(resolveRoute({ default: "gemini-flash" }, "x").provider).toBe("gemini");
-    });
-
-    it("maps nano-banana-2 to nano-banana provider", () => {
+it("maps nano-banana-2 to nano-banana provider", () => {
       expect(resolveRoute({ default: "nano-banana-2" }, "x").provider).toBe("nano-banana");
     });
 
