@@ -11,11 +11,18 @@ import { LLMResponse } from "../llm/types";
 import { createTask, updateTaskStatus, createApproval } from "../supabase/task-writer";
 import { logActivity } from "../supabase/activity-writer";
 
+export type ProgressCallback = (
+  action: string,
+  message: string,
+  details?: Record<string, unknown>
+) => Promise<void>;
+
 export interface AgentTask {
   type: string;
   title: string;
   input: string;
   priority?: string;
+  onProgress?: ProgressCallback;
 }
 
 export interface AgentResult {
@@ -92,12 +99,30 @@ export abstract class BaseAgent {
     });
 
     try {
+      const routeAlias = (this.manifest.routing as Record<string, string>)[task.type]
+        ?? (this.manifest.routing as Record<string, string>).default
+        ?? "unknown";
+      await task.onProgress?.("llm_calling", `:brain: ${this.name} anropar ${routeAlias}...`, {
+        task_id: taskId,
+        model: routeAlias,
+        task_type: task.type,
+      });
+
       const response = await this.callLLM(task.type, task.input);
+
+      const durationSec = (response.durationMs / 1000).toFixed(1);
+      const totalTokens = response.tokensIn + response.tokensOut;
+      await task.onProgress?.("llm_complete", `:white_check_mark: Innehåll genererat (${totalTokens} tokens, ${durationSec}s)`, {
+        task_id: taskId,
+        model: response.model,
+        tokens: totalTokens,
+        duration_ms: response.durationMs,
+      });
 
       await updateTaskStatus(this.supabase, taskId, "awaiting_review", {
         content_json: { output: response.text },
         model_used: response.model,
-        tokens_used: response.tokensIn + response.tokensOut,
+        tokens_used: totalTokens,
       });
 
       this.logger.info(`${this.name} completed: ${task.title}`, {
