@@ -12,7 +12,7 @@ index.ts → gateway/gateway.ts (huvudklass)
   ├── slack/        – Bolt SDK app, commands (/fia), handlers, channels
   ├── supabase/     – client, heartbeat, task-writer, metrics-writer, activity-writer, command-listener
   ├── api/          – Express REST API (internt), routes (agents, tasks, metrics, kill-switch), JWT auth
-  ├── mcp/          – Tunna wrappers: wordpress.ts, hubspot.ts, linkedin.ts, buffer.ts
+  ├── mcp/          – Tunna wrappers: hubspot.ts, linkedin.ts, buffer.ts
   ├── context/      – context-manager (läser kunskapsbas), prompt-builder (systemprompt)
   └── utils/        – config (.env), errors, kill-switch
 ```
@@ -25,7 +25,6 @@ index.ts → gateway/gateway.ts (huvudklass)
 | `gateway/logger.ts` | JA | Strukturerad JSON-loggning (audit trail). Varje agentbeslut loggas. |
 | `agents/agent-loader.ts` | JA | Läser agent.yaml, resolvar filer, bygger systemprompt + task_context. |
 | `agents/base-agent.ts` | JA | Abstrakt basklass – execute(), getSystemPrompt(), escalate(), writeMemory(). |
-| `mcp/wordpress.ts` | JA | MCP-wrapper, granska manuellt. |
 | `llm/claude.ts` | – | Anthropic SDK-klient (Opus 4.6 + Sonnet 4.6). |
 | `supabase/client.ts` | – | Supabase-klient med service role key. |
 

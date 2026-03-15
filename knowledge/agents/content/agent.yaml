@@ -32,7 +32,6 @@ task_context:
   whitepaper:
     - context/templates/whitepaper.md
 tools:
-  - wordpress
   - buffer
   - "gws:drive"
   - "gws:docs"

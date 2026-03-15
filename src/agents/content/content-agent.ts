@@ -9,6 +9,30 @@ import { updateTaskStatus } from "../../supabase/task-writer";
 import { logActivity } from "../../supabase/activity-writer";
 import { writeMetric } from "../../supabase/metrics-writer";
 import { usdToSek } from "../../llm/pricing";
+import { ToolDefinition } from "../../llm/types";
+
+const CONTENT_RESPONSE_TOOL: ToolDefinition = {
+  name: "content_response",
+  description: "Submit generated or revised content",
+  input_schema: {
+    type: "object",
+    properties: {
+      content: {
+        type: "string",
+        description: "The generated content text",
+      },
+      intent_conflict: {
+        type: "boolean",
+        description: "True if the original request cannot be fulfilled within brand guidelines",
+      },
+      conflict_description: {
+        type: "string",
+        description: "If intent_conflict is true, explain why the request conflicts with brand guidelines",
+      },
+    },
+    required: ["content", "intent_conflict"],
+  },
+};
 
 export class ContentAgent extends BaseAgent {
   readonly name = "Content Agent";
@@ -115,11 +139,35 @@ export class ContentAgent extends BaseAgent {
         attempt: attempts + 1,
       });
 
-      const response = await this.callLLM(task.type, revisedInput);
+      const response = await this.callLLM(task.type, revisedInput, {
+        tools: [CONTENT_RESPONSE_TOOL],
+        toolChoice: { type: "tool", name: "content_response" },
+      });
+
+      // Extract structured response from tool use
+      let responseText = response.text;
+      let intentConflict = false;
+      let conflictReason = "";
+
+      if (response.toolUse && response.toolUse.toolName === "content_response") {
+        const input = response.toolUse.input as {
+          content: string;
+          intent_conflict: boolean;
+          conflict_description?: string;
+        };
+        responseText = input.content;
+        intentConflict = input.intent_conflict;
+        conflictReason = input.conflict_description ?? "";
+      } else {
+        // Fallback: check for legacy INTENT_CONFLICT prefix
+        if (responseText.startsWith("INTENT_CONFLICT:")) {
+          intentConflict = true;
+          conflictReason = responseText.replace("INTENT_CONFLICT:", "").trim();
+        }
+      }
 
       // Check if Content Agent flagged an intent conflict
-      if (response.text.startsWith("INTENT_CONFLICT:")) {
-        const conflictReason = response.text.replace("INTENT_CONFLICT:", "").trim();
+      if (intentConflict) {
 
         this.logger.warn(`Content Agent detected intent conflict: ${conflictReason}`, {
           agent: this.slug,
@@ -184,7 +232,7 @@ export class ContentAgent extends BaseAgent {
 
       await updateTaskStatus(this.supabase, result.taskId, "awaiting_review", {
         content_json: {
-          output: response.text,
+          output: responseText,
           revision: attempts + 1,
           original_request: task.input,
         },
@@ -195,7 +243,7 @@ export class ContentAgent extends BaseAgent {
 
       result = {
         ...result,
-        output: response.text,
+        output: responseText,
         model: response.model,
         tokensIn: result.tokensIn + response.tokensIn,
         tokensOut: result.tokensOut + response.tokensOut,

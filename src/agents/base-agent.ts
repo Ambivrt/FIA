@@ -7,7 +7,7 @@ import { AgentManifest, resolveAgentFiles, loadSkills } from "./agent-loader";
 import { loadBrandContext } from "../context/context-manager";
 import { buildSystemPrompt, buildTaskPrompt } from "../context/prompt-builder";
 import { routeRequest, AgentRouting } from "../gateway/router";
-import { LLMResponse } from "../llm/types";
+import { LLMResponse, ToolDefinition } from "../llm/types";
 import { createTask, updateTaskStatus, createApproval } from "../supabase/task-writer";
 import { logActivity } from "../supabase/activity-writer";
 import { writeMetric } from "../supabase/metrics-writer";
@@ -66,7 +66,14 @@ export abstract class BaseAgent {
     return resolveAgentFiles(this.config.knowledgeDir, this.slug, files);
   }
 
-  protected async callLLM(taskType: string, userPrompt: string): Promise<LLMResponse> {
+  protected async callLLM(
+    taskType: string,
+    userPrompt: string,
+    options?: {
+      tools?: ToolDefinition[];
+      toolChoice?: { type: "auto" | "any" | "tool"; name?: string };
+    }
+  ): Promise<LLMResponse> {
     const systemPrompt = this.getSystemPrompt();
     const taskContext = this.getTaskContext(taskType);
     const fullPrompt = buildTaskPrompt(taskContext, userPrompt);
@@ -76,7 +83,12 @@ export abstract class BaseAgent {
       this.logger,
       this.manifest.routing as AgentRouting,
       taskType,
-      { systemPrompt, userPrompt: fullPrompt }
+      {
+        systemPrompt,
+        userPrompt: fullPrompt,
+        tools: options?.tools,
+        toolChoice: options?.toolChoice,
+      }
     );
   }
 

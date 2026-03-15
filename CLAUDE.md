@@ -19,7 +19,7 @@ AI-agentgateway som ersätter Forefronts marknadsavdelning. Sju agentkluster utf
 | Schemaläggning | node-cron |
 | Databas | Supabase PostgreSQL (EU-region) |
 | Google Workspace | gws CLI som MCP-server |
-| MCP-integrationer | WordPress, HubSpot, LinkedIn, Buffer |
+| MCP-integrationer | HubSpot, LinkedIn, Buffer |
 | REST API | Express (internt, ej exponerat) |
 | Deploy | GCP Compute Engine (europe-north1), PM2 |
 
@@ -45,7 +45,7 @@ fia/
 │   ├── slack/                   # Bolt SDK, kommandon, handlers
 │   ├── supabase/                # DB-klient, heartbeat, writers, listeners
 │   ├── api/                     # REST API (Express, routes, auth middleware)
-│   ├── mcp/                     # MCP-wrappers (WordPress, HubSpot, etc.)
+│   ├── mcp/                     # MCP-wrappers (HubSpot, LinkedIn, Buffer)
 │   ├── context/                 # Kontexthantering, prompt-builder
 │   └── utils/                   # Config, errors, kill-switch
 ├── knowledge/                   # Kunskapsbas (se knowledge/CLAUDE.md)

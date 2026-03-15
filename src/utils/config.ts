@@ -16,8 +16,6 @@ export interface AppConfig {
   supabaseServiceRoleKey: string;
   supabaseAnonKey: string;
   gwsCredentialsFile: string;
-  wordpressUrl: string;
-  wordpressApiKey: string;
   hubspotApiKey: string;
   linkedinAccessToken: string;
   ga4CredentialsPath: string;
@@ -45,8 +43,6 @@ export function loadConfig(): AppConfig {
     supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
     supabaseAnonKey: process.env.SUPABASE_ANON_KEY || "",
     gwsCredentialsFile: process.env.GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE || "",
-    wordpressUrl: process.env.WORDPRESS_URL || "",
-    wordpressApiKey: process.env.WORDPRESS_API_KEY || "",
     hubspotApiKey: process.env.HUBSPOT_API_KEY || "",
     linkedinAccessToken: process.env.LINKEDIN_ACCESS_TOKEN || "",
     ga4CredentialsPath: process.env.GA4_CREDENTIALS_PATH || "",

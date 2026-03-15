@@ -2,6 +2,7 @@ import { BrandAgent, ReviewRequest, ReviewResult } from "../src/agents/brand/bra
 import { AgentManifest } from "../src/agents/agent-loader";
 import { AppConfig } from "../src/utils/config";
 import { Logger } from "../src/gateway/logger";
+import { LLMResponse } from "../src/llm/types";
 
 // Mock all external dependencies
 jest.mock("../src/gateway/router", () => ({
@@ -51,13 +52,13 @@ const mockConfig: AppConfig = {
   supabaseServiceRoleKey: "",
   supabaseAnonKey: "",
   gwsCredentialsFile: "",
-  wordpressUrl: "",
-  wordpressApiKey: "",
   hubspotApiKey: "",
   linkedinAccessToken: "",
   ga4CredentialsPath: "",
   bufferAccessToken: "",
   gatewayApiPort: 3001,
+  usdToSek: 10.5,
+  queueMaxConcurrency: 3,
 };
 
 const mockLogger: Logger = {
@@ -114,11 +115,16 @@ describe("BrandAgent", () => {
   describe("approval flow", () => {
     it("approves content that passes brand review", async () => {
       mockRouteRequest.mockResolvedValueOnce({
-        text: '{"decision": "approved", "feedback": "Bra tonalitet och tydlig poäng."}',
+        text: "",
         model: "claude-opus-4-6",
         tokensIn: 500,
         tokensOut: 50,
         durationMs: 1200,
+        costUsd: 0.01,
+        toolUse: {
+          toolName: "brand_review_decision",
+          input: { decision: "approved", feedback: "Bra tonalitet och tydlig poäng." },
+        },
       });
 
       const agent = createBrandAgent();
@@ -139,11 +145,16 @@ describe("BrandAgent", () => {
   describe("rejection flow", () => {
     it("rejects content that fails brand review", async () => {
       mockRouteRequest.mockResolvedValueOnce({
-        text: '{"decision": "rejected", "feedback": "Passivt språk. Saknar tydlig poäng."}',
+        text: "",
         model: "claude-opus-4-6",
         tokensIn: 500,
         tokensOut: 80,
         durationMs: 1500,
+        costUsd: 0.01,
+        toolUse: {
+          toolName: "brand_review_decision",
+          input: { decision: "rejected", feedback: "Passivt språk. Saknar tydlig poäng." },
+        },
       });
 
       const agent = createBrandAgent();
@@ -160,11 +171,16 @@ describe("BrandAgent", () => {
   describe("escalation flow", () => {
     it("escalates after 3 consecutive rejections", async () => {
       const rejectionResponse = {
-        text: '{"decision": "rejected", "feedback": "Otydlig tonalitet."}',
+        text: "",
         model: "claude-opus-4-6",
         tokensIn: 500,
         tokensOut: 50,
         durationMs: 1000,
+        costUsd: 0.01,
+        toolUse: {
+          toolName: "brand_review_decision",
+          input: { decision: "rejected", feedback: "Otydlig tonalitet." },
+        },
       };
 
       mockRouteRequest
@@ -191,19 +207,22 @@ describe("BrandAgent", () => {
     it("resets rejection count after approval", async () => {
       mockRouteRequest
         .mockResolvedValueOnce({
-          text: '{"decision": "rejected", "feedback": "Fel ton."}',
+          text: "",
           model: "claude-opus-4-6",
-          tokensIn: 500, tokensOut: 50, durationMs: 1000,
+          tokensIn: 500, tokensOut: 50, durationMs: 1000, costUsd: 0.01,
+          toolUse: { toolName: "brand_review_decision", input: { decision: "rejected", feedback: "Fel ton." } },
         })
         .mockResolvedValueOnce({
-          text: '{"decision": "approved", "feedback": "Bra!"}',
+          text: "",
           model: "claude-opus-4-6",
-          tokensIn: 500, tokensOut: 50, durationMs: 1000,
+          tokensIn: 500, tokensOut: 50, durationMs: 1000, costUsd: 0.01,
+          toolUse: { toolName: "brand_review_decision", input: { decision: "approved", feedback: "Bra!" } },
         })
         .mockResolvedValueOnce({
-          text: '{"decision": "rejected", "feedback": "Fel ton igen."}',
+          text: "",
           model: "claude-opus-4-6",
-          tokensIn: 500, tokensOut: 50, durationMs: 1000,
+          tokensIn: 500, tokensOut: 50, durationMs: 1000, costUsd: 0.01,
+          toolUse: { toolName: "brand_review_decision", input: { decision: "rejected", feedback: "Fel ton igen." } },
         });
 
       const agent = createBrandAgent();
@@ -217,14 +236,15 @@ describe("BrandAgent", () => {
     });
   });
 
-  describe("JSON parsing", () => {
-    it("handles non-JSON LLM response as revision_requested", async () => {
+  describe("fallback parsing", () => {
+    it("handles text-only LLM response (no tool use) as revision_requested", async () => {
       mockRouteRequest.mockResolvedValueOnce({
         text: "This is not JSON. The content needs revision because it lacks clarity.",
         model: "claude-opus-4-6",
         tokensIn: 500,
         tokensOut: 50,
         durationMs: 1000,
+        costUsd: 0.01,
       });
 
       const agent = createBrandAgent();
