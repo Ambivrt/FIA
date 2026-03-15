@@ -1,11 +1,17 @@
 name: Lead Agent
 slug: lead
-version: 1.0.0
+version: 1.1.0
+skills:
+  - shared:forefront-identity
+  - shared:brand-compliance
+  - shared:gdpr-compliance
+  - shared:escalation-protocol
+  - agent:lead-scoring
+  - agent:nurture-sequences
 routing:
   default: claude-sonnet
   nurture_sequences: claude-opus
-system_context:
-  - SKILL.md
+system_context: []
 task_context:
   nurture_email:
     - context/templates/nurture-email.md
