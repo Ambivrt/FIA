@@ -77,7 +77,7 @@ export function startTaskListener(
         }
 
         const agentSlug = agentRow.slug as string;
-        const taskInput = (task.content_json?.input as string) || task.title;
+        const taskInput = (task.content_json?.description as string) || task.title;
 
         await logActivity(supabase, {
           agent_id: task.agent_id,
