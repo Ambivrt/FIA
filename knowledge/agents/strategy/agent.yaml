@@ -1,12 +1,18 @@
 name: Strategy Agent
 slug: strategy
-version: 1.0.0
+version: 1.1.0
+skills:
+  - shared:forefront-identity
+  - shared:brand-compliance
+  - shared:data-driven-reasoning
+  - shared:escalation-protocol
+  - agent:strategic-planning
+  - agent:market-analysis
 routing:
   default: claude-opus
   research: google-search
   trend_analysis: google-search
 system_context:
-  - SKILL.md
   - context/planning-framework.md
 task_context:
   quarterly_plan:

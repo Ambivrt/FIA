@@ -1,10 +1,15 @@
 name: Brand Agent
 slug: brand
-version: 1.0.0
+version: 1.1.0
+skills:
+  - shared:forefront-identity
+  - shared:brand-compliance
+  - shared:escalation-protocol
+  - agent:brand-review
+  - agent:quality-scoring
 routing:
   default: claude-opus
 system_context:
-  - SKILL.md
   - context/review-checklist.md
   - context/few-shot/review-approved.md
   - context/few-shot/review-rejected.md

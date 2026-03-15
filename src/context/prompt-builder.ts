@@ -1,12 +1,23 @@
+import { LoadedSkill } from "../agents/agent-loader";
+
 export function buildSystemPrompt(
   brandContext: string,
-  agentSkill: string,
+  skills: LoadedSkill[] | string,
   extraContext?: string
 ): string {
   const parts = [
     "# Brand Context\n\n" + brandContext,
-    "# Agent Role\n\n" + agentSkill,
   ];
+
+  if (typeof skills === "string") {
+    // Legacy: plain string agent skill
+    parts.push("# Agent Role\n\n" + skills);
+  } else if (skills.length > 0) {
+    const skillSections = skills.map(
+      (skill) => `## Skill: ${skill.metadata.name}\n\n${skill.content}`
+    );
+    parts.push("# Agent Skills\n\n" + skillSections.join("\n\n---\n\n"));
+  }
 
   if (extraContext) {
     parts.push("# Additional Context\n\n" + extraContext);
