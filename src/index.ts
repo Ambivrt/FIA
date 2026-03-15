@@ -3,6 +3,7 @@ import { createLogger } from "./gateway/logger";
 import { createSupabaseClient } from "./supabase/client";
 import { startHeartbeat } from "./supabase/heartbeat";
 import { startCommandListener } from "./supabase/command-listener";
+import { startTaskListener } from "./supabase/task-listener";
 import { createSlackApp } from "./slack/app";
 import { createApiServer, startApiServer } from "./api/server";
 import { startScheduler } from "./gateway/scheduler";
@@ -81,9 +82,10 @@ async function main(): Promise<void> {
     logger.warn("REST API not started – Supabase required", { action: "api_init" });
   }
 
-  // --- Command Listener (Supabase Realtime) ---
+  // --- Realtime Listeners (Supabase) ---
   if (supabase) {
     startCommandListener(supabase, logger, killSwitch);
+    startTaskListener(supabase, config, logger, killSwitch, taskQueue);
   }
 
   // --- Scheduler ---

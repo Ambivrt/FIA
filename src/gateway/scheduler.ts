@@ -28,7 +28,7 @@ const AGENT_CHANNEL: Record<string, string> = {
   brand: CHANNELS.orchestrator,
 };
 
-const SCHEDULE: ScheduleEntry[] = [
+export const SCHEDULE: ScheduleEntry[] = [
   { expression: "0 7 * * 1-5", agent: "analytics", task: "morning_pulse", description: "Analytics morgonpuls" },
   { expression: "0 8 * * 1", agent: "strategy", task: "weekly_planning", description: "Strategy veckoplanering" },
   { expression: "0 9 * * 1,3,5", agent: "content", task: "scheduled_content", description: "Content schemalagt innehåll" },

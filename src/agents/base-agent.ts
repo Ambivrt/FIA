@@ -93,6 +93,7 @@ export abstract class BaseAgent {
       type: task.type,
       title: task.title,
       priority: task.priority ?? "normal",
+      source: "gateway",
     });
 
     await updateTaskStatus(this.supabase, taskId, "in_progress");
