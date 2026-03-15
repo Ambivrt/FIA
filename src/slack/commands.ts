@@ -9,6 +9,7 @@ import { logActivity } from "../supabase/activity-writer";
 import { createAgent, getAllAgentSlugs } from "../agents/agent-factory";
 import { loadAgentManifest } from "../agents/agent-loader";
 import { ProgressCallback } from "../agents/base-agent";
+import { SCHEDULE } from "../gateway/scheduler";
 
 export function registerCommands(
   app: App,
@@ -71,6 +72,13 @@ export function registerCommands(
         } else {
           statusText += "\n\n*Task Queue:* _Ej aktiv_";
         }
+
+        statusText += `\n\n*Subsystem:*`;
+        statusText += `\n:calendar_spiral: Scheduler: *${SCHEDULE.length}* cron-jobb aktiva`;
+        statusText += supabase
+          ? "\n:satellite_antenna: Command Listener: *aktiv* (Supabase Realtime)"
+          : "\n:satellite_antenna: Command Listener: _ej aktiv_ (Supabase saknas)";
+        statusText += `\n:globe_with_meridians: REST API: port *${config.gatewayApiPort}*`;
 
         await respond({ response_type: "ephemeral", text: statusText });
         break;
@@ -341,6 +349,16 @@ export function registerCommands(
             helpLines.push(`  *${slug}* – \`default\``);
           }
         }
+
+        helpLines.push("", "*Schemalagda jobb:*");
+        for (const entry of SCHEDULE) {
+          helpLines.push(`  \`${entry.expression}\` – *${entry.agent}*: ${entry.description}`);
+        }
+
+        helpLines.push(
+          "",
+          `_REST API: port ${config.gatewayApiPort} | Dashboard: tasks/commands via Supabase Realtime_`
+        );
 
         await respond({
           response_type: "ephemeral",

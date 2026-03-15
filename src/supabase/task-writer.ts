@@ -10,6 +10,7 @@ export interface TaskInput {
   model_used?: string;
   tokens_used?: number;
   cost_sek?: number;
+  source?: string;
 }
 
 export interface ApprovalInput {

@@ -24,6 +24,8 @@ export interface AgentTask {
   title: string;
   input: string;
   priority?: string;
+  /** If set, reuse an existing task row instead of creating a new one (e.g. Dashboard-created tasks). */
+  existingTaskId?: string;
   onProgress?: ProgressCallback;
 }
 
@@ -98,14 +100,17 @@ export abstract class BaseAgent {
       action: "task_start",
     });
 
-    // Create task in Supabase
+    // Reuse existing task row (Dashboard) or create new one (gateway)
     const agentRow = await this.getAgentId();
-    const taskId = await createTask(this.supabase, {
-      agent_id: agentRow,
-      type: task.type,
-      title: task.title,
-      priority: task.priority ?? "normal",
-    });
+    const taskId = task.existingTaskId
+      ? task.existingTaskId
+      : await createTask(this.supabase, {
+          agent_id: agentRow,
+          type: task.type,
+          title: task.title,
+          priority: task.priority ?? "normal",
+          source: "gateway",
+        });
 
     await updateTaskStatus(this.supabase, taskId, "in_progress");
     await logActivity(this.supabase, {
