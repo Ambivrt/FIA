@@ -70,8 +70,6 @@
 #
 #   OPTIONAL (agenter fungerar utan dessa, men saknar features):
 #     SERPER_API_KEY=...               # SEO/Strategy webbsökning
-#     WORDPRESS_URL=...                # WordPress-publicering
-#     WORDPRESS_API_KEY=...
 #     HUBSPOT_API_KEY=...              # Lead Agent CRM
 #     LINKEDIN_ACCESS_TOKEN=...        # Campaign Agent LinkedIn
 #     BUFFER_ACCESS_TOKEN=...          # Social media scheduling

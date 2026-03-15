@@ -84,8 +84,6 @@ Graceful shutdown hanteras via SIGTERM/SIGINT.
 | `SUPABASE_SERVICE_ROLE_KEY` | `""` | Supabase (server-side) |
 | `SUPABASE_ANON_KEY` | `""` | Supabase (publik) |
 | `GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE` | `""` | gws CLI (ej implementerat) |
-| `WORDPRESS_URL` | `""` | WordPress MCP (ej implementerat) |
-| `WORDPRESS_API_KEY` | `""` | WordPress MCP (ej implementerat) |
 | `HUBSPOT_API_KEY` | `""` | HubSpot MCP (ej implementerat) |
 | `LINKEDIN_ACCESS_TOKEN` | `""` | LinkedIn MCP (ej implementerat) |
 | `GA4_CREDENTIALS_PATH` | `""` | GA4 (ej implementerat) |
@@ -925,7 +923,6 @@ Följande refereras i CLAUDE.md eller agent.yaml men existerar **inte** i kodbas
 | Område | Status |
 |--------|--------|
 | MCP-klient (`src/mcp/mcp-client.ts`) | Saknas helt |
-| WordPress MCP-wrapper (`src/mcp/wordpress.ts`) | Saknas helt |
 | HubSpot MCP-wrapper (`src/mcp/hubspot.ts`) | Saknas helt |
 | LinkedIn MCP-wrapper (`src/mcp/linkedin.ts`) | Saknas helt |
 | Buffer MCP-wrapper (`src/mcp/buffer.ts`) | Saknas helt |

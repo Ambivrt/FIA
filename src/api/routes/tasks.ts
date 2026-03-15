@@ -1,8 +1,22 @@
 import { Router } from "express";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { requireRole } from "../middleware/auth";
+import { validateBody } from "../middleware/validate";
 import { updateTaskStatus, createApproval } from "../../supabase/task-writer";
 import { logActivity } from "../../supabase/activity-writer";
+
+const approveSchema = z.object({
+  feedback: z.string().optional(),
+});
+
+const rejectSchema = z.object({
+  feedback: z.string().min(1, "Feedback is required for rejection."),
+});
+
+const revisionSchema = z.object({
+  feedback: z.string().min(1, "Feedback is required for revision request."),
+});
 
 export function taskRoutes(supabase: SupabaseClient): Router {
   const router = Router();
@@ -74,10 +88,10 @@ export function taskRoutes(supabase: SupabaseClient): Router {
   });
 
   // POST /api/tasks/:id/approve
-  router.post("/:id/approve", requireRole("orchestrator", "admin"), async (req, res) => {
+  router.post("/:id/approve", requireRole("orchestrator", "admin"), validateBody(approveSchema), async (req, res) => {
     try {
       const taskId = req.params.id as string;
-      const { feedback } = req.body ?? {};
+      const { feedback } = req.body;
       await updateTaskStatus(supabase, taskId, "approved");
       await createApproval(supabase, {
         task_id: taskId,
@@ -99,14 +113,10 @@ export function taskRoutes(supabase: SupabaseClient): Router {
   });
 
   // POST /api/tasks/:id/reject
-  router.post("/:id/reject", requireRole("orchestrator", "admin"), async (req, res) => {
+  router.post("/:id/reject", requireRole("orchestrator", "admin"), validateBody(rejectSchema), async (req, res) => {
     try {
       const taskId = req.params.id as string;
-      const { feedback } = req.body ?? {};
-      if (!feedback) {
-        res.status(400).json({ error: { code: "VALIDATION", message: "Feedback is required for rejection." } });
-        return;
-      }
+      const { feedback } = req.body;
 
       await updateTaskStatus(supabase, taskId, "rejected");
       await createApproval(supabase, {
@@ -129,14 +139,10 @@ export function taskRoutes(supabase: SupabaseClient): Router {
   });
 
   // POST /api/tasks/:id/revision
-  router.post("/:id/revision", requireRole("orchestrator", "admin"), async (req, res) => {
+  router.post("/:id/revision", requireRole("orchestrator", "admin"), validateBody(revisionSchema), async (req, res) => {
     try {
       const taskId = req.params.id as string;
-      const { feedback } = req.body ?? {};
-      if (!feedback) {
-        res.status(400).json({ error: { code: "VALIDATION", message: "Feedback is required for revision request." } });
-        return;
-      }
+      const { feedback } = req.body;
 
       await updateTaskStatus(supabase, taskId, "awaiting_review");
       await createApproval(supabase, {

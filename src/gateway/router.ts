@@ -1,5 +1,5 @@
 import { AppConfig } from "../utils/config";
-import { LLMRequest, LLMResponse, ModelAlias, MODEL_MAP, ImageGenerationRequest, ImageGenerationResponse, SearchResult } from "../llm/types";
+import { LLMRequest, LLMResponse, ModelAlias, MODEL_MAP, ImageGenerationRequest, ImageGenerationResponse } from "../llm/types";
 import { callClaude } from "../llm/claude";
 import { searchGoogle } from "../llm/google-search";
 import { generateImage } from "../llm/nano-banana";

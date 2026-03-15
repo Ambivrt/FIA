@@ -17,12 +17,25 @@ export const MODEL_MAP: Record<ModelAlias, ModelId> = {
   "google-search": "google-custom-search",
 };
 
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  input_schema: Record<string, unknown>;
+}
+
+export interface ToolUseResult {
+  toolName: string;
+  input: Record<string, unknown>;
+}
+
 export interface LLMRequest {
   systemPrompt?: string;
   userPrompt: string;
   temperature?: number;
   maxTokens?: number;
   timeoutMs?: number;
+  tools?: ToolDefinition[];
+  toolChoice?: { type: "auto" | "any" | "tool"; name?: string };
 }
 
 export interface LLMResponse {
@@ -32,6 +45,7 @@ export interface LLMResponse {
   tokensOut: number;
   durationMs: number;
   costUsd: number;
+  toolUse?: ToolUseResult;
 }
 
 export interface SearchResult {

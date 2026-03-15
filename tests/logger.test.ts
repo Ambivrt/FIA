@@ -21,13 +21,13 @@ function makeTempConfig(): AppConfig {
     supabaseServiceRoleKey: "",
     supabaseAnonKey: "",
     gwsCredentialsFile: "",
-    wordpressUrl: "",
-    wordpressApiKey: "",
     hubspotApiKey: "",
     linkedinAccessToken: "",
     ga4CredentialsPath: "",
     bufferAccessToken: "",
     gatewayApiPort: 3001,
+    usdToSek: 10.5,
+    queueMaxConcurrency: 3,
   };
 }
 

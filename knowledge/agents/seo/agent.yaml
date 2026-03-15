@@ -19,7 +19,6 @@ task_context:
 tools:
   - "gws:analytics"
   - "gws:sheets"
-  - wordpress
 autonomy: autonomous
 escalation_threshold: 3
 sample_review_rate: 0.0

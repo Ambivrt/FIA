@@ -49,7 +49,6 @@ task_context:
 
 # MCP-verktyg (minsta möjliga rättighet)
 tools:
-  - wordpress
   - gws:docs
 
 # Guardrails

@@ -8,6 +8,27 @@ import { createApproval, updateTaskStatus } from "../../supabase/task-writer";
 import { logActivity } from "../../supabase/activity-writer";
 import { getSlackApp } from "../../slack/app";
 import { sendEscalation } from "../../slack/handlers";
+import { ToolDefinition } from "../../llm/types";
+
+const BRAND_REVIEW_TOOL: ToolDefinition = {
+  name: "brand_review_decision",
+  description: "Submit brand review decision for the content being reviewed",
+  input_schema: {
+    type: "object",
+    properties: {
+      decision: {
+        type: "string",
+        enum: ["approved", "rejected", "revision_requested"],
+        description: "The review decision",
+      },
+      feedback: {
+        type: "string",
+        description: "Detailed feedback explaining the decision",
+      },
+    },
+    required: ["decision", "feedback"],
+  },
+};
 
 export interface ReviewRequest {
   taskId: string;
@@ -41,7 +62,7 @@ export class BrandAgent extends BaseAgent {
     const prompt = [
       "Granska följande innehåll för varumärkesöverensstämmelse.",
       "Kontrollera: tonalitet, budskapshierarki, visuella riktlinjer och Forefronts varumärkesvärden.",
-      'Svara med ett JSON-objekt: { "decision": "approved" | "rejected" | "revision_requested", "feedback": "..." }',
+      "Använd verktyget brand_review_decision för att lämna ditt beslut.",
       "",
       `Innehållstyp: ${request.taskType}`,
       `Källagent: ${request.agentSlug}`,
@@ -50,20 +71,32 @@ export class BrandAgent extends BaseAgent {
       request.content,
     ].join("\n");
 
-    const response = await this.callLLM("default", prompt);
+    const response = await this.callLLM("default", prompt, {
+      tools: [BRAND_REVIEW_TOOL],
+      toolChoice: { type: "tool", name: "brand_review_decision" },
+    });
 
-    let parsed: { decision: string; feedback: string };
-    try {
-      const jsonMatch = response.text.match(/\{[\s\S]*\}/);
-      parsed = jsonMatch
-        ? JSON.parse(jsonMatch[0])
-        : { decision: "revision_requested", feedback: response.text };
-    } catch {
-      parsed = { decision: "revision_requested", feedback: response.text };
+    let decision: ReviewResult["decision"];
+    let feedback: string;
+
+    if (response.toolUse && response.toolUse.toolName === "brand_review_decision") {
+      const input = response.toolUse.input as { decision: string; feedback: string };
+      decision = input.decision as ReviewResult["decision"];
+      feedback = input.feedback;
+    } else {
+      // Fallback: try to parse JSON from text response
+      try {
+        const jsonMatch = response.text.match(/\{[\s\S]*\}/);
+        const parsed = jsonMatch
+          ? JSON.parse(jsonMatch[0])
+          : { decision: "revision_requested", feedback: response.text };
+        decision = parsed.decision as ReviewResult["decision"];
+        feedback = parsed.feedback;
+      } catch {
+        decision = "revision_requested";
+        feedback = response.text;
+      }
     }
-
-    const decision = parsed.decision as ReviewResult["decision"];
-    const feedback = parsed.feedback;
 
     // Track rejections per task
     if (decision !== "approved") {
