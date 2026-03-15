@@ -3,7 +3,6 @@ import { AppConfig } from "../utils/config";
 import { Logger } from "../gateway/logger";
 import { KillSwitch } from "../utils/kill-switch";
 import { TaskQueue } from "../gateway/task-queue";
-import { updateTaskStatus } from "./task-writer";
 import { logActivity } from "./activity-writer";
 import { createAgent } from "../agents/agent-factory";
 import { ProgressCallback } from "../agents/base-agent";
@@ -101,6 +100,7 @@ export function startTaskListener(
               title: task.title,
               input: taskInput,
               priority: task.priority || "normal",
+              existingTaskId: task.id,
               onProgress,
             },
             task.priority || "normal"
@@ -113,8 +113,6 @@ export function startTaskListener(
         } else {
           // Direct execution fallback
           try {
-            await updateTaskStatus(supabase, task.id, "in_progress");
-
             const agent = createAgent(agentSlug, config, logger, supabase);
             const onProgress: ProgressCallback = async (action, message, details) => {
               await logActivity(supabase, {
@@ -129,6 +127,7 @@ export function startTaskListener(
               title: task.title,
               input: taskInput,
               priority: task.priority || "normal",
+              existingTaskId: task.id,
               onProgress,
             });
           } catch (err) {
