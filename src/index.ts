@@ -1,3 +1,4 @@
+import { ZodError } from "zod";
 import { loadConfig } from "./utils/config";
 import { createLogger } from "./gateway/logger";
 import { createSupabaseClient } from "./supabase/client";
@@ -10,7 +11,21 @@ import { KillSwitch } from "./utils/kill-switch";
 import { TaskQueue } from "./gateway/task-queue";
 
 async function main(): Promise<void> {
-  const config = loadConfig();
+  let config;
+  try {
+    config = loadConfig();
+  } catch (err) {
+    if (err instanceof ZodError) {
+      console.error("Configuration validation failed:");
+      for (const issue of err.issues) {
+        console.error(`  ${issue.path.join(".")}: ${issue.message}`);
+      }
+    } else {
+      console.error("Failed to load configuration:", (err as Error).message);
+    }
+    process.exit(1);
+  }
+
   const logger = createLogger(config);
 
   logger.info("FIA Gateway starting", {

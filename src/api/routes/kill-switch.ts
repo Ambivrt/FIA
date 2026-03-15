@@ -1,6 +1,14 @@
 import { Router } from "express";
+import { z } from "zod";
 import { requireRole } from "../middleware/auth";
+import { validateBody } from "../middleware/validate";
 import { KillSwitch } from "../../utils/kill-switch";
+
+const killSwitchSchema = z.object({
+  action: z.enum(["activate", "deactivate"], {
+    error: "action must be 'activate' or 'deactivate'.",
+  }),
+});
 
 export function killSwitchRoutes(killSwitch: KillSwitch): Router {
   const router = Router();
@@ -11,19 +19,17 @@ export function killSwitchRoutes(killSwitch: KillSwitch): Router {
   });
 
   // POST /api/kill-switch
-  router.post("/", requireRole("orchestrator", "admin"), async (req, res) => {
+  router.post("/", requireRole("orchestrator", "admin"), validateBody(killSwitchSchema), async (req, res) => {
     try {
-      const { action } = req.body ?? {};
+      const { action } = req.body;
 
       if (action === "activate") {
         await killSwitch.activate("api", req.user!.id);
-        res.json({ data: killSwitch.getStatus() });
-      } else if (action === "deactivate") {
-        await killSwitch.deactivate("api", req.user!.id);
-        res.json({ data: killSwitch.getStatus() });
       } else {
-        res.status(400).json({ error: { code: "VALIDATION", message: "action must be 'activate' or 'deactivate'." } });
+        await killSwitch.deactivate("api", req.user!.id);
       }
+
+      res.json({ data: killSwitch.getStatus() });
     } catch (err) {
       res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
     }
