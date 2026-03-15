@@ -30,7 +30,7 @@ export function startTaskListener(
   taskQueue: TaskQueue | null
 ): void {
   const channel = supabase
-    .channel("tasks-external")
+    .channel("gateway-tasks")
     .on(
       "postgres_changes",
       { event: "INSERT", schema: "public", table: "tasks", filter: "status=eq.queued" },
