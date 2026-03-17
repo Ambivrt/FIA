@@ -66,3 +66,53 @@ export interface ImageGenerationResponse {
   durationMs: number;
   costUsd: number;
 }
+
+// --- Routing types ---
+
+export interface RoutingEntry {
+  primary: ModelAlias;
+  fallback?: ModelAlias;
+}
+
+/**
+ * Normalize a routing value from agent.yaml.
+ * Supports both string (legacy) and object { primary, fallback } formats.
+ */
+export function normalizeRoutingEntry(entry: string | RoutingEntry): RoutingEntry {
+  if (typeof entry === "string") return { primary: entry as ModelAlias };
+  return entry;
+}
+
+// --- Self-eval types ---
+
+export interface SelfEvalConfig {
+  enabled: boolean;
+  model: ModelAlias;
+  criteria: string[];
+  threshold: number;
+}
+
+export interface SelfEvalResult {
+  pass: boolean;
+  score: number;
+  issues: string[];
+}
+
+// --- Pipeline metadata ---
+
+export interface PipelineData {
+  generation?: {
+    model: string;
+    tokens_in: number;
+    tokens_out: number;
+  };
+  self_eval?: SelfEvalResult & {
+    revision_triggered: boolean;
+    model: string;
+  };
+  parallel_screening?: {
+    flagged: boolean;
+    issues: string[];
+    model: string;
+  };
+}

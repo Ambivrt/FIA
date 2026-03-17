@@ -28,6 +28,15 @@ tools:
 autonomy: autonomous
 escalation_threshold: 3
 sample_review_rate: 0.33
+max_iterations: 5
 budget_limit_sek: 10000
+self_eval:
+  enabled: true
+  model: claude-sonnet
+  criteria:
+    - "Matchar kampanjens budskap varumärkesplattformen?"
+    - "Är CTA:n tydlig och handlingsorienterad?"
+    - "Finns segmentering och A/B-variant korrekt angiven?"
+  threshold: 0.7
 writable:
   - memory/ab-test-results.json

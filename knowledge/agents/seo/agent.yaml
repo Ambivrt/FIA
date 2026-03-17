@@ -21,7 +21,8 @@ tools:
   - "gws:sheets"
 autonomy: autonomous
 escalation_threshold: 3
-sample_review_rate: 0.0
+sample_review_rate: 0.05
+max_iterations: 5
 writable:
   - memory/keyword-rankings.json
   - memory/opportunities.json

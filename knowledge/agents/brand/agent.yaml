@@ -18,6 +18,7 @@ tools: []
 autonomy: autonomous
 escalation_threshold: 3
 sample_review_rate: 0.0
+max_iterations: 5
 has_veto: true
 writable:
   - memory/rejection-patterns.json
