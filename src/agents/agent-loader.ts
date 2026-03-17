@@ -2,11 +2,13 @@ import fs from "fs";
 import path from "path";
 import { parse as parseYaml } from "yaml";
 
+import { SelfEvalConfig, RoutingEntry } from "../llm/types";
+
 export interface AgentManifest {
   name: string;
   slug: string;
   version: string;
-  routing: Record<string, string>;
+  routing: Record<string, string | RoutingEntry>;
   skills?: string[];
   system_context: string[];
   task_context: Record<string, string[]>;
@@ -14,10 +16,12 @@ export interface AgentManifest {
   autonomy: "autonomous" | "semi-autonomous" | "manual";
   escalation_threshold: number;
   sample_review_rate: number;
+  max_iterations?: number;
   writable: string[];
   has_veto?: boolean;
   budget_limit_sek?: number;
   score_threshold_mql?: number;
+  self_eval?: SelfEvalConfig;
 }
 
 export interface SkillMetadata {

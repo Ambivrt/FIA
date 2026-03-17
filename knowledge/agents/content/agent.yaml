@@ -38,6 +38,15 @@ tools:
 autonomy: autonomous
 escalation_threshold: 3
 sample_review_rate: 0.2
+max_iterations: 5
+self_eval:
+  enabled: true
+  model: claude-sonnet
+  criteria:
+    - "Följer texten tonalitetsreglerna? (konkret, aktivt språk, tydlig poäng)"
+    - "Finns påståenden utan källa eller stöd?"
+    - "Passar längd och format för målkanalen?"
+  threshold: 0.7
 writable:
   - memory/learnings.json
   - memory/feedback-log.json

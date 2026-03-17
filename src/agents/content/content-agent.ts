@@ -10,6 +10,7 @@ import { logActivity } from "../../supabase/activity-writer";
 import { writeMetric } from "../../supabase/metrics-writer";
 import { usdToSek } from "../../llm/pricing";
 import { ToolDefinition } from "../../llm/types";
+import { quickBrandScreen, isHighRiskContent } from "../brand/quick-screen";
 
 const CONTENT_RESPONSE_TOOL: ToolDefinition = {
   name: "content_response",
@@ -59,6 +60,88 @@ export class ContentAgent extends BaseAgent {
     let result = await super.execute(task);
     if (result.status === "error") return result;
 
+    // Pre-review brand screening for high-risk content (catches issues before formal Brand review)
+    if (isHighRiskContent(task.type, this.manifest.sample_review_rate)) {
+      try {
+        await task.onProgress?.("parallel_screening", `:mag: Parallell varumärkesscreening...`, {
+          task_id: result.taskId,
+        });
+
+        const screening = await quickBrandScreen(
+          this.config,
+          this.logger,
+          result.output,
+          task.type
+        );
+
+        // Store screening result in pipeline (ensure pipeline exists)
+        if (!result.pipeline) result.pipeline = {};
+        result.pipeline.parallel_screening = {
+          flagged: screening.flagged,
+          issues: screening.issues,
+          model: "claude-sonnet",
+        };
+
+        if (screening.flagged && screening.issues.length > 0) {
+          this.logger.info("Parallel screening flagged issues", {
+            action: "parallel_screen_flagged",
+            agent: this.slug,
+            task_id: result.taskId,
+            issues: screening.issues,
+          });
+
+          await task.onProgress?.("parallel_screen_revision", `:arrows_counterclockwise: Screening hittade problem — korrigerar...`, {
+            task_id: result.taskId,
+            issues: screening.issues,
+          });
+
+          // One pre-correction round before formal Brand review
+          const revisionInput = [
+            "Korrigera följande text baserat på varumärkesscreeningen nedan.",
+            "",
+            "## Screening-feedback",
+            ...screening.issues.map((i) => `- ${i}`),
+            "",
+            "## Originaltext",
+            result.output,
+          ].join("\n");
+
+          const revision = await this.callLLM(task.type, revisionInput, {
+            tools: [CONTENT_RESPONSE_TOOL],
+            toolChoice: { type: "tool", name: "content_response" },
+          });
+
+          let revisedText = revision.text;
+          if (revision.toolUse && revision.toolUse.toolName === "content_response") {
+            revisedText = (revision.toolUse.input as { content: string }).content;
+          }
+
+          result = {
+            ...result,
+            output: revisedText,
+            tokensIn: result.tokensIn + revision.tokensIn,
+            tokensOut: result.tokensOut + revision.tokensOut,
+            durationMs: result.durationMs + revision.durationMs,
+          };
+
+          await updateTaskStatus(this.supabase, result.taskId, "awaiting_review", {
+            content_json: {
+              output: revisedText,
+              _pipeline: result.pipeline,
+              pre_correction: true,
+            },
+          });
+        }
+      } catch (err) {
+        // Screening failure is non-fatal – continue to Brand review
+        this.logger.warn(`Parallel screening failed, continuing: ${(err as Error).message}`, {
+          action: "parallel_screen_error",
+          agent: this.slug,
+          task_id: result.taskId,
+        });
+      }
+    }
+
     const brandManifest = loadAgentManifest(this.config.knowledgeDir, "brand");
     const brandAgent = new BrandAgent(this.config, this.logger, this.supabase, brandManifest);
 
@@ -68,6 +151,9 @@ export class ContentAgent extends BaseAgent {
     const feedbackHistory: Array<{ attempt: number; feedback: string }> = [];
 
     while (attempts < maxAttempts) {
+      // Guard against infinite loops across the full pipeline (self-eval revisions + brand revisions)
+      this.checkMaxIterations(result.taskId);
+
       await task.onProgress?.("brand_reviewing", `:mag: Brand Agent granskar${attempts > 0 ? ` (${attempts + 1}/${maxAttempts})` : ""}...`, {
         task_id: result.taskId,
         attempt: attempts + 1,
@@ -84,6 +170,7 @@ export class ContentAgent extends BaseAgent {
         await task.onProgress?.("brand_approved", `:white_check_mark: Brand Agent godkände`, {
           task_id: result.taskId,
         });
+        this.clearIterations(result.taskId);
         return result;
       }
 
@@ -92,6 +179,7 @@ export class ContentAgent extends BaseAgent {
           task_id: result.taskId,
           feedback: review.feedback,
         });
+        this.clearIterations(result.taskId);
         result.status = "escalated";
         return result;
       }
@@ -215,6 +303,7 @@ export class ContentAgent extends BaseAgent {
           );
         }
 
+        this.clearIterations(result.taskId);
         result.status = "escalated";
         return result;
       }

@@ -1,4 +1,4 @@
-import { resolveRoute, AgentRouting } from "../src/gateway/router";
+import { resolveRoute, resolveRouteWithFallback, AgentRouting } from "../src/gateway/router";
 
 // All 7 agents' routing as defined in their agent.yaml manifests
 const AGENT_ROUTINGS: Record<string, AgentRouting> = {
@@ -200,12 +200,54 @@ describe("resolveRoute", () => {
       expect(resolveRoute({ default: "claude-sonnet" }, "x").provider).toBe("claude");
     });
 
-it("maps nano-banana-2 to nano-banana provider", () => {
+    it("maps nano-banana-2 to nano-banana provider", () => {
       expect(resolveRoute({ default: "nano-banana-2" }, "x").provider).toBe("nano-banana");
     });
 
     it("maps google-search to google-search provider", () => {
       expect(resolveRoute({ default: "google-search" }, "x").provider).toBe("google-search");
     });
+  });
+});
+
+describe("resolveRouteWithFallback", () => {
+  it("string routing returns no fallback (backward compatible)", () => {
+    const routing: AgentRouting = { default: "claude-opus" };
+    const result = resolveRouteWithFallback(routing, "blog_post");
+    expect(result.primary.alias).toBe("claude-opus");
+    expect(result.fallback).toBeUndefined();
+  });
+
+  it("object routing returns primary and fallback", () => {
+    const routing: AgentRouting = {
+      default: { primary: "claude-sonnet", fallback: "claude-opus" },
+    };
+    const result = resolveRouteWithFallback(routing, "blog_post");
+    expect(result.primary.alias).toBe("claude-sonnet");
+    expect(result.fallback).toBeDefined();
+    expect(result.fallback!.alias).toBe("claude-opus");
+  });
+
+  it("object routing without fallback field returns no fallback", () => {
+    const routing: AgentRouting = {
+      default: { primary: "claude-opus" },
+    };
+    const result = resolveRouteWithFallback(routing, "blog_post");
+    expect(result.primary.alias).toBe("claude-opus");
+    expect(result.fallback).toBeUndefined();
+  });
+
+  it("mixed routing: specific task uses object, default uses string", () => {
+    const routing: AgentRouting = {
+      default: "claude-opus",
+      metadata: { primary: "claude-sonnet", fallback: "claude-opus" },
+    };
+    const defaultResult = resolveRouteWithFallback(routing, "blog_post");
+    expect(defaultResult.primary.alias).toBe("claude-opus");
+    expect(defaultResult.fallback).toBeUndefined();
+
+    const metaResult = resolveRouteWithFallback(routing, "metadata");
+    expect(metaResult.primary.alias).toBe("claude-sonnet");
+    expect(metaResult.fallback!.alias).toBe("claude-opus");
   });
 });

@@ -29,5 +29,6 @@ tools:
 autonomy: semi-autonomous
 escalation_threshold: 1
 sample_review_rate: 1.0
+max_iterations: 5
 writable:
   - memory/campaign-history.json

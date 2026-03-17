@@ -27,6 +27,7 @@ tools:
   - hubspot
 autonomy: autonomous
 escalation_threshold: 3
-sample_review_rate: 0.0
+sample_review_rate: 0.05
+max_iterations: 5
 writable:
   - memory/baseline-metrics.json

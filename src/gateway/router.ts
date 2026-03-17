@@ -1,14 +1,15 @@
 import { AppConfig } from "../utils/config";
-import { LLMRequest, LLMResponse, ModelAlias, MODEL_MAP, ImageGenerationRequest, ImageGenerationResponse } from "../llm/types";
+import { LLMRequest, LLMResponse, ModelAlias, MODEL_MAP, ImageGenerationRequest, ImageGenerationResponse, RoutingEntry, normalizeRoutingEntry } from "../llm/types";
 import { callClaude } from "../llm/claude";
 import { searchGoogle } from "../llm/google-search";
 import { generateImage } from "../llm/nano-banana";
 import { calculateFlatCostUsd } from "../llm/pricing";
+import { isRetryableError } from "../llm/retry";
 import { Logger } from "./logger";
 
 export interface AgentRouting {
-  default: ModelAlias;
-  [taskType: string]: ModelAlias;
+  default: string | RoutingEntry;
+  [taskType: string]: string | RoutingEntry;
 }
 
 export interface RouteResult {
@@ -18,8 +19,23 @@ export interface RouteResult {
 }
 
 export function resolveRoute(routing: AgentRouting, taskType: string): RouteResult {
-  const alias = routing[taskType] ?? routing.default;
+  const raw = routing[taskType] ?? routing.default;
+  const { primary } = normalizeRoutingEntry(raw as string | RoutingEntry);
+  return aliasToRoute(primary);
+}
+
+export function resolveRouteWithFallback(routing: AgentRouting, taskType: string): { primary: RouteResult; fallback?: RouteResult } {
+  const raw = routing[taskType] ?? routing.default;
+  const entry = normalizeRoutingEntry(raw as string | RoutingEntry);
+  return {
+    primary: aliasToRoute(entry.primary),
+    fallback: entry.fallback ? aliasToRoute(entry.fallback) : undefined,
+  };
+}
+
+function aliasToRoute(alias: ModelAlias): RouteResult {
   const modelId = MODEL_MAP[alias];
+  if (!modelId) throw new Error(`Unknown model alias: ${alias}`);
 
   let provider: RouteResult["provider"];
   if (alias === "claude-opus" || alias === "claude-sonnet") {
@@ -35,26 +51,15 @@ export function resolveRoute(routing: AgentRouting, taskType: string): RouteResu
   return { alias, modelId, provider };
 }
 
-export async function routeRequest(
+async function callProvider(
   config: AppConfig,
-  logger: Logger,
-  routing: AgentRouting,
-  taskType: string,
+  route: RouteResult,
   request: LLMRequest
 ): Promise<LLMResponse> {
-  const route = resolveRoute(routing, taskType);
-
-  logger.debug(`Routing ${taskType} → ${route.alias} (${route.modelId})`, {
-    action: "route_request",
-    model: route.modelId,
-  });
-
   switch (route.provider) {
     case "claude":
       return callClaude(config, route.modelId, request);
     case "google-search": {
-      // Google Search returns search results, not a generative response.
-      // Wrap results as an LLM-style response for uniform handling.
       const start = Date.now();
       const results = await searchGoogle(config, request.userPrompt);
       const text = results
@@ -71,6 +76,37 @@ export async function routeRequest(
     }
     default:
       throw new Error(`Cannot route text request to provider: ${route.provider}`);
+  }
+}
+
+export async function routeRequest(
+  config: AppConfig,
+  logger: Logger,
+  routing: AgentRouting,
+  taskType: string,
+  request: LLMRequest
+): Promise<LLMResponse> {
+  const { primary, fallback } = resolveRouteWithFallback(routing, taskType);
+
+  logger.debug(`Routing ${taskType} → ${primary.alias} (${primary.modelId})`, {
+    action: "route_request",
+    model: primary.modelId,
+  });
+
+  try {
+    return await callProvider(config, primary, request);
+  } catch (error) {
+    if (fallback && isRetryableError(error)) {
+      logger.warn(`Primary model ${primary.alias} failed, falling back to ${fallback.alias}`, {
+        action: "model_fallback",
+        task_type: taskType,
+        primary: primary.alias,
+        fallback: fallback.alias,
+        error: (error as Error).message,
+      });
+      return await callProvider(config, fallback, request);
+    }
+    throw error;
   }
 }
 

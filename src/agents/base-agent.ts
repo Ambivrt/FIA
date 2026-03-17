@@ -7,11 +7,12 @@ import { AgentManifest, resolveAgentFiles, loadSkills } from "./agent-loader";
 import { loadBrandContext } from "../context/context-manager";
 import { buildSystemPrompt, buildTaskPrompt } from "../context/prompt-builder";
 import { routeRequest, AgentRouting } from "../gateway/router";
-import { LLMResponse, ToolDefinition } from "../llm/types";
+import { LLMResponse, ToolDefinition, PipelineData } from "../llm/types";
 import { createTask, updateTaskStatus, createApproval } from "../supabase/task-writer";
 import { logActivity } from "../supabase/activity-writer";
 import { writeMetric } from "../supabase/metrics-writer";
 import { usdToSek } from "../llm/pricing";
+import { runSelfEval } from "./self-eval";
 
 export type ProgressCallback = (
   action: string,
@@ -37,11 +38,15 @@ export interface AgentResult {
   tokensOut: number;
   durationMs: number;
   status: "completed" | "escalated" | "error";
+  pipeline?: PipelineData;
 }
 
 export abstract class BaseAgent {
   abstract readonly name: string;
   abstract readonly slug: string;
+
+  /** Tracks iteration count per task to enforce max_iterations. */
+  private iterationCounts = new Map<string, number>();
 
   constructor(
     protected readonly config: AppConfig,
@@ -120,9 +125,7 @@ export abstract class BaseAgent {
     });
 
     try {
-      const routeAlias = (this.manifest.routing as Record<string, string>)[task.type]
-        ?? (this.manifest.routing as Record<string, string>).default
-        ?? "unknown";
+      const routeAlias = this.getRouteAlias(task.type);
       await task.onProgress?.("llm_calling", `:brain: ${this.name} anropar ${routeAlias}...`, {
         task_id: taskId,
         model: routeAlias,
@@ -132,20 +135,100 @@ export abstract class BaseAgent {
       const response = await this.callLLM(task.type, task.input);
 
       const durationSec = (response.durationMs / 1000).toFixed(1);
-      const totalTokens = response.tokensIn + response.tokensOut;
-      await task.onProgress?.("llm_complete", `:white_check_mark: Innehåll genererat (${totalTokens} tokens, ${durationSec}s)`, {
+      const generationTokens = response.tokensIn + response.tokensOut;
+      await task.onProgress?.("llm_complete", `:white_check_mark: Innehåll genererat (${generationTokens} tokens, ${durationSec}s)`, {
         task_id: taskId,
         model: response.model,
-        tokens: totalTokens,
+        tokens: generationTokens,
         duration_ms: response.durationMs,
       });
 
-      const costSek = usdToSek(response.costUsd, this.config.usdToSek);
+      // Build pipeline data
+      const pipeline: PipelineData = {
+        generation: {
+          model: response.model,
+          tokens_in: response.tokensIn,
+          tokens_out: response.tokensOut,
+        },
+      };
+
+      // --- Self-eval ---
+      let finalOutput = response.text;
+      let accumulatedTokensIn = response.tokensIn;
+      let accumulatedTokensOut = response.tokensOut;
+      let accumulatedCostUsd = response.costUsd;
+      let accumulatedDurationMs = response.durationMs;
+
+      const selfEvalResult = await this.runSelfEvalIfEnabled(finalOutput, taskId, task, pipeline);
+      const selfEvalThreshold = this.manifest.self_eval?.threshold ?? 0.7;
+
+      if (selfEvalResult && selfEvalResult.score < selfEvalThreshold) {
+        if (selfEvalResult.score <= 0.4) {
+          // Very poor quality – mark as error
+          await updateTaskStatus(this.supabase, taskId, "error", {
+            content_json: { output: finalOutput, _pipeline: pipeline, error: "Self-eval score too low" },
+          });
+
+          await logActivity(this.supabase, {
+            agent_id: agentRow,
+            action: "self_eval_error",
+            details_json: { task_id: taskId, score: selfEvalResult.score, issues: selfEvalResult.issues },
+          });
+
+          this.logger.warn(`${this.name} self-eval too low (${selfEvalResult.score}): ${task.title}`, {
+            agent: this.slug,
+            task_id: taskId,
+            action: "self_eval_error",
+            score: selfEvalResult.score,
+          });
+
+          this.clearIterations(taskId);
+          return {
+            taskId,
+            output: finalOutput,
+            model: response.model,
+            tokensIn: accumulatedTokensIn,
+            tokensOut: accumulatedTokensOut,
+            durationMs: accumulatedDurationMs,
+            status: "error",
+            pipeline,
+          };
+        }
+
+        // Score > 0.4 but below threshold – one revision attempt
+        await task.onProgress?.("self_eval_revision", `:arrows_counterclockwise: Self-eval identifierade brister — omgenererar...`, {
+          task_id: taskId,
+          issues: selfEvalResult.issues,
+        });
+
+        const revisionPrompt = [
+          "Förbättra följande text baserat på feedbacken nedan.",
+          "",
+          "## Feedback",
+          ...selfEvalResult.issues.map((i) => `- ${i}`),
+          "",
+          "## Originaltext",
+          finalOutput,
+        ].join("\n");
+
+        const revision = await this.callLLM(task.type, revisionPrompt);
+        finalOutput = revision.text;
+        accumulatedTokensIn += revision.tokensIn;
+        accumulatedTokensOut += revision.tokensOut;
+        accumulatedCostUsd += revision.costUsd;
+        accumulatedDurationMs += revision.durationMs;
+
+        pipeline.self_eval!.revision_triggered = true;
+      }
+
+      const costSek = usdToSek(accumulatedCostUsd, this.config.usdToSek);
+
+      const totalAccumulatedTokens = accumulatedTokensIn + accumulatedTokensOut;
 
       await updateTaskStatus(this.supabase, taskId, "awaiting_review", {
-        content_json: { output: response.text },
+        content_json: { output: finalOutput, _pipeline: pipeline },
         model_used: response.model,
-        tokens_used: totalTokens,
+        tokens_used: totalAccumulatedTokens,
         cost_sek: costSek,
       });
 
@@ -156,7 +239,7 @@ export abstract class BaseAgent {
         value: costSek,
         period: "daily",
         period_start: new Date().toISOString().slice(0, 10),
-        metadata_json: { model: response.model, task_id: taskId, cost_usd: response.costUsd },
+        metadata_json: { model: response.model, task_id: taskId, cost_usd: accumulatedCostUsd },
       });
 
       this.logger.info(`${this.name} completed: ${task.title}`, {
@@ -164,21 +247,23 @@ export abstract class BaseAgent {
         task_id: taskId,
         action: "task_complete",
         model: response.model,
-        tokens_in: response.tokensIn,
-        tokens_out: response.tokensOut,
-        cost_usd: response.costUsd,
-        duration_ms: response.durationMs,
+        tokens_in: accumulatedTokensIn,
+        tokens_out: accumulatedTokensOut,
+        cost_usd: accumulatedCostUsd,
+        duration_ms: accumulatedDurationMs,
         status: "success",
       });
 
+      this.clearIterations(taskId);
       return {
         taskId,
-        output: response.text,
+        output: finalOutput,
         model: response.model,
-        tokensIn: response.tokensIn,
-        tokensOut: response.tokensOut,
-        durationMs: response.durationMs,
+        tokensIn: accumulatedTokensIn,
+        tokensOut: accumulatedTokensOut,
+        durationMs: accumulatedDurationMs,
         status: "completed",
+        pipeline,
       };
     } catch (err) {
       const message = (err as Error).message;
@@ -205,6 +290,7 @@ export abstract class BaseAgent {
         error: message,
       });
 
+      this.clearIterations(taskId);
       return {
         taskId,
         output: "",
@@ -215,6 +301,86 @@ export abstract class BaseAgent {
         status: "error",
       };
     }
+  }
+
+  private async runSelfEvalIfEnabled(
+    output: string,
+    taskId: string,
+    task: AgentTask,
+    pipeline: PipelineData
+  ): Promise<{ pass: boolean; score: number; issues: string[] } | null> {
+    const selfEvalConfig = this.manifest.self_eval;
+    if (!selfEvalConfig?.enabled) return null;
+
+    try {
+      await task.onProgress?.("self_eval", `:mag: Self-eval körs...`, { task_id: taskId });
+
+      const result = await runSelfEval(
+        this.config,
+        this.logger,
+        this.slug,
+        output,
+        selfEvalConfig
+      );
+
+      pipeline.self_eval = {
+        ...result,
+        revision_triggered: false,
+        model: selfEvalConfig.model,
+      };
+
+      this.logger.info(`Self-eval: score=${result.score}, pass=${result.pass}`, {
+        action: "self_eval",
+        agent: this.slug,
+        task_id: taskId,
+        model: selfEvalConfig.model,
+        score: result.score,
+        issues: result.issues,
+      });
+
+      return result;
+    } catch (err) {
+      // Self-eval failure is non-fatal – log and continue
+      this.logger.warn(`Self-eval failed, continuing without: ${(err as Error).message}`, {
+        action: "self_eval_error",
+        agent: this.slug,
+        task_id: taskId,
+      });
+      return null;
+    }
+  }
+
+  private getRouteAlias(taskType: string): string {
+    const entry = (this.manifest.routing as Record<string, unknown>)[taskType]
+      ?? (this.manifest.routing as Record<string, unknown>).default;
+    if (typeof entry === "string") return entry;
+    if (typeof entry === "object" && entry !== null && "primary" in entry) {
+      return (entry as { primary: string }).primary;
+    }
+    return "unknown";
+  }
+
+  /**
+   * Increment and check the iteration count for a task.
+   * Throws if max_iterations is exceeded, which will be caught by execute()'s try/catch.
+   */
+  protected checkMaxIterations(taskId: string): void {
+    const maxIterations = this.manifest.max_iterations ?? 5;
+    const count = (this.iterationCounts.get(taskId) ?? 0) + 1;
+    this.iterationCounts.set(taskId, count);
+
+    if (count > maxIterations) {
+      this.iterationCounts.delete(taskId);
+      throw new Error(
+        `Max iterations (${maxIterations}) exceeded for task ${taskId}. ` +
+        `Marking as error to prevent infinite loops.`
+      );
+    }
+  }
+
+  /** Clear iteration tracking for a completed/failed task. */
+  protected clearIterations(taskId: string): void {
+    this.iterationCounts.delete(taskId);
   }
 
   protected async getAgentId(): Promise<string> {
