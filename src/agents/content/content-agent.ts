@@ -374,14 +374,22 @@ export class ContentAgent extends BaseAgent {
         cost_sek: costSek,
       });
 
-      await writeMetric(this.supabase, {
-        category: "cost",
-        metric_name: "agent_cost_content",
-        value: costSek,
-        period: "daily",
-        period_start: new Date().toISOString().slice(0, 10),
-        metadata_json: { model: response.model, task_id: taskId, cost_usd: response.costUsd, type: "image" },
-      });
+      try {
+        await writeMetric(this.supabase, {
+          category: "cost",
+          metric_name: "agent_cost_content",
+          value: costSek,
+          period: "daily",
+          period_start: new Date().toISOString().slice(0, 10),
+          metadata_json: { model: response.model, task_id: taskId, cost_usd: response.costUsd, type: "image" },
+        });
+      } catch (metricErr) {
+        this.logger.warn(`Non-fatal: failed to write image cost metric: ${(metricErr as Error).message}`, {
+          agent: this.slug,
+          task_id: taskId,
+          action: "metric_write_error",
+        });
+      }
 
       await logActivity(this.supabase, {
         agent_id: agentRow,

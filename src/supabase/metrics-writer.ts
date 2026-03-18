@@ -14,5 +14,11 @@ export async function writeMetric(
   metric: MetricInput
 ): Promise<void> {
   const { error } = await supabase.from("metrics").insert(metric);
-  if (error) throw new Error(`Failed to write metric: ${error.message}`);
+  if (error) {
+    // Metric write failures are non-fatal – log but don't block task execution
+    console.error(`[metrics-writer] Failed to write metric: ${error.message}`, {
+      metric_name: metric.metric_name,
+      category: metric.category,
+    });
+  }
 }
