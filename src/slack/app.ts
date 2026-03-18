@@ -1,4 +1,5 @@
 import { App, LogLevel, SocketModeReceiver } from "@slack/bolt";
+import { SocketModeClient } from "@slack/socket-mode";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { AppConfig } from "../utils/config";
 import { Logger } from "../gateway/logger";
@@ -21,6 +22,13 @@ export async function createSlackApp(
   taskQueue?: TaskQueue | null
 ): Promise<App> {
   const receiver = new SocketModeReceiver({
+    appToken: config.slackAppToken,
+    logLevel: LogLevel.WARN,
+  });
+
+  // Replace internal client with one that has relaxed ping timeouts
+  // SocketModeReceiverOptions doesn't expose these, but SocketModeClient does
+  receiver.client = new SocketModeClient({
     appToken: config.slackAppToken,
     clientPingTimeout: 30_000,
     serverPingTimeout: 30_000,
