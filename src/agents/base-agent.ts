@@ -275,15 +275,23 @@ export abstract class BaseAgent {
       };
     } catch (err) {
       const message = (err as Error).message;
-      await updateTaskStatus(this.supabase, taskId, "error", {
-        content_json: { error: message },
-      });
+      try {
+        await updateTaskStatus(this.supabase, taskId, "error", {
+          content_json: { error: message },
+        });
 
-      await logActivity(this.supabase, {
-        agent_id: agentRow,
-        action: "task_error",
-        details_json: { task_id: taskId, error: message },
-      });
+        await logActivity(this.supabase, {
+          agent_id: agentRow,
+          action: "task_error",
+          details_json: { task_id: taskId, error: message },
+        });
+      } catch (updateErr) {
+        this.logger.error(`Failed to write error status for task ${taskId}: ${(updateErr as Error).message}`, {
+          agent: this.slug,
+          task_id: taskId,
+          action: "task_error_write_failed",
+        });
+      }
 
       this.logger.error(`${this.name} failed: ${message}`, {
         agent: this.slug,
