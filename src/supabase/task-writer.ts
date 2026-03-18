@@ -43,21 +43,31 @@ export async function updateTaskStatus(
 ): Promise<void> {
   const completedAt = (status === "published" || status === "approved")
     ? new Date().toISOString()
-    : null;
+    : undefined;
 
-  const contentJson = extras?.content_json != null
-    ? JSON.stringify(extras.content_json)
-    : null;
+  const updatePayload: Record<string, unknown> = { status };
 
-  const { error } = await supabase.rpc("update_task_status", {
-    p_task_id: taskId,
-    p_status: status,
-    p_content_json: contentJson,
-    p_model_used: (extras?.model_used as string) ?? null,
-    p_tokens_used: (extras?.tokens_used as number) ?? null,
-    p_cost_sek: (extras?.cost_sek as number) ?? null,
-    p_completed_at: completedAt,
-  });
+  if (extras?.content_json != null) {
+    updatePayload.content_json = extras.content_json;
+  }
+  if (extras?.model_used != null) {
+    updatePayload.model_used = extras.model_used;
+  }
+  if (extras?.tokens_used != null) {
+    updatePayload.tokens_used = extras.tokens_used;
+  }
+  if (extras?.cost_sek != null) {
+    updatePayload.cost_sek = extras.cost_sek;
+  }
+  if (completedAt != null) {
+    updatePayload.completed_at = completedAt;
+  }
+
+  const { error } = await supabase
+    .from("tasks")
+    .update(updatePayload)
+    .eq("id", taskId);
+
   if (error) throw new Error(`Failed to update task ${taskId}: ${error.message}`);
 }
 
