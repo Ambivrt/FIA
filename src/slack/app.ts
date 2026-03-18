@@ -1,4 +1,4 @@
-import { App, LogLevel } from "@slack/bolt";
+import { App, LogLevel, SocketModeReceiver } from "@slack/bolt";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { AppConfig } from "../utils/config";
 import { Logger } from "../gateway/logger";
@@ -20,11 +20,17 @@ export async function createSlackApp(
   killSwitch?: KillSwitch,
   taskQueue?: TaskQueue | null
 ): Promise<App> {
+  const receiver = new SocketModeReceiver({
+    appToken: config.slackAppToken,
+    clientPingTimeout: 30_000,
+    serverPingTimeout: 30_000,
+    logLevel: LogLevel.WARN,
+  });
+
   const app = new App({
     token: config.slackBotToken,
-    appToken: config.slackAppToken,
     signingSecret: config.slackSigningSecret,
-    socketMode: true,
+    receiver,
     logLevel: LogLevel.WARN,
   });
 
