@@ -232,15 +232,23 @@ export abstract class BaseAgent {
         cost_sek: costSek,
       });
 
-      // Write cost metric
-      await writeMetric(this.supabase, {
-        category: "cost",
-        metric_name: `agent_cost_${this.slug}`,
-        value: costSek,
-        period: "daily",
-        period_start: new Date().toISOString().slice(0, 10),
-        metadata_json: { model: response.model, task_id: taskId, cost_usd: accumulatedCostUsd },
-      });
+      // Write cost metric (non-fatal – must not block task completion)
+      try {
+        await writeMetric(this.supabase, {
+          category: "cost",
+          metric_name: `agent_cost_${this.slug}`,
+          value: costSek,
+          period: "daily",
+          period_start: new Date().toISOString().slice(0, 10),
+          metadata_json: { model: response.model, task_id: taskId, cost_usd: accumulatedCostUsd },
+        });
+      } catch (metricErr) {
+        this.logger.warn(`Non-fatal: failed to write cost metric: ${(metricErr as Error).message}`, {
+          agent: this.slug,
+          task_id: taskId,
+          action: "metric_write_error",
+        });
+      }
 
       this.logger.info(`${this.name} completed: ${task.title}`, {
         agent: this.slug,
