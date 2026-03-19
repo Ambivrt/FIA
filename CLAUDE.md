@@ -128,22 +128,29 @@ Se `.env.example` för alla nyckelnamn. Aldrig i kod. Kritiska:
 
 ## Pågående arbete
 
-### Klart (Deploy 0.1, 2026-03-12)
+### Klart (Deploy 0.2, 2026-03-15)
 
 - [x] Gateway-skelett, Slack-integration, Supabase-uppsättning
 - [x] LLM-klienter, modell-router, kontexthantering
 - [x] Content Agent + Brand Agent med Supabase task-skrivning
 - [x] REST API, schemaläggning, kill switch
 - [x] Claude API-integration (migrerat från Gemini)
+- [x] Alla 7 agenter implementerade (Strategy, Content, Campaign, SEO, Lead, Analytics, Brand)
+- [x] Testsvit (13 testfiler: router, brand-agent, agent-loader, content-agent, logger, config, skill-loader, task-queue, parallel-screening, self-eval, retry, integration)
+- [x] FIA Dashboard MVP (Lovable): auth, agentpuls, godkännandekö, kill switch, Realtime
+- [x] Self-eval scoring, parallel pre-screening, exponential backoff retry
 
 ### Pågår
 
-- [ ] Testsvit (router, agent-loader, brand-agent, logger)
-- [ ] End-to-end Content Agent + Brand Agent
-- [ ] FIA Dashboard MVP (Lovable)
+- [ ] gws MCP kopplad till agenter (konfigurerad, ej kopplad)
+- [ ] Gemini context caching
+- [ ] GA4 Analytics API
+- [ ] 10 innehållsenheter producerade
 
 ### Fas 2
 
-- [ ] gws MCP, HubSpot/LinkedIn/Buffer MCP-wrappers
-- [ ] Content staging med Zod-validering
-- [ ] Dashboard: rapporter, agentdetalj, ledningsgrupp-vy
+- [ ] MCP-wrappers: HubSpot, LinkedIn, Buffer (`src/mcp/` – ej påbörjat)
+- [ ] Content staging med Zod-validering av content_json
+- [ ] CI/CD (GitHub Actions)
+- [ ] ESLint + Prettier
+- [ ] Teknisk skuld: agent-loader bounds check, brand-agent memory cleanup, context cache TTL

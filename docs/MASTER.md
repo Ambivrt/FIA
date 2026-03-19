@@ -2,8 +2,8 @@
 
 **Master-dokument.** All arkitektur, alla agentdefinitioner, datamodell, API-kontrakt, roadmap och principer lever här. Gateway- och Dashboard-filerna pekar hit.
 
-**Version:** 0.2.0
-**Senast uppdaterad:** 2026-03-15
+**Version:** 0.3.0
+**Senast uppdaterad:** 2026-03-19
 
 ---
 
@@ -18,6 +18,72 @@ Vi utvärderade tre ansatser:
 | **Claude Code Agent Teams** | Stark multi-agent-koordinering | Sessionsbaserat, saknar persistence och schemaläggning |
 
 **Slutsatsen:** Egen tunn gateway – inspirerad av OpenClaws mönster, med Claude Opus 4.6 som orkestrerande huvud-LLM, multi-modell-routing, och full kontroll över varumärkeskontext, guardrails och säkerhet.
+
+---
+
+## Nuläge (2026-03-19)
+
+### Övergripande status
+
+| Delsystem | Status | Deploy |
+|-----------|--------|--------|
+| Gateway (backend) | Solid MVP, alla 7 agenter live | 0.2 (2026-03-15) |
+| Dashboard (frontend) | Funktionell MVP, behöver robusthet | Live på Lovable |
+| Supabase (DB) | 10 tabeller, RLS, Realtime | EU-region aktiv |
+| GCP (hosting) | Compute Engine konfigurerad | europe-north1-b |
+| Slack | Bolt SDK + Socket Mode live | Aktiv |
+| MCP-integrationer | gws konfigurerad, ej kopplad | Fas 2 |
+
+### Backend – Gateway (Ambivrt/FIA)
+
+**Kodbas:** ~47 TypeScript-filer, ~3 000 LOC, TypeScript strict mode, 13 testfiler.
+
+| Komponent | Status |
+|-----------|--------|
+| Gateway-kärna (scheduler, router, task queue, logger) | Klar |
+| Alla 7 agenter (Content, Brand, Strategy, Campaign, SEO, Lead, Analytics) | Klar |
+| LLM-klienter (Claude Opus/Sonnet, Nano Banana 2, Serper) | Klar |
+| Modell-router (manifest-driven via agent.yaml) | Klar |
+| Skill-system (shared: + agent:) | Klar |
+| Slack-integration (Bolt SDK, 6+ kommandon) | Klar |
+| Supabase-klient (heartbeats, tasks, realtime-lyssnare) | Klar |
+| REST API (Express, JWT-auth, Zod-validering) | Klar |
+| Kill switch (dual: Slack + Dashboard) | Klar |
+| Kostnadsberäkning (tokens → USD → SEK) | Klar |
+| Task recovery vid startup | Klar |
+| Testsvit (router, brand-agent, agent-loader, content-agent, m.fl.) | Klar |
+| MCP-wrappers (HubSpot, LinkedIn, Buffer) | **Ej påbörjat** |
+| gws MCP kopplad till agenter | **Konfigurerad, ej kopplad** |
+| Content staging (Zod-validering av content_json) | **Fas 2** |
+| Feedback-loop (feedback-summary, dynamisk review rate) | **Fas 3** |
+| CI/CD (GitHub Actions) | **Saknas** |
+| ESLint/Prettier | **Saknas** |
+
+### Frontend – Dashboard PWA (Ambivrt/fia-frontend)
+
+**Kodbas:** React 18.3 + Vite 5.4 + TypeScript 5.8 (strict: false), Tailwind 3.4 + shadcn/ui, TanStack React Query 5.83, 12 sidor, 15+ komponenter, 60+ API-funktioner.
+
+| Komponent | Status |
+|-----------|--------|
+| Auth (Supabase, login/signup, rollhantering) | Klar |
+| Agentöversikt med puls/status/heartbeat | Klar |
+| Godkännandekö (approve/reject/revision + dual-write audit) | Klar |
+| Kill switch (toggle + realtidsuppdatering) | Klar |
+| Aktivitetslogg med paginering (20/sida) | Klar |
+| Realtime-sync via Supabase PostgreSQL Changes | Klar |
+| i18n (svenska + engelska, 409 rader per språk) | Klar |
+| Teman (5 färgscheman × ljust/mörkt, persisterat) | Klar |
+| PWA-stöd (service worker, manifest, offline caching) | Klar |
+| Kostnadssida med KPI-kort | Klar |
+| Kalendervy + schemalagda jobb | Klar |
+| Inställningar (profiler, roller, schemalagda jobb) | Klar |
+| Responsiv design med mobil bottom-nav | Klar |
+| Sökfunktion | **Icke-funktionell** (input utan handler) |
+| Notifikationssystem | **Icke-funktionell** (ikon utan logik) |
+| Error boundaries | **Saknas** |
+| Testsvit | **Minimalt** (1 trivial test) |
+| Content staging / preview | **Fas 2** |
+| Feedback-UI / rating | **Fas 3** |
 
 ---
 
@@ -656,6 +722,26 @@ CREATE TABLE system_settings (
 
 Används av Dashboard för kill switch-status (`key = 'kill_switch'`). RLS: alla autentiserade kan SELECT, orchestrator/admin kan UPDATE.
 
+### scheduled_jobs
+
+```sql
+CREATE TABLE scheduled_jobs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_id uuid NOT NULL REFERENCES agents(id),
+  title text NOT NULL,
+  task_type text NOT NULL,
+  cron_expression text NOT NULL,
+  priority text NOT NULL DEFAULT 'normal',
+  description text,
+  enabled boolean NOT NULL DEFAULT true,
+  last_triggered_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+```
+
+Notering: Hanterar dashboard-baserad schemaläggning. Gateway har egen node-cron med fasta 7 jobb (se "Schemalagda uppgifter"). Tabellen möjliggör framtida dynamisk schemaläggning via Dashboard.
+
 ### Migrationer
 
 | # | Fil | Beskrivning |
@@ -663,6 +749,10 @@ Används av Dashboard för kill switch-status (`key = 'kill_switch'`). RLS: alla
 | 001 | `001_initial_schema.sql` | Komplett schema med 6 tabeller + RLS |
 | 002 | `002_remove_task_type_check.sql` | Tog bort rigid type-enum (`agent.yaml` är källa) |
 | 003 | `003_add_error_status.sql` | Lade till `error` i task status-constraint |
+| 004 | `004_add_source_and_metrics_constraint.sql` | `source`-fält på tasks, metrics-constraint |
+| 005 | `005_fix_metrics_constraint.sql` | Fixade metrics-constraint |
+| 006 | `006_add_update_task_status_fn.sql` | RPC-funktion `update_task_status()` |
+| 007 | `007_drop_cost_ledger_trigger.sql` | Droppade `cost_ledger`-tabell och trigger |
 
 ### Row Level Security
 
@@ -799,6 +889,106 @@ Frontend och backend är helt separerade. Frontenden kommunicerar enbart via: (1
 | MVP | Lovable | Custom domän |
 | V2 | Vercel/Netlify | Byt DNS + env |
 | V3 | Egen server | `npm run build` → Nginx |
+
+### Dashboard – teknisk arkitektur
+
+#### Teknikstack
+
+| Komponent | Teknik | Version |
+|-----------|--------|---------|
+| UI-ramverk | React | 18.3.1 |
+| Byggverktyg | Vite (SWC) | 5.4.19 |
+| Språk | TypeScript | 5.8.3 |
+| Styling | Tailwind CSS + shadcn/ui (Radix) | 3.4.17 |
+| Server state | TanStack React Query | 5.83.0 |
+| Routing | React Router DOM | 6.30.1 |
+| Formulär | React Hook Form + Zod | 7.61.1 / 3.25.76 |
+| Grafer | Recharts | 2.15.4 |
+| Ikoner | Lucide React | 0.462.0 |
+| i18n | i18next + react-i18next | 25.8.17 / 16.5.6 |
+| Backend-klient | @supabase/supabase-js | 2.99.0 |
+| Test | Vitest + Testing Library | 3.2.4 |
+
+#### Komponentstruktur
+
+```
+src/
+├── components/           # React-komponenter
+│   ├── ui/              # shadcn/ui (genererade Radix-baserade)
+│   ├── AppSidebar.tsx   # Navigation (sidebar)
+│   ├── DashboardLayout.tsx  # Layout-wrapper
+│   ├── TaskContent.tsx  # Task-rendering
+│   ├── FeedbackDialog.tsx   # Feedback-modal
+│   ├── RunTaskDialog.tsx    # Manuell task-trigger
+│   ├── TaskDetailSheet.tsx  # Task-detaljvy (sheet)
+│   ├── SystemHealthCard.tsx # Systemhälsa-kort
+│   ├── AgentPerformance.tsx # Agent-prestandagraf
+│   ├── ThemePicker.tsx      # Temväljare
+│   ├── LanguageSwitcher.tsx # Språkväxlare (sv/en)
+│   └── MobileBottomNav.tsx  # Mobil-navigation
+├── pages/               # Sidor (route-level)
+│   ├── DashboardPage.tsx    # Hem: KPI, agentpuls, senaste tasks
+│   ├── LoginPage.tsx        # Inloggning
+│   ├── AgentsListPage.tsx   # Alla agenter
+│   ├── AgentDetailPage.tsx  # Agentdetalj (/:slug)
+│   ├── ApprovalsPage.tsx    # Godkännandekö
+│   ├── CalendarPage.tsx     # Kalender + schemalagda jobb
+│   ├── ActivityPage.tsx     # Aktivitetslogg
+│   ├── SettingsPage.tsx     # Inställningar
+│   ├── CostsPage.tsx        # Kostnadsöversikt
+│   └── InstallPage.tsx      # PWA-installation
+├── contexts/            # React Context
+│   ├── AuthContext.tsx   # Auth-state, login/signup/logout
+│   └── ThemeContext.tsx  # Tema-state, persistering
+├── hooks/               # Custom hooks
+│   ├── use-fia-data.ts  # 40+ hooks (queries + mutations)
+│   └── use-realtime-sync.ts  # Supabase Realtime-prenumeration
+├── services/
+│   └── fia-api.ts       # 60+ API-funktioner (centralt servicelager)
+├── integrations/supabase/
+│   ├── client.ts        # Supabase-klientinstans
+│   └── types.ts         # Auto-genererade typer
+├── types/fia.ts         # Applikationstyper
+├── i18n/                # sv.ts + en.ts (409 rader per språk)
+└── lib/utils.ts         # Hjälpfunktioner (cn, cron-helpers)
+```
+
+#### Routing
+
+```
+/login                   → LoginPage (publik)
+/install                 → InstallPage (publik)
+/                        → DashboardPage (skyddad, DashboardLayout)
+  ├── /agents            → AgentsListPage
+  ├── /agents/:slug      → AgentDetailPage
+  ├── /approvals         → ApprovalsPage
+  ├── /calendar          → CalendarPage
+  ├── /activity          → ActivityPage
+  ├── /settings          → SettingsPage
+  └── /costs             → CostsPage
+*                        → NotFound (404)
+```
+
+`ProtectedRoute`-wrapper kontrollerar auth-status och omdirigerar till `/login`. Användare med roll `nobody` ser `NoAccessPage`.
+
+#### State management
+
+**Tre lager:**
+
+1. **Server state (TanStack React Query):** Alla API-anrop via `useQuery`/`useMutation` med automatisk caching (`staleTime: 5000`). Query keys: `['agents']`, `['tasks', agentId]`, etc.
+2. **React Context:** `AuthContext` (user, isAuthenticated, login/signup/logout) + `ThemeContext` (färg + mörkt/ljust, persisterat till localStorage + Supabase profile).
+3. **Realtidssync (`useRealtimeSync`):** Prenumererar på Supabase PostgreSQL Changes för tabeller: `agents`, `tasks`, `activity_log`, `approvals`, `commands`, `feedback`, `system_settings`. Vid dataändring invalideras motsvarande React Query-cache → automatisk re-render.
+
+#### PWA-konfiguration
+
+- Service worker med auto-update (Vite PWA-plugin)
+- Manifest: "FIA Dashboard", tema `#FF6B0B`
+- Ikoner: 192×192 + 512×512 SVG
+- Offline-stöd via Workbox (caching av Supabase-anrop)
+
+#### Temasystem
+
+5 färgscheman (plum, forest, slate, sienna, stone) × 2 lägen (light, dark) = 10 kombinationer. HSL-baserade CSS-variabler. Persisteras till localStorage + `profiles.theme` i Supabase.
 
 ---
 
@@ -960,6 +1150,54 @@ Modiga, Hängivna, Lustfyllda
 
 ---
 
+## Teknisk skuld (2026-03-19)
+
+Identifierade brister vid kodgranskning. Prioriterade efter allvarlighetsgrad.
+
+### Backend – Hög prioritet
+
+| # | Fil | Problem | Risk |
+|---|-----|---------|------|
+| B1 | `src/agents/agent-loader.ts` | `parseSkillReference()` saknar bounds check på `indexOf(":")` | Krasch vid felformaterad skill-referens |
+| B2 | `src/agents/brand/brand-agent.ts` | `rejectionCounts` Map växer obegränsat | Minnesläcka vid långkörning |
+| B3 | `src/context/context-manager.ts` | Filcache har ingen TTL | Inaktuella data kräver omstart |
+
+### Backend – Medel prioritet
+
+| # | Fil | Problem | Risk |
+|---|-----|---------|------|
+| B4 | `src/api/routes/tasks.ts` | Sort-parameter saknar whitelist-validering | Kolumnenumering via felmedd. |
+| B5 | `src/api/server.ts` | Ingen API rate limiting | Brute force möjlig |
+| B6 | `src/gateway/scheduler.ts` | Generisk felhantering, skiljer inte timeout från auth-fel | Tysta fel, svår felsökning |
+| B7 | `src/gateway/task-queue.ts` | Ingen prioritetsåldring | Low-priority tasks kan svältas |
+| B8 | — | Ingen CI/CD-pipeline (GitHub Actions) | Tester körs enbart lokalt |
+| B9 | — | Ingen ESLint/Prettier | Kodstil hålls manuellt |
+| B10 | `src/gateway/logger.ts` | Ingen felhantering om `JSON.stringify()` misslyckas | Loggpost förloras tyst |
+| B11 | — | Inga korrelations-ID:n i loggar | Svårt att spåra multi-agent-flöden |
+| B12 | `src/utils/kill-switch.ts` | Hårdkodade agent-slugs i kill switch | Nya agenter pausas inte |
+
+### Frontend – Hög prioritet
+
+| # | Fil | Problem | Risk |
+|---|-----|---------|------|
+| F1 | `tsconfig.app.json` | `strict: false`, `noImplicitAny: false` | Typfel upptäcks ej vid kompilering |
+| F2 | — | Ingen React Error Boundary | Komponentkrasch tar ner hela appen |
+| F3 | — | Testsvit obefintlig (1 trivial test) | Inga regressionsgarantier |
+| F4 | `DashboardLayout.tsx` | Sökfält utan handler (icke-funktionellt) | Förvirrande UX |
+| F5 | `DashboardLayout.tsx` | Bell-ikon utan click handler (icke-funktionellt) | Förvirrande UX |
+
+### Frontend – Medel prioritet
+
+| # | Fil | Problem | Risk |
+|---|-----|---------|------|
+| F6 | Diverse | Saknar ARIA-labels på ikon-knappar | Tillgänglighetsbrist |
+| F7 | `fia-api.ts` | `fetchKpi()` hämtar hela tasks-tabellen två gånger | Prestanda vid stor datamängd |
+| F8 | Diverse | Ingen paginering för agents/tasks-listor | Prestanda vid skalning |
+| F9 | Diverse | Flera mutations saknar `onError`-handlers | Tysta fel för användaren |
+| F10 | — | Statusfärger utan ikon/text-fallback | Otillgängligt för färgblinda |
+
+---
+
 ## Kostnadsanalys
 
 ### Löpande månadskostnad (full drift)
@@ -1099,35 +1337,60 @@ Tempo: Fas 0 + fas 1 (deploy 0.1) genomfördes på 4 arbetsdagar. Tidsestimaten 
 
 **Status: Deploy 0.2 (2026-03-15)**
 
+**Gateway:**
 - ✅ Gateway (Node.js daemon, Slack, cron, task queue)
 - ✅ Supabase-klient (heartbeats, tasks, activity_log, realtime-lyssnare)
 - ✅ Modell-router (manifest-driven, Claude Opus/Sonnet + Nano Banana + Serper)
 - ✅ Agent-loader med modulärt skill-system (shared: + agent:)
 - ✅ Alla 7 agentkluster implementerade (Content, Brand, Strategy, Campaign, SEO, Lead, Analytics)
 - ✅ Claude API-integration (Opus 4.6 + Sonnet 4.6) med tool_use för strukturerad output
-- ✅ Dashboard MVP (Lovable): auth, agentpuls, godkännandekö, kill switch, commands, Realtime
 - ✅ REST API med JWT-auth + Zod-validering
 - ✅ Kill switch dual (Slack + Dashboard) med audit trail
-- ✅ Testsvit (8 testfiler: router, brand-agent, agent-loader, content-agent, logger, config, skill-loader, task-queue)
+- ✅ Testsvit (13 testfiler: router, brand-agent, agent-loader, content-agent, logger, config, skill-loader, task-queue, parallel-screening, self-eval, retry, integration)
 - ✅ Kostnadsberäkning (tokens → USD → SEK)
 - ✅ Task recovery vid startup
+- ✅ Self-eval scoring i base-agent
+- ✅ Parallel pre-screening (Brand Agent quick-screen)
+- ✅ Exponential backoff retry för LLM-anrop
+
+**Dashboard:**
+- ✅ Auth (Supabase, login/signup, rollhantering: orchestrator/admin/viewer/nobody)
+- ✅ Agentöversikt med puls/status/heartbeat
+- ✅ Godkännandekö (approve/reject/revision + dual-write audit trail)
+- ✅ Kill switch (toggle + realtidsuppdatering)
+- ✅ Aktivitetslogg med paginering (20/sida)
+- ✅ Realtime-sync (7 tabeller via Supabase PostgreSQL Changes)
+- ✅ i18n (svenska + engelska, 409 strängar per språk)
+- ✅ Teman (5 färgscheman × ljust/mörkt, persisterat till DB)
+- ✅ PWA-stöd (service worker, manifest, offline caching)
+- ✅ Kostnadssida, kalendervy, inställningar
+- ✅ Responsiv design med mobil bottom-nav
+
+**Kvarstår från fas 1:**
 - ⏳ Gemini context caching – planerad
 - ⏳ GA4 Analytics API – planerad
-- ⏳ gws MCP-konfiguration – konfigurerad men ej kopplad till agenter
+- ⏳ gws MCP – konfigurerad men ej kopplad till agenter
 - ⏳ 10 innehållsenheter producerade
+- ⏳ Sökfunktion i dashboard (input finns, logik saknas)
+- ⏳ Error boundaries i dashboard
 - Go/no-go: 80% publiceringsredo
 
 ### Fas 2: Expansion + Content Staging (Dag 5–12)
 
 - Strategy, Campaign, SEO, Lead, Analytics agenter kopplade till externa system
-- MCP-wrappers: LinkedIn, HubSpot
+- MCP-wrappers: LinkedIn, HubSpot, Buffer (`src/mcp/` – ej påbörjat)
 - Första agentdrivna kampanjen
-- Dashboard: rapporter, agentdetalj, push, mörkt läge
+- Dashboard: rapporter, agentdetalj, push, mörkt läge (mörkt läge ✅ klar)
+- Dashboard: sökfunktion, notifikationssystem, error boundaries
+- Dashboard: TypeScript strict mode
+- CI/CD: GitHub Actions för test + build
+- ESLint + Prettier för backend
 - Content Staging:
   - Standardiserat `content_json`-schema i gateway (Zod-validering)
   - Output-validering för alla content-producerande agenter
   - Dashboard: staging-vy med markdown-preview + kanalspecifika previews
   - Bildhantering via Google Drive-URL:er i `media[]`
+- Teknisk skuld: B1–B3, F1–F3 (se "Teknisk skuld"-sektionen)
 - Go/no-go: Kampanj i paritet
 
 ### Fas 3: Optimering + Feedback (Dag 13–18)
