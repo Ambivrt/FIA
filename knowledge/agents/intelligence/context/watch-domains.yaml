@@ -1,0 +1,145 @@
+version: 1.0.0
+updated: 2026-03-19
+
+settings:
+  max_results_per_source: 10
+  dedup_window_hours: 72
+  min_relevance_score: 0.6
+  rapid_response_threshold: 0.9
+
+domains:
+  - slug: ai-enterprise
+    name: "AI i enterprise/konsulting"
+    weight: 1.0
+    keywords:
+      primary:
+        - "enterprise AI"
+        - "AI transformation"
+        - "AI consulting"
+      secondary:
+        - "AI strategy"
+        - "digital transformation"
+        - "AI adoption"
+        - "AI implementation"
+      swedish:
+        - "AI-transformation"
+        - "AI-strategi"
+        - "digital mognad"
+        - "AI-konsulting"
+    exclude:
+      - "crypto"
+      - "NFT"
+      - "Web3"
+      - "blockchain"
+
+  - slug: competitors
+    name: "Konkurrenter"
+    weight: 1.0
+    entities:
+      - name: "Accenture"
+        aliases: ["accenture.com"]
+      - name: "McKinsey"
+        aliases: ["mckinsey.com", "McKinsey Digital"]
+      - name: "BCG"
+        aliases: ["bcg.com", "Boston Consulting"]
+      - name: "Valtech"
+        aliases: ["valtech.com"]
+      - name: "Cognizant"
+        aliases: ["cognizant.com"]
+      - name: "Capgemini"
+        aliases: ["capgemini.com"]
+      - name: "Deloitte Digital"
+        aliases: ["deloitte.com"]
+    keywords:
+      primary:
+        - "management consulting AI"
+        - "consulting firm AI"
+        - "konsultbolag AI"
+      secondary:
+        - "professional services automation"
+        - "consulting digital transformation"
+
+  - slug: martech
+    name: "Marketing Technology"
+    weight: 0.8
+    keywords:
+      primary:
+        - "marketing automation AI"
+        - "AI content generation"
+        - "agentic marketing"
+        - "autonomous marketing"
+      secondary:
+        - "martech stack 2026"
+        - "AI copywriting"
+        - "AI marketing agents"
+        - "marketing AI platform"
+
+  - slug: llm-updates
+    name: "LLM-modeller & verktyg"
+    weight: 0.7
+    keywords:
+      primary:
+        - "Claude update"
+        - "GPT release"
+        - "Gemini update"
+        - "LLM benchmark"
+        - "AI model release"
+      secondary:
+        - "AI model pricing"
+        - "AI API changes"
+        - "prompt engineering"
+        - "AI agent framework"
+    sources:
+      - "anthropic.com"
+      - "openai.com"
+      - "deepmind.google"
+      - "huggingface.co"
+      - "ai.google.dev"
+
+  - slug: sustainability-tech
+    name: "Hållbarhet & teknik"
+    weight: 0.6
+    keywords:
+      primary:
+        - "sustainable AI"
+        - "green tech"
+        - "hållbar digitalisering"
+      secondary:
+        - "ESG technology"
+        - "AI carbon footprint"
+        - "sustainable digital transformation"
+
+  - slug: future-of-work
+    name: "Framtidens arbete"
+    weight: 0.7
+    keywords:
+      primary:
+        - "AI workforce"
+        - "future of work AI"
+        - "AI augmented workforce"
+      secondary:
+        - "AI upskilling"
+        - "human-AI collaboration"
+        - "AI competence development"
+        - "kompetensutveckling AI"
+
+pinned_sources:
+  - url: "blog.anthropic.com"
+    check_frequency: daily
+  - url: "openai.com/blog"
+    check_frequency: daily
+  - url: "techcrunch.com/category/artificial-intelligence"
+    check_frequency: daily
+  - url: "di.se"
+    check_frequency: daily
+    keywords: ["AI", "digitalisering", "konsult", "transformation"]
+  - url: "breakit.se"
+    check_frequency: daily
+    keywords: ["AI", "automation", "startup"]
+  - url: "computersweden.se"
+    check_frequency: daily
+    keywords: ["AI", "digitalisering"]
+  - url: "the-decoder.com"
+    check_frequency: daily
+  - url: "bensbites.com"
+    check_frequency: daily

@@ -1,0 +1,65 @@
+version: 1.0.0
+
+signal_scoring:
+  dimensions:
+    - name: domain_relevance
+      weight: 0.35
+      scale:
+        "0.0": "Ingen koppling till bevakningsdomän"
+        "0.5": "Tangerar ämnet"
+        "1.0": "Direkt träff på primärt keyword eller namngiven entity"
+
+    - name: forefront_impact
+      weight: 0.30
+      scale:
+        "0.0": "Generell branschnyhet utan koppling"
+        "0.5": "Påverkar vår typ av verksamhet"
+        "1.0": "Direkt konkurrentrörelse, Forefront namngivet, hot eller möjlighet"
+
+    - name: actionability
+      weight: 0.20
+      scale:
+        "0.0": "Rent informativt"
+        "0.5": "Input till strategi eller planering"
+        "1.0": "Kräver eller möjliggör omedelbar handling"
+
+    - name: recency_novelty
+      weight: 0.15
+      scale:
+        "0.0": "Gammal eller känd information"
+        "0.5": "Känt ämne, ny vinkel"
+        "1.0": "Breaking news, oväntat"
+
+  composite_formula: "sum(dimension * weight) * domain_weight"
+
+  thresholds:
+    ignore: 0.6
+    include_in_brief: 0.6
+    deep_analysis: 0.7
+    rapid_response: 0.9
+
+deep_analysis:
+  model: claude-opus
+  output_fields:
+    - summary
+    - implications
+    - suggested_action
+    - confidence
+    - sources
+
+rapid_response_rules:
+  - condition: "Konkurrent namnger Forefront"
+    action: escalate
+    priority: urgent
+  - condition: "Konkurrent lanserar tjänst i direkt överlapp med FIA/AI-transformation"
+    action: rapid_response
+    priority: high
+  - condition: "Ny LLM-modell eller prisförändring >20%"
+    action: strategy_input
+    priority: normal
+  - condition: "Branschrapport om AI-konsulting publicerad"
+    action: rapid_response
+    priority: normal
+  - condition: "Regulatorisk förändring som påverkar AI-användning i EU"
+    action: escalate
+    priority: high
