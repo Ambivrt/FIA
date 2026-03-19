@@ -107,6 +107,14 @@ export function taskRoutes(supabase: SupabaseClient): Router {
         details_json: { task_id: taskId },
       });
 
+      await supabase.from("commands").insert({
+        command_type: "approve_task",
+        payload_json: { task_id: taskId, feedback, source: "api" },
+        issued_by: req.user!.id,
+        status: "completed",
+        processed_at: new Date().toISOString(),
+      });
+
       res.json({ data: { id: taskId, status: "approved" } });
     } catch (err) {
       res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
@@ -133,6 +141,14 @@ export function taskRoutes(supabase: SupabaseClient): Router {
         details_json: { task_id: taskId, feedback },
       });
 
+      await supabase.from("commands").insert({
+        command_type: "reject_task",
+        payload_json: { task_id: taskId, feedback, source: "api" },
+        issued_by: req.user!.id,
+        status: "completed",
+        processed_at: new Date().toISOString(),
+      });
+
       res.json({ data: { id: taskId, status: "rejected" } });
     } catch (err) {
       res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
@@ -157,6 +173,14 @@ export function taskRoutes(supabase: SupabaseClient): Router {
         user_id: req.user!.id,
         action: "task_revision_requested",
         details_json: { task_id: taskId, feedback },
+      });
+
+      await supabase.from("commands").insert({
+        command_type: "revision_task",
+        payload_json: { task_id: taskId, feedback, source: "api" },
+        issued_by: req.user!.id,
+        status: "completed",
+        processed_at: new Date().toISOString(),
       });
 
       res.json({ data: { id: taskId, status: "awaiting_review" } });

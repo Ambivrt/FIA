@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireRole } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
@@ -10,7 +11,7 @@ const killSwitchSchema = z.object({
   }),
 });
 
-export function killSwitchRoutes(killSwitch: KillSwitch): Router {
+export function killSwitchRoutes(killSwitch: KillSwitch, supabase: SupabaseClient): Router {
   const router = Router();
 
   // GET /api/kill-switch/status
@@ -28,6 +29,15 @@ export function killSwitchRoutes(killSwitch: KillSwitch): Router {
       } else {
         await killSwitch.deactivate("api", req.user!.id);
       }
+
+      // Audit trail
+      await supabase.from("commands").insert({
+        command_type: "kill_switch",
+        payload_json: { active: action === "activate", source: "api" },
+        issued_by: req.user!.id,
+        status: "completed",
+        processed_at: new Date().toISOString(),
+      });
 
       res.json({ data: killSwitch.getStatus() });
     } catch (err) {

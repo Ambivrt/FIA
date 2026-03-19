@@ -1375,8 +1375,9 @@ Tempo: Fas 0 + fas 1 (deploy 0.1) genomfördes på 4 arbetsdagar. Tidsestimaten 
 - ⏳ GA4 Analytics API – planerad
 - ⏳ gws MCP – konfigurerad men ej kopplad till agenter
 - ⏳ 10 innehållsenheter producerade
-- ⏳ Sökfunktion i dashboard (input finns, logik saknas)
-- ⏳ Error boundaries i dashboard
+- ✅ Sökfunktion i dashboard (Command Palette, Cmd+K)
+- ✅ Error boundaries i dashboard (app-level + granulär)
+- ✅ Commands-tabell (migration 008, command-listener, API audit trail) (2026-03-19)
 - Go/no-go: 80% publiceringsredo
 
 ### Fas 2: Expansion + Content Staging (Dag 5–12)
@@ -1385,10 +1386,11 @@ Tempo: Fas 0 + fas 1 (deploy 0.1) genomfördes på 4 arbetsdagar. Tidsestimaten 
 - MCP-wrappers: LinkedIn, HubSpot, Buffer (`src/mcp/` – ej påbörjat)
 - Första agentdrivna kampanjen
 - Dashboard: rapporter, agentdetalj, push, mörkt läge (mörkt läge ✅ klar)
-- Dashboard: sökfunktion, notifikationssystem, error boundaries
-- Dashboard: TypeScript strict mode
-- CI/CD: GitHub Actions för test + build
-- ESLint + Prettier för backend
+- Dashboard: sökfunktion, notifikationssystem, error boundaries (✅ klar)
+- Dashboard: TypeScript strict mode (✅ klar)
+- CI/CD: GitHub Actions för test + build (✅ klar)
+- ESLint + Prettier för backend (✅ klar)
+- Commands-tabell: migration, command-listener, API audit trail (✅ klar)
 - Content Staging:
   - Standardiserat `content_json`-schema i gateway (Zod-validering)
   - Output-validering för alla content-producerande agenter
