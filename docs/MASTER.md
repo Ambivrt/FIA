@@ -28,7 +28,7 @@ Vi utvärderade tre ansatser:
 | Delsystem | Status | Deploy |
 |-----------|--------|--------|
 | Gateway (backend) | Solid MVP, alla 7 agenter live | 0.2 (2026-03-15) |
-| Dashboard (frontend) | Funktionell MVP, behöver robusthet | Live på Lovable |
+| Dashboard (frontend) | Robust MVP, strict TS, error boundaries, tester | Live på Lovable |
 | Supabase (DB) | 10 tabeller, RLS, Realtime | EU-region aktiv |
 | GCP (hosting) | Compute Engine konfigurerad | europe-north1-b |
 | Slack | Bolt SDK + Socket Mode live | Aktiv |
@@ -36,7 +36,7 @@ Vi utvärderade tre ansatser:
 
 ### Backend – Gateway (Ambivrt/FIA)
 
-**Kodbas:** ~47 TypeScript-filer, ~3 000 LOC, TypeScript strict mode, 13 testfiler.
+**Kodbas:** ~47 TypeScript-filer, ~3 000 LOC, TypeScript strict mode, 15 testfiler.
 
 | Komponent | Status |
 |-----------|--------|
@@ -56,12 +56,13 @@ Vi utvärderade tre ansatser:
 | gws MCP kopplad till agenter | **Konfigurerad, ej kopplad** |
 | Content staging (Zod-validering av content_json) | **Fas 2** |
 | Feedback-loop (feedback-summary, dynamisk review rate) | **Fas 3** |
-| CI/CD (GitHub Actions) | **Saknas** |
-| ESLint/Prettier | **Saknas** |
+| CI/CD (GitHub Actions) | Klar (`.github/workflows/ci.yml`) |
+| ESLint/Prettier | Klar (`eslint.config.mjs`, `.prettierrc`) |
+| Teknisk skuld B1–B12 | **Åtgärdad** (2026-03-19) |
 
 ### Frontend – Dashboard PWA (Ambivrt/fia-frontend)
 
-**Kodbas:** React 18.3 + Vite 5.4 + TypeScript 5.8 (strict: false), Tailwind 3.4 + shadcn/ui, TanStack React Query 5.83, 12 sidor, 15+ komponenter, 60+ API-funktioner.
+**Kodbas:** React 18.3 + Vite 5.4 + TypeScript 5.8 (strict: true), Tailwind 3.4 + shadcn/ui, TanStack React Query 5.83, 13 sidor, 19+ komponenter, 60+ API-funktioner.
 
 | Komponent | Status |
 |-----------|--------|
@@ -78,10 +79,13 @@ Vi utvärderade tre ansatser:
 | Kalendervy + schemalagda jobb | Klar |
 | Inställningar (profiler, roller, schemalagda jobb) | Klar |
 | Responsiv design med mobil bottom-nav | Klar |
-| Sökfunktion | **Icke-funktionell** (input utan handler) |
-| Notifikationssystem | **Icke-funktionell** (ikon utan logik) |
-| Error boundaries | **Saknas** |
-| Testsvit | **Minimalt** (1 trivial test) |
+| Sökfunktion (Command Palette, Cmd+K) | Klar |
+| Notifikationssystem (bell med pending count badge) | Klar |
+| Error boundaries (app-level + granulär) | Klar |
+| Testsvit (ErrorBoundary, status-utils, computeKpi) | Klar |
+| ARIA-labels på alla icon-knappar | Klar |
+| Task-paginering (prev/next) | Klar |
+| Teknisk skuld F1–F10 | **Åtgärdad** (2026-03-19) |
 | Content staging / preview | **Fas 2** |
 | Feedback-UI / rating | **Fas 3** |
 
