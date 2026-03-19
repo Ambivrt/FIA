@@ -1166,12 +1166,15 @@ Identifierade brister vid kodgranskning. Prioriterade efter allvarlighetsgrad.
 
 | # | Fil | Problem | Risk |
 |---|-----|---------|------|
-| B4 | `src/gateway/scheduler.ts` | Generisk felhantering, skiljer inte timeout från auth-fel | Tysta fel, svår felsökning |
-| B5 | `src/gateway/task-queue.ts` | Ingen prioritetsåldring | Low-priority tasks kan svältas |
-| B6 | — | Ingen CI/CD-pipeline (GitHub Actions) | Tester körs enbart lokalt |
-| B7 | — | Ingen ESLint/Prettier | Kodstil hålls manuellt |
-| B8 | `src/gateway/logger.ts` | Ingen felhantering om `JSON.stringify()` misslyckas | Loggpost förloras tyst |
-| B9 | — | Inga korrelations-ID:n i loggar | Svårt att spåra multi-agent-flöden |
+| B4 | `src/api/routes/tasks.ts` | Sort-parameter saknar whitelist-validering | Kolumnenumering via felmedd. |
+| B5 | `src/api/server.ts` | Ingen API rate limiting | Brute force möjlig |
+| B6 | `src/gateway/scheduler.ts` | Generisk felhantering, skiljer inte timeout från auth-fel | Tysta fel, svår felsökning |
+| B7 | `src/gateway/task-queue.ts` | Ingen prioritetsåldring | Low-priority tasks kan svältas |
+| B8 | — | Ingen CI/CD-pipeline (GitHub Actions) | Tester körs enbart lokalt |
+| B9 | — | Ingen ESLint/Prettier | Kodstil hålls manuellt |
+| B10 | `src/gateway/logger.ts` | Ingen felhantering om `JSON.stringify()` misslyckas | Loggpost förloras tyst |
+| B11 | — | Inga korrelations-ID:n i loggar | Svårt att spåra multi-agent-flöden |
+| B12 | `src/utils/kill-switch.ts` | Hårdkodade agent-slugs i kill switch | Nya agenter pausas inte |
 
 ### Frontend – Hög prioritet
 
