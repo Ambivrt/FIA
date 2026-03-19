@@ -5,11 +5,7 @@ import { loadAgentManifest, resolveAgentFiles } from "../src/agents/agent-loader
 const KNOWLEDGE_DIR = path.join(process.cwd(), "knowledge");
 const ALL_SLUGS = ["content", "brand", "strategy", "campaign", "seo", "lead", "analytics"];
 
-const VALID_MODELS = [
-  "claude-opus", "claude-sonnet",
-  "gemini-pro", "gemini-flash",
-  "nano-banana-2", "google-search",
-];
+const VALID_MODELS = ["claude-opus", "claude-sonnet", "gemini-pro", "gemini-flash", "nano-banana-2", "google-search"];
 
 describe("loadAgentManifest", () => {
   it.each(ALL_SLUGS)("loads %s manifest without error", (slug) => {
@@ -81,21 +77,13 @@ describe("loadAgentManifest", () => {
 describe("resolveAgentFiles", () => {
   it("concatenates multiple files with delimiter", () => {
     const manifest = loadAgentManifest(KNOWLEDGE_DIR, "content");
-    const result = resolveAgentFiles(
-      KNOWLEDGE_DIR,
-      "content",
-      manifest.system_context
-    );
+    const result = resolveAgentFiles(KNOWLEDGE_DIR, "content", manifest.system_context);
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
   });
 
   it("skips non-existent files gracefully", () => {
-    const result = resolveAgentFiles(
-      KNOWLEDGE_DIR,
-      "content",
-      ["nonexistent-file.md"]
-    );
+    const result = resolveAgentFiles(KNOWLEDGE_DIR, "content", ["nonexistent-file.md"]);
     expect(result).toBe("");
   });
 });

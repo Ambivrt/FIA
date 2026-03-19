@@ -9,12 +9,7 @@ export class SeoAgent extends BaseAgent {
   readonly name = "SEO Agent";
   readonly slug = "seo";
 
-  constructor(
-    config: AppConfig,
-    logger: Logger,
-    supabase: SupabaseClient,
-    manifest: AgentManifest
-  ) {
+  constructor(config: AppConfig, logger: Logger, supabase: SupabaseClient, manifest: AgentManifest) {
     super(config, logger, supabase, manifest);
   }
 

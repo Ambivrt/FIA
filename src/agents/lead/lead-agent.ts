@@ -9,12 +9,7 @@ export class LeadAgent extends BaseAgent {
   readonly name = "Lead Agent";
   readonly slug = "lead";
 
-  constructor(
-    config: AppConfig,
-    logger: Logger,
-    supabase: SupabaseClient,
-    manifest: AgentManifest
-  ) {
+  constructor(config: AppConfig, logger: Logger, supabase: SupabaseClient, manifest: AgentManifest) {
     super(config, logger, supabase, manifest);
   }
 

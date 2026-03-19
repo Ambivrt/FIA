@@ -4,11 +4,7 @@ import { withRetry } from "./retry";
 
 const SERPER_API_URL = "https://google.serper.dev/search";
 
-export async function searchGoogle(
-  config: AppConfig,
-  query: string,
-  numResults: number = 10
-): Promise<SearchResult[]> {
+export async function searchGoogle(config: AppConfig, query: string, numResults: number = 10): Promise<SearchResult[]> {
   if (!config.serperApiKey) {
     throw new Error("SERPER_API_KEY must be configured");
   }

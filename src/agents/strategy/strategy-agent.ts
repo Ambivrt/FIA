@@ -8,12 +8,7 @@ export class StrategyAgent extends BaseAgent {
   readonly name = "Strategy Agent";
   readonly slug = "strategy";
 
-  constructor(
-    config: AppConfig,
-    logger: Logger,
-    supabase: SupabaseClient,
-    manifest: AgentManifest
-  ) {
+  constructor(config: AppConfig, logger: Logger, supabase: SupabaseClient, manifest: AgentManifest) {
     super(config, logger, supabase, manifest);
   }
 
@@ -66,8 +61,7 @@ export class StrategyAgent extends BaseAgent {
       },
       model_used: analysisResponse.model,
       tokens_used:
-        searchResponse.tokensIn + searchResponse.tokensOut +
-        analysisResponse.tokensIn + analysisResponse.tokensOut,
+        searchResponse.tokensIn + searchResponse.tokensOut + analysisResponse.tokensIn + analysisResponse.tokensOut,
     });
 
     await logActivity(this.supabase, {

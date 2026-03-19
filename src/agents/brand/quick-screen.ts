@@ -43,7 +43,7 @@ export async function quickBrandScreen(
   logger: Logger,
   content: string,
   taskType: string,
-  model: ModelAlias = DEFAULT_SCREEN_MODEL
+  model: ModelAlias = DEFAULT_SCREEN_MODEL,
 ): Promise<QuickScreenResult> {
   const prompt = [
     "Du är en snabb varumärkesscreening. Kolla ENBART dessa tre saker:",
@@ -83,12 +83,7 @@ export async function quickBrandScreen(
   return { flagged: false, issues: [] };
 }
 
-const HIGH_RISK_TYPES = new Set([
-  "case_study",
-  "whitepaper",
-  "newsletter",
-  "press_release",
-]);
+const HIGH_RISK_TYPES = new Set(["case_study", "whitepaper", "newsletter", "press_release"]);
 
 export function isHighRiskContent(taskType: string, sampleReviewRate: number): boolean {
   return HIGH_RISK_TYPES.has(taskType) || sampleReviewRate >= 1.0;

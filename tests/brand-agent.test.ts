@@ -132,13 +132,8 @@ describe("BrandAgent", () => {
 
       expect(result.decision).toBe("approved");
       expect(result.escalated).toBe(false);
-      expect(mockUpdateTaskStatus).toHaveBeenCalledWith(
-        mockSupabase, "task-123", "approved"
-      );
-      expect(mockCreateApproval).toHaveBeenCalledWith(
-        mockSupabase,
-        expect.objectContaining({ decision: "approved" })
-      );
+      expect(mockUpdateTaskStatus).toHaveBeenCalledWith(mockSupabase, "task-123", "approved");
+      expect(mockCreateApproval).toHaveBeenCalledWith(mockSupabase, expect.objectContaining({ decision: "approved" }));
     });
   });
 
@@ -162,9 +157,7 @@ describe("BrandAgent", () => {
 
       expect(result.decision).toBe("rejected");
       expect(result.escalated).toBe(false);
-      expect(mockUpdateTaskStatus).toHaveBeenCalledWith(
-        mockSupabase, "task-123", "rejected"
-      );
+      expect(mockUpdateTaskStatus).toHaveBeenCalledWith(mockSupabase, "task-123", "rejected");
     });
   });
 
@@ -209,19 +202,28 @@ describe("BrandAgent", () => {
         .mockResolvedValueOnce({
           text: "",
           model: "claude-opus-4-6",
-          tokensIn: 500, tokensOut: 50, durationMs: 1000, costUsd: 0.01,
+          tokensIn: 500,
+          tokensOut: 50,
+          durationMs: 1000,
+          costUsd: 0.01,
           toolUse: { toolName: "brand_review_decision", input: { decision: "rejected", feedback: "Fel ton." } },
         })
         .mockResolvedValueOnce({
           text: "",
           model: "claude-opus-4-6",
-          tokensIn: 500, tokensOut: 50, durationMs: 1000, costUsd: 0.01,
+          tokensIn: 500,
+          tokensOut: 50,
+          durationMs: 1000,
+          costUsd: 0.01,
           toolUse: { toolName: "brand_review_decision", input: { decision: "approved", feedback: "Bra!" } },
         })
         .mockResolvedValueOnce({
           text: "",
           model: "claude-opus-4-6",
-          tokensIn: 500, tokensOut: 50, durationMs: 1000, costUsd: 0.01,
+          tokensIn: 500,
+          tokensOut: 50,
+          durationMs: 1000,
+          costUsd: 0.01,
           toolUse: { toolName: "brand_review_decision", input: { decision: "rejected", feedback: "Fel ton igen." } },
         });
 
@@ -233,6 +235,43 @@ describe("BrandAgent", () => {
       const r3 = await agent.review(request); // reject #1 again (not #2)
 
       expect(r3.escalated).toBe(false);
+    });
+  });
+
+  describe("stale entry cleanup (B2)", () => {
+    it("cleans up rejection entries older than 24h", async () => {
+      const rejectionResponse = {
+        text: "",
+        model: "claude-opus-4-6",
+        tokensIn: 500,
+        tokensOut: 50,
+        durationMs: 1000,
+        costUsd: 0.01,
+        toolUse: {
+          toolName: "brand_review_decision",
+          input: { decision: "rejected", feedback: "Otydlig ton." },
+        },
+      };
+
+      // Reject twice for task-stale (count = 2)
+      mockRouteRequest.mockResolvedValueOnce(rejectionResponse).mockResolvedValueOnce(rejectionResponse);
+
+      const agent = createBrandAgent();
+      await agent.review(makeReviewRequest({ taskId: "task-stale" }));
+      await agent.review(makeReviewRequest({ taskId: "task-stale" }));
+
+      // Fast-forward time by 25 hours to make entries stale
+      const realNow = Date.now;
+      Date.now = () => realNow() + 25 * 60 * 60 * 1000;
+
+      // Next rejection should be count=1 (stale entry cleaned), not count=3 (escalation)
+      mockRouteRequest.mockResolvedValueOnce(rejectionResponse);
+      const result = await agent.review(makeReviewRequest({ taskId: "task-stale" }));
+
+      Date.now = realNow;
+
+      expect(result.escalated).toBe(false);
+      // Count was reset by cleanup, so this is rejection #1, not #3
     });
   });
 

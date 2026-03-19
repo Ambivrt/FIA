@@ -26,7 +26,7 @@ export function startTaskListener(
   config: AppConfig,
   logger: Logger,
   killSwitch: KillSwitch,
-  taskQueue: TaskQueue | null
+  taskQueue: TaskQueue | null,
 ): void {
   const channel = supabase
     .channel("gateway-tasks")
@@ -103,7 +103,7 @@ export function startTaskListener(
               existingTaskId: task.id,
               onProgress,
             },
-            task.priority || "normal"
+            task.priority || "normal",
           );
 
           logger.info(`External task ${task.id} enqueued for ${agentSlug}`, {
@@ -137,7 +137,7 @@ export function startTaskListener(
             });
           }
         }
-      }
+      },
     )
     .subscribe((status) => {
       if (status === "SUBSCRIBED") {

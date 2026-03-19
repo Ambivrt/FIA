@@ -199,16 +199,14 @@ describe("routeRequest – fallback integration", () => {
     err503.status = 503;
 
     // First call (primary) fails, second call (fallback) succeeds
-    mockCallClaude
-      .mockRejectedValueOnce(err503)
-      .mockResolvedValueOnce({
-        text: "fallback response",
-        model: "claude-opus-4-6",
-        tokensIn: 100,
-        tokensOut: 50,
-        durationMs: 500,
-        costUsd: 0.01,
-      });
+    mockCallClaude.mockRejectedValueOnce(err503).mockResolvedValueOnce({
+      text: "fallback response",
+      model: "claude-opus-4-6",
+      tokensIn: 100,
+      tokensOut: 50,
+      durationMs: 500,
+      costUsd: 0.01,
+    });
 
     const result = await routeRequest(
       mockConfig,
@@ -217,7 +215,7 @@ describe("routeRequest – fallback integration", () => {
         default: { primary: "claude-sonnet", fallback: "claude-opus" },
       },
       "blog_post",
-      { userPrompt: "test" }
+      { userPrompt: "test" },
     );
 
     expect(result.text).toBe("fallback response");
@@ -242,8 +240,8 @@ describe("routeRequest – fallback integration", () => {
           default: { primary: "claude-sonnet", fallback: "claude-opus" },
         },
         "blog_post",
-        { userPrompt: "test" }
-      )
+        { userPrompt: "test" },
+      ),
     ).rejects.toThrow("Bad request");
 
     expect(mockCallClaude).toHaveBeenCalledTimes(1);
@@ -253,9 +251,7 @@ describe("routeRequest – fallback integration", () => {
     const err503 = new Error("Service unavailable") as any;
     err503.status = 503;
 
-    mockCallClaude
-      .mockRejectedValueOnce(err503)
-      .mockRejectedValueOnce(err503);
+    mockCallClaude.mockRejectedValueOnce(err503).mockRejectedValueOnce(err503);
 
     await expect(
       routeRequest(
@@ -265,8 +261,8 @@ describe("routeRequest – fallback integration", () => {
           default: { primary: "claude-sonnet", fallback: "claude-opus" },
         },
         "blog_post",
-        { userPrompt: "test" }
-      )
+        { userPrompt: "test" },
+      ),
     ).rejects.toThrow("Service unavailable");
   });
 
@@ -277,13 +273,7 @@ describe("routeRequest – fallback integration", () => {
     mockCallClaude.mockRejectedValueOnce(err503);
 
     await expect(
-      routeRequest(
-        mockConfig,
-        mockLogger,
-        { default: "claude-sonnet" },
-        "blog_post",
-        { userPrompt: "test" }
-      )
+      routeRequest(mockConfig, mockLogger, { default: "claude-sonnet" }, "blog_post", { userPrompt: "test" }),
     ).rejects.toThrow("Service unavailable");
 
     expect(mockCallClaude).toHaveBeenCalledTimes(1);
@@ -317,7 +307,7 @@ describe("BaseAgent – self-eval flow", () => {
       tokensIn: 1000,
       tokensOut: 500,
       durationMs: 2000,
-      costUsd: 0.10,
+      costUsd: 0.1,
     });
     // Self-eval call
     mockCallClaude.mockResolvedValueOnce({
@@ -357,7 +347,7 @@ describe("BaseAgent – self-eval flow", () => {
       tokensIn: 1000,
       tokensOut: 500,
       durationMs: 2000,
-      costUsd: 0.10,
+      costUsd: 0.1,
     });
     // Self-eval call (fail)
     mockCallClaude.mockResolvedValueOnce({
@@ -406,7 +396,7 @@ describe("BaseAgent – self-eval flow", () => {
       tokensIn: 1000,
       tokensOut: 500,
       durationMs: 2000,
-      costUsd: 0.10,
+      costUsd: 0.1,
     });
     // Self-eval: LLM says pass=true, but score 0.6 is below threshold 0.7
     mockCallClaude.mockResolvedValueOnce({
@@ -454,7 +444,7 @@ describe("BaseAgent – self-eval flow", () => {
       tokensIn: 1000,
       tokensOut: 500,
       durationMs: 2000,
-      costUsd: 0.10,
+      costUsd: 0.1,
     });
     // Self-eval: LLM says pass=false, but score 0.75 is above threshold 0.7
     mockCallClaude.mockResolvedValueOnce({
@@ -493,7 +483,7 @@ describe("BaseAgent – self-eval flow", () => {
       tokensIn: 1000,
       tokensOut: 500,
       durationMs: 2000,
-      costUsd: 0.10,
+      costUsd: 0.1,
     });
     // Self-eval call (very low score)
     mockCallClaude.mockResolvedValueOnce({
@@ -521,10 +511,12 @@ describe("BaseAgent – self-eval flow", () => {
     // Only 2 LLM calls: generation + self-eval. No revision call.
     expect(mockCallClaude).toHaveBeenCalledTimes(2);
     expect(mockUpdateTaskStatus).toHaveBeenCalledWith(
-      mockSupabase, "task-se-1", "error",
+      mockSupabase,
+      "task-se-1",
+      "error",
       expect.objectContaining({
         content_json: expect.objectContaining({ error: "Self-eval score too low" }),
-      })
+      }),
     );
   });
 });

@@ -14,11 +14,7 @@ import { writeMetric } from "../supabase/metrics-writer";
 import { usdToSek } from "../llm/pricing";
 import { runSelfEval } from "./self-eval";
 
-export type ProgressCallback = (
-  action: string,
-  message: string,
-  details?: Record<string, unknown>
-) => Promise<void>;
+export type ProgressCallback = (action: string, message: string, details?: Record<string, unknown>) => Promise<void>;
 
 export interface AgentTask {
   type: string;
@@ -27,6 +23,8 @@ export interface AgentTask {
   priority?: string;
   /** If set, reuse an existing task row instead of creating a new one (e.g. Dashboard-created tasks). */
   existingTaskId?: string;
+  /** Correlation ID for tracing multi-agent flows through logs. */
+  correlationId?: string;
   onProgress?: ProgressCallback;
 }
 
@@ -52,18 +50,14 @@ export abstract class BaseAgent {
     protected readonly config: AppConfig,
     protected readonly logger: Logger,
     protected readonly supabase: SupabaseClient,
-    protected readonly manifest: AgentManifest
+    protected readonly manifest: AgentManifest,
   ) {}
 
   protected getSystemPrompt(): string {
     const brandContext = loadBrandContext(this.config.knowledgeDir);
     const skills = loadSkills(this.config.knowledgeDir, this.slug, this.manifest);
     const extraFiles = this.manifest.system_context.filter((f) => f !== "SKILL.md");
-    const extraContext = resolveAgentFiles(
-      this.config.knowledgeDir,
-      this.slug,
-      extraFiles
-    );
+    const extraContext = resolveAgentFiles(this.config.knowledgeDir, this.slug, extraFiles);
     return buildSystemPrompt(brandContext, skills, extraContext || undefined);
   }
 
@@ -79,30 +73,26 @@ export abstract class BaseAgent {
     options?: {
       tools?: ToolDefinition[];
       toolChoice?: { type: "auto" | "any" | "tool"; name?: string };
-    }
+    },
   ): Promise<LLMResponse> {
     const systemPrompt = this.getSystemPrompt();
     const taskContext = this.getTaskContext(taskType);
     const fullPrompt = buildTaskPrompt(taskContext, userPrompt);
 
-    return routeRequest(
-      this.config,
-      this.logger,
-      this.manifest.routing as AgentRouting,
-      taskType,
-      {
-        systemPrompt,
-        userPrompt: fullPrompt,
-        tools: options?.tools,
-        toolChoice: options?.toolChoice,
-      }
-    );
+    return routeRequest(this.config, this.logger, this.manifest.routing as AgentRouting, taskType, {
+      systemPrompt,
+      userPrompt: fullPrompt,
+      tools: options?.tools,
+      toolChoice: options?.toolChoice,
+    });
   }
 
   async execute(task: AgentTask): Promise<AgentResult> {
+    const cid = task.correlationId;
     this.logger.info(`${this.name} executing: ${task.title}`, {
       agent: this.slug,
       action: "task_start",
+      correlation_id: cid,
     });
 
     // Reuse existing task row (Dashboard) or create new one (gateway)
@@ -136,12 +126,16 @@ export abstract class BaseAgent {
 
       const durationSec = (response.durationMs / 1000).toFixed(1);
       const generationTokens = response.tokensIn + response.tokensOut;
-      await task.onProgress?.("llm_complete", `:white_check_mark: Innehåll genererat (${generationTokens} tokens, ${durationSec}s)`, {
-        task_id: taskId,
-        model: response.model,
-        tokens: generationTokens,
-        duration_ms: response.durationMs,
-      });
+      await task.onProgress?.(
+        "llm_complete",
+        `:white_check_mark: Innehåll genererat (${generationTokens} tokens, ${durationSec}s)`,
+        {
+          task_id: taskId,
+          model: response.model,
+          tokens: generationTokens,
+          duration_ms: response.durationMs,
+        },
+      );
 
       // Build pipeline data
       const pipeline: PipelineData = {
@@ -196,10 +190,14 @@ export abstract class BaseAgent {
         }
 
         // Score > 0.4 but below threshold – one revision attempt
-        await task.onProgress?.("self_eval_revision", `:arrows_counterclockwise: Self-eval identifierade brister — omgenererar...`, {
-          task_id: taskId,
-          issues: selfEvalResult.issues,
-        });
+        await task.onProgress?.(
+          "self_eval_revision",
+          `:arrows_counterclockwise: Self-eval identifierade brister — omgenererar...`,
+          {
+            task_id: taskId,
+            issues: selfEvalResult.issues,
+          },
+        );
 
         const revisionPrompt = [
           "Förbättra följande text baserat på feedbacken nedan.",
@@ -254,6 +252,7 @@ export abstract class BaseAgent {
         agent: this.slug,
         task_id: taskId,
         action: "task_complete",
+        correlation_id: cid,
         model: response.model,
         tokens_in: accumulatedTokensIn,
         tokens_out: accumulatedTokensOut,
@@ -297,6 +296,7 @@ export abstract class BaseAgent {
         agent: this.slug,
         task_id: taskId,
         action: "task_error",
+        correlation_id: cid,
         status: "error",
         error: message,
       });
@@ -323,7 +323,7 @@ export abstract class BaseAgent {
     output: string,
     taskId: string,
     task: AgentTask,
-    pipeline: PipelineData
+    pipeline: PipelineData,
   ): Promise<{ pass: boolean; score: number; issues: string[] } | null> {
     const selfEvalConfig = this.manifest.self_eval;
     if (!selfEvalConfig?.enabled) return null;
@@ -331,13 +331,7 @@ export abstract class BaseAgent {
     try {
       await task.onProgress?.("self_eval", `:mag: Self-eval körs...`, { task_id: taskId });
 
-      const result = await runSelfEval(
-        this.config,
-        this.logger,
-        this.slug,
-        output,
-        selfEvalConfig
-      );
+      const result = await runSelfEval(this.config, this.logger, this.slug, output, selfEvalConfig);
 
       pipeline.self_eval = {
         ...result,
@@ -367,8 +361,9 @@ export abstract class BaseAgent {
   }
 
   private getRouteAlias(taskType: string): string {
-    const entry = (this.manifest.routing as Record<string, unknown>)[taskType]
-      ?? (this.manifest.routing as Record<string, unknown>).default;
+    const entry =
+      (this.manifest.routing as Record<string, unknown>)[taskType] ??
+      (this.manifest.routing as Record<string, unknown>).default;
     if (typeof entry === "string") return entry;
     if (typeof entry === "object" && entry !== null && "primary" in entry) {
       return (entry as { primary: string }).primary;
@@ -389,7 +384,7 @@ export abstract class BaseAgent {
       this.iterationCounts.delete(taskId);
       throw new Error(
         `Max iterations (${maxIterations}) exceeded for task ${taskId}. ` +
-        `Marking as error to prevent infinite loops.`
+          `Marking as error to prevent infinite loops.`,
       );
     }
   }
@@ -400,11 +395,7 @@ export abstract class BaseAgent {
   }
 
   protected async getAgentId(): Promise<string> {
-    const { data, error } = await this.supabase
-      .from("agents")
-      .select("id")
-      .eq("slug", this.slug)
-      .single();
+    const { data, error } = await this.supabase.from("agents").select("id").eq("slug", this.slug).single();
 
     if (error || !data) throw new Error(`Agent '${this.slug}' not found in database`);
     return data.id;
@@ -415,12 +406,7 @@ export abstract class BaseAgent {
       throw new Error(`Agent ${this.slug} cannot write to ${relativePath}`);
     }
 
-    const fullPath = path.join(
-      this.config.knowledgeDir,
-      "agents",
-      this.slug,
-      relativePath
-    );
+    const fullPath = path.join(this.config.knowledgeDir, "agents", this.slug, relativePath);
 
     const dir = path.dirname(fullPath);
     if (!fs.existsSync(dir)) {

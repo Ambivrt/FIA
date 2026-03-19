@@ -21,12 +21,7 @@ const AGENT_CLASSES: Record<string, new (...args: ConstructorParameters<typeof B
   analytics: AnalyticsAgent,
 };
 
-export function createAgent(
-  slug: string,
-  config: AppConfig,
-  logger: Logger,
-  supabase: SupabaseClient
-): BaseAgent {
+export function createAgent(slug: string, config: AppConfig, logger: Logger, supabase: SupabaseClient): BaseAgent {
   const AgentClass = AGENT_CLASSES[slug];
   if (!AgentClass) {
     throw new Error(`Unknown agent slug: ${slug}. Valid: ${Object.keys(AGENT_CLASSES).join(", ")}`);

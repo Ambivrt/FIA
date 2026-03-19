@@ -152,7 +152,7 @@ description: A shared test skill
 
 # Test Shared Skill
 
-Shared content.`
+Shared content.`,
     );
 
     // Create agent skill
@@ -167,7 +167,7 @@ description: An agent-specific skill
 
 # Agent Skill
 
-Agent-specific content.`
+Agent-specific content.`,
     );
 
     const manifest: AgentManifest = {

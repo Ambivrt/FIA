@@ -15,11 +15,7 @@ function getClient(config: AppConfig): Anthropic {
 
 const DEFAULT_TIMEOUT_MS = 120_000; // 2 minutes
 
-export async function callClaude(
-  config: AppConfig,
-  model: string,
-  request: LLMRequest
-): Promise<LLMResponse> {
+export async function callClaude(config: AppConfig, model: string, request: LLMRequest): Promise<LLMResponse> {
   const client = getClient(config);
   const timeoutMs = request.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
@@ -44,10 +40,7 @@ export async function callClaude(
         createParams.tool_choice = request.toolChoice as Anthropic.ToolChoice;
       }
 
-      const response = await client.messages.create(
-        createParams,
-        { signal: controller.signal }
-      );
+      const response = await client.messages.create(createParams, { signal: controller.signal });
 
       const text = response.content
         .filter((block): block is Anthropic.TextBlock => block.type === "text")
@@ -56,9 +49,7 @@ export async function callClaude(
 
       // Extract tool use block if present
       let toolUse: ToolUseResult | undefined;
-      const toolUseBlock = response.content.find(
-        (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
-      );
+      const toolUseBlock = response.content.find((block): block is Anthropic.ToolUseBlock => block.type === "tool_use");
       if (toolUseBlock) {
         toolUse = {
           toolName: toolUseBlock.name,

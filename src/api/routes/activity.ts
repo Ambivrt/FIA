@@ -7,15 +7,7 @@ export function activityRoutes(supabase: SupabaseClient): Router {
   // GET /api/activity
   router.get("/", async (req, res) => {
     try {
-      const {
-        agent_slug,
-        action,
-        from,
-        to,
-        search,
-        page = "1",
-        per_page = "50",
-      } = req.query as Record<string, string>;
+      const { agent_slug, action, from, to, search, page = "1", per_page = "50" } = req.query as Record<string, string>;
 
       const pageNum = Math.max(1, parseInt(page, 10));
       const perPage = Math.min(100, Math.max(1, parseInt(per_page, 10)));
@@ -27,11 +19,7 @@ export function activityRoutes(supabase: SupabaseClient): Router {
         .order("created_at", { ascending: false });
 
       if (agent_slug) {
-        const { data: agent } = await supabase
-          .from("agents")
-          .select("id")
-          .eq("slug", agent_slug)
-          .single();
+        const { data: agent } = await supabase.from("agents").select("id").eq("slug", agent_slug).single();
         if (agent) query = query.eq("agent_id", agent.id);
       }
       if (action) query = query.eq("action", action);

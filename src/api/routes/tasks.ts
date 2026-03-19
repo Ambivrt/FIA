@@ -18,6 +18,8 @@ const revisionSchema = z.object({
   feedback: z.string().min(1, "Feedback is required for revision request."),
 });
 
+const ALLOWED_SORT_FIELDS = ["created_at", "updated_at", "priority", "status", "type"] as const;
+
 export function taskRoutes(supabase: SupabaseClient): Router {
   const router = Router();
 
@@ -38,12 +40,11 @@ export function taskRoutes(supabase: SupabaseClient): Router {
       const perPage = Math.min(100, Math.max(1, parseInt(per_page, 10)));
       const offset = (pageNum - 1) * perPage;
 
-      const sortField = sort.startsWith("-") ? sort.slice(1) : sort;
+      const rawField = sort.startsWith("-") ? sort.slice(1) : sort;
+      const sortField = (ALLOWED_SORT_FIELDS as readonly string[]).includes(rawField) ? rawField : "created_at";
       const ascending = !sort.startsWith("-");
 
-      let query = supabase
-        .from("tasks")
-        .select("*, agents!inner(slug, name)", { count: "exact" });
+      let query = supabase.from("tasks").select("*, agents!inner(slug, name)", { count: "exact" });
 
       if (status) query = query.eq("status", status);
       if (agent_slug) query = query.eq("agents.slug", agent_slug);

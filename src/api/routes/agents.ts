@@ -9,10 +9,7 @@ export function agentRoutes(supabase: SupabaseClient): Router {
   // GET /api/agents – all authenticated users
   router.get("/", async (req, res) => {
     try {
-      const { data: agents, error } = await supabase
-        .from("agents")
-        .select("*")
-        .order("name");
+      const { data: agents, error } = await supabase.from("agents").select("*").order("name");
 
       if (error) throw error;
 
@@ -32,7 +29,7 @@ export function agentRoutes(supabase: SupabaseClient): Router {
           }
 
           return { ...agent, tasks_today: counts };
-        })
+        }),
       );
 
       res.json({ data: enriched });
@@ -53,7 +50,10 @@ export function agentRoutes(supabase: SupabaseClient): Router {
         .single();
 
       if (error) throw error;
-      if (!data) { res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } }); return; }
+      if (!data) {
+        res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
+        return;
+      }
 
       await logActivity(supabase, {
         agent_id: data.id,
@@ -80,7 +80,10 @@ export function agentRoutes(supabase: SupabaseClient): Router {
         .single();
 
       if (error) throw error;
-      if (!data) { res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } }); return; }
+      if (!data) {
+        res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
+        return;
+      }
 
       await logActivity(supabase, {
         agent_id: data.id,

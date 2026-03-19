@@ -9,12 +9,7 @@ export class AnalyticsAgent extends BaseAgent {
   readonly name = "Analytics Agent";
   readonly slug = "analytics";
 
-  constructor(
-    config: AppConfig,
-    logger: Logger,
-    supabase: SupabaseClient,
-    manifest: AgentManifest
-  ) {
+  constructor(config: AppConfig, logger: Logger, supabase: SupabaseClient, manifest: AgentManifest) {
     super(config, logger, supabase, manifest);
   }
 
@@ -41,10 +36,7 @@ export class AnalyticsAgent extends BaseAgent {
     return taskType;
   }
 
-  private async extractAndWriteMetrics(
-    taskType: string,
-    output: string
-  ): Promise<void> {
+  private async extractAndWriteMetrics(taskType: string, output: string): Promise<void> {
     try {
       // Try to extract structured metrics from LLM output
       const metricsMatch = output.match(/```json\s*([\s\S]*?)```/);
@@ -54,9 +46,12 @@ export class AnalyticsAgent extends BaseAgent {
       if (!Array.isArray(parsed)) return;
 
       const today = new Date().toISOString().split("T")[0];
-      const period = taskType === "quarterly_review" ? "monthly" as const
-        : taskType === "weekly_report" ? "weekly" as const
-        : "daily" as const;
+      const period =
+        taskType === "quarterly_review"
+          ? ("monthly" as const)
+          : taskType === "weekly_report"
+            ? ("weekly" as const)
+            : ("daily" as const);
 
       for (const item of parsed) {
         if (item.metric_name && item.value !== undefined && item.category) {

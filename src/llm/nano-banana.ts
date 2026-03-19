@@ -8,7 +8,7 @@ const IMAGE_MODEL = "gemini-2.5-flash-image";
 
 export async function generateImage(
   config: AppConfig,
-  request: ImageGenerationRequest
+  request: ImageGenerationRequest,
 ): Promise<ImageGenerationResponse> {
   const client = new GoogleGenAI({ apiKey: config.geminiApiKey });
 

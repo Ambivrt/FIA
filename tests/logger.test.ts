@@ -85,7 +85,7 @@ describe("Logger", () => {
         duration_ms: 3400,
         status: "success",
         brand_review: "approved",
-      })
+      }),
     );
 
     const entry: LogEntry = JSON.parse(lines[0]);
@@ -115,6 +115,20 @@ describe("Logger", () => {
 
     expect(lines).toHaveLength(1);
     expect(JSON.parse(lines[0]).level).toBe("warn");
+  });
+
+  it("handles circular references in meta without crashing (B10)", () => {
+    const logger = createLogger(config);
+    const circular: Record<string, unknown> = { key: "value" };
+    circular.self = circular;
+
+    const lines = captureStdout(() => logger.error("bad meta", circular as any));
+
+    expect(lines).toHaveLength(1);
+    const entry = JSON.parse(lines[0]);
+    expect(entry.level).toBe("error");
+    expect(entry.error).toBe("Failed to serialize log entry");
+    expect(entry.message).toBe("bad meta");
   });
 
   it("supports all four log levels", () => {
