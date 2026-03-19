@@ -1,23 +1,9 @@
-# FIA – Forefront Intelligent Automation
+# FIA – Arkitektur & Teknisk Blueprint
 
-**Master-dokument.** All arkitektur, alla agentdefinitioner, datamodell, API-kontrakt, roadmap och principer lever här. Gateway- och Dashboard-filerna pekar hit.
+All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och principer. Gateway- och Dashboard-repon pekar hit.
 
-**Version:** 0.3.0
+**Version:** 0.3.1
 **Senast uppdaterad:** 2026-03-19
-
----
-
-## Bakgrund: varför vi landar här
-
-Vi utvärderade tre ansatser:
-
-| Ansats | Styrkor | Svagheter |
-|--------|---------|-----------|
-| **Perplexity Computer** | Multi-modell-orkestrering (19 LLM:er), molnbaserat | Svart låda, ingen kontroll över promptar/varumärkeskontext, $200/mån, designat för ad hoc – inte always-on drift |
-| **OpenClaw** | Rätt mönster (persistent agent, skill-baserat, heartbeats, meddelandegränssnitt) | Skaparen lämnat projektet, 512 säkerhetshål (8 kritiska), omoget |
-| **Claude Code Agent Teams** | Stark multi-agent-koordinering | Sessionsbaserat, saknar persistence och schemaläggning |
-
-**Slutsatsen:** Egen tunn gateway – inspirerad av OpenClaws mönster, med Claude Opus 4.6 som orkestrerande huvud-LLM, multi-modell-routing, och full kontroll över varumärkeskontext, guardrails och säkerhet.
 
 ---
 
@@ -27,67 +13,36 @@ Vi utvärderade tre ansatser:
 
 | Delsystem | Status | Deploy |
 |-----------|--------|--------|
-| Gateway (backend) | Solid MVP, alla 7 agenter live | 0.2 (2026-03-15) |
-| Dashboard (frontend) | Robust MVP, strict TS, error boundaries, tester | Live på Lovable |
+| Gateway (backend) | Solid MVP, alla 7 agenter live, 15 testfiler, CI/CD | 0.2 (2026-03-15) |
+| Dashboard (frontend) | Robust MVP, strict TS, error boundaries, i18n, PWA | Live på Lovable |
 | Supabase (DB) | 10 tabeller, RLS, Realtime | EU-region aktiv |
 | GCP (hosting) | Compute Engine konfigurerad | europe-north1-b |
 | Slack | Bolt SDK + Socket Mode live | Aktiv |
-| MCP-integrationer | gws konfigurerad, ej kopplad | Fas 2 |
+| MCP-integrationer | gws konfigurerad, ej kopplad till agenter | Fas 2 |
 
 ### Backend – Gateway (Ambivrt/FIA)
 
-**Kodbas:** ~47 TypeScript-filer, ~3 000 LOC, TypeScript strict mode, 15 testfiler.
+**Kodbas:** ~47 TypeScript-filer, ~3 100 LOC, TypeScript strict mode, 15 testfiler, CI/CD via GitHub Actions, ESLint + Prettier.
+
+**Kvarstår:**
 
 | Komponent | Status |
 |-----------|--------|
-| Gateway-kärna (scheduler, router, task queue, logger) | Klar |
-| Alla 7 agenter (Content, Brand, Strategy, Campaign, SEO, Lead, Analytics) | Klar |
-| LLM-klienter (Claude Opus/Sonnet, Nano Banana 2, Serper) | Klar |
-| Modell-router (manifest-driven via agent.yaml) | Klar |
-| Skill-system (shared: + agent:) | Klar |
-| Slack-integration (Bolt SDK, 6+ kommandon) | Klar |
-| Supabase-klient (heartbeats, tasks, realtime-lyssnare) | Klar |
-| REST API (Express, JWT-auth, Zod-validering) | Klar |
-| Kill switch (dual: Slack + Dashboard) | Klar |
-| Kostnadsberäkning (tokens → USD → SEK) | Klar |
-| Task recovery vid startup | Klar |
-| Testsvit (router, brand-agent, agent-loader, content-agent, m.fl.) | Klar |
-| MCP-wrappers (HubSpot, LinkedIn, Buffer) | **Ej påbörjat** |
-| gws MCP kopplad till agenter | **Konfigurerad, ej kopplad** |
-| Content staging (Zod-validering av content_json) | **Fas 2** |
-| Feedback-loop (feedback-summary, dynamisk review rate) | **Fas 3** |
-| CI/CD (GitHub Actions) | Klar (`.github/workflows/ci.yml`) |
-| ESLint/Prettier | Klar (`eslint.config.mjs`, `.prettierrc`) |
-| Teknisk skuld B1–B12 | **Åtgärdad** (2026-03-19) |
+| MCP-wrappers (HubSpot, LinkedIn, Buffer) | Ej påbörjat |
+| gws MCP kopplad till agenter | Konfigurerad, ej kopplad |
+| Content staging (Zod-validering av content_json) | Fas 2 |
+| Feedback-loop (feedback-summary, dynamisk review rate) | Fas 3 |
 
 ### Frontend – Dashboard PWA (Ambivrt/fia-frontend)
 
 **Kodbas:** React 18.3 + Vite 5.4 + TypeScript 5.8 (strict: true), Tailwind 3.4 + shadcn/ui, TanStack React Query 5.83, 13 sidor, 19+ komponenter, 60+ API-funktioner.
 
+**Kvarstår:**
+
 | Komponent | Status |
 |-----------|--------|
-| Auth (Supabase, login/signup, rollhantering) | Klar |
-| Agentöversikt med puls/status/heartbeat | Klar |
-| Godkännandekö (approve/reject/revision + dual-write audit) | Klar |
-| Kill switch (toggle + realtidsuppdatering) | Klar |
-| Aktivitetslogg med paginering (20/sida) | Klar |
-| Realtime-sync via Supabase PostgreSQL Changes | Klar |
-| i18n (svenska + engelska, 409 rader per språk) | Klar |
-| Teman (5 färgscheman × ljust/mörkt, persisterat) | Klar |
-| PWA-stöd (service worker, manifest, offline caching) | Klar |
-| Kostnadssida med KPI-kort | Klar |
-| Kalendervy + schemalagda jobb | Klar |
-| Inställningar (profiler, roller, schemalagda jobb) | Klar |
-| Responsiv design med mobil bottom-nav | Klar |
-| Sökfunktion (Command Palette, Cmd+K) | Klar |
-| Notifikationssystem (bell med pending count badge) | Klar |
-| Error boundaries (app-level + granulär) | Klar |
-| Testsvit (ErrorBoundary, status-utils, computeKpi) | Klar |
-| ARIA-labels på alla icon-knappar | Klar |
-| Task-paginering (prev/next) | Klar |
-| Teknisk skuld F1–F10 | **Åtgärdad** (2026-03-19) |
-| Content staging / preview | **Fas 2** |
-| Feedback-UI / rating | **Fas 3** |
+| Content staging / preview | Fas 2 |
+| Feedback-UI / rating | Fas 3 |
 
 ---
 
@@ -1154,52 +1109,6 @@ Modiga, Hängivna, Lustfyllda
 
 ---
 
-## Teknisk skuld (2026-03-19) — ✅ Backend åtgärdad 2026-03-19
-
-Identifierade brister vid kodgranskning. Prioriterade efter allvarlighetsgrad.
-
-### Backend – Hög prioritet (alla åtgärdade)
-
-| # | Fil | Problem | Status |
-|---|-----|---------|--------|
-| ~~B1~~ | `src/agents/agent-loader.ts` | `parseSkillReference()` saknar bounds check | ✅ Redan fixat (validering fanns) |
-| ~~B2~~ | `src/agents/brand/brand-agent.ts` | `rejectionCounts` Map växer obegränsat | ✅ Timestamp + 24h cleanup |
-| ~~B3~~ | `src/context/context-manager.ts` | Filcache har ingen TTL | ✅ 5 min TTL med `CACHE_TTL_MS` |
-
-### Backend – Medel prioritet (alla åtgärdade)
-
-| # | Fil | Problem | Status |
-|---|-----|---------|--------|
-| ~~B4~~ | `src/api/routes/tasks.ts` | Sort-parameter saknar whitelist-validering | ✅ Whitelist med fallback till `created_at` |
-| ~~B5~~ | `src/api/server.ts` | Ingen API rate limiting | ✅ `express-rate-limit` (100 req/15 min) |
-| ~~B6~~ | `src/gateway/scheduler.ts` | Generisk felhantering | ✅ Typklassificering (timeout/auth/llm/network) |
-| ~~B7~~ | `src/gateway/task-queue.ts` | Ingen prioritetsåldring | ✅ Aging: +1 nivå var 30:e minut |
-| ~~B8~~ | `.github/workflows/ci.yml` | Ingen CI/CD-pipeline | ✅ GitHub Actions: typecheck + lint + test |
-| ~~B9~~ | `eslint.config.mjs`, `.prettierrc` | Ingen ESLint/Prettier | ✅ Flat config + Prettier, `npm run lint/format` |
-| ~~B10~~ | `src/gateway/logger.ts` | `JSON.stringify()` kan krascha | ✅ try/catch med fallback-logg |
-| ~~B11~~ | Genomgripande | Inga korrelations-ID:n | ✅ `correlation_id` i LogEntry, AgentTask, API middleware |
-| ~~B12~~ | `src/utils/kill-switch.ts` | Hårdkodade agent-slugs | ✅ `.neq("slug", "brand")` – pausar alla utom Brand |
-
-### Frontend – Hög prioritet
-
-| # | Fil | Problem | Risk |
-|---|-----|---------|------|
-| F1 | `tsconfig.app.json` | `strict: false`, `noImplicitAny: false` | Typfel upptäcks ej vid kompilering |
-| F2 | — | Ingen React Error Boundary | Komponentkrasch tar ner hela appen |
-| F3 | — | Testsvit obefintlig (1 trivial test) | Inga regressionsgarantier |
-| F4 | `DashboardLayout.tsx` | Sökfält utan handler (icke-funktionellt) | Förvirrande UX |
-| F5 | `DashboardLayout.tsx` | Bell-ikon utan click handler (icke-funktionellt) | Förvirrande UX |
-
-### Frontend – Medel prioritet
-
-| # | Fil | Problem | Risk |
-|---|-----|---------|------|
-| F6 | Diverse | Saknar ARIA-labels på ikon-knappar | Tillgänglighetsbrist |
-| F7 | `fia-api.ts` | `fetchKpi()` hämtar hela tasks-tabellen två gånger | Prestanda vid stor datamängd |
-| F8 | Diverse | Ingen paginering för agents/tasks-listor | Prestanda vid skalning |
-| F9 | Diverse | Flera mutations saknar `onError`-handlers | Tysta fel för användaren |
-| F10 | — | Statusfärger utan ikon/text-fallback | Otillgängligt för färgblinda |
-
 ---
 
 ## Kostnadsanalys
@@ -1323,97 +1232,44 @@ Tasks med betyg 1-2 och kommentarer extraheras automatiskt som negativa few-shot
 
 ## Roadmap
 
-Tempo: Fas 0 + fas 1 (deploy 0.1) genomfördes på 4 arbetsdagar. Tidsestimaten nedan är justerade efter faktiskt tempo.
+### Fas 0–1: Genomförd
 
-### Fas 0: Förberedelse (Dag 1) ✅
+Deploy 0.2 (2026-03-15). Gateway + Dashboard MVP live. 4 arbetsdagar, en person med Claude Code + Lovable.
 
-- GCP-projekt, Compute Engine, IAM, Service Accounts
-- Git-repos, projektstruktur
-- Varumärkesplattform som markdown
-- Agent-mappstruktur med `agent.yaml`
-- API-konton (Gemini, Slack, Anthropic)
-- gws CLI-autentisering
-- Supabase-projekt (EU) med datamodell, RLS, Auth
-- Utse Marketing Orchestrator
-- Slack-workspace med kanaler
+### Nästa steg – Fas 1 avslut
 
-### Fas 1: MVP – Content + Brand + Dashboard (Dag 2–4) ✅
+| # | Uppgift | Beskrivning | Prioritet |
+|---|---------|-------------|-----------|
+| 1 | **gws MCP → agenter** | Koppla gws MCP-server till Content, Strategy, SEO och Analytics. Konfigurationen finns – agent-loader behöver anropa gws-tools vid task-execution. Filer: `src/agents/base-agent.ts`, `src/mcp/` | Hög |
+| 2 | **10 innehållsenheter** | Kör Content Agent med verkliga tasks (blog_post, linkedin, newsletter). Verifiera end-to-end: trigger → LLM → Brand review → godkänn → activity_log. Via `/fia run content blog_post` | Hög |
+| 3 | **Go/no-go checkpoint** | Granska de 10 enheterna mot tonalitetsregler och varumärkesplattform. Kriterium: 80% publiceringsredo | Hög |
+| 4 | Gemini context caching | Minskar kostnader vid upprepade system_context-anrop. Kan skjutas till Fas 2 | Valfritt |
+| 5 | GA4 Analytics API | Analytics Agent klarar sig utan i MVP. Kan skjutas till Fas 2 | Valfritt |
 
-**Status: Deploy 0.2 (2026-03-15)**
+### Fas 2: Expansion + Content Staging
 
-**Gateway:**
-- ✅ Gateway (Node.js daemon, Slack, cron, task queue)
-- ✅ Supabase-klient (heartbeats, tasks, activity_log, realtime-lyssnare)
-- ✅ Modell-router (manifest-driven, Claude Opus/Sonnet + Nano Banana + Serper)
-- ✅ Agent-loader med modulärt skill-system (shared: + agent:)
-- ✅ Alla 7 agentkluster implementerade (Content, Brand, Strategy, Campaign, SEO, Lead, Analytics)
-- ✅ Claude API-integration (Opus 4.6 + Sonnet 4.6) med tool_use för strukturerad output
-- ✅ REST API med JWT-auth + Zod-validering
-- ✅ Kill switch dual (Slack + Dashboard) med audit trail
-- ✅ Testsvit (13 testfiler: router, brand-agent, agent-loader, content-agent, logger, config, skill-loader, task-queue, parallel-screening, self-eval, retry, integration)
-- ✅ Kostnadsberäkning (tokens → USD → SEK)
-- ✅ Task recovery vid startup
-- ✅ Self-eval scoring i base-agent
-- ✅ Parallel pre-screening (Brand Agent quick-screen)
-- ✅ Exponential backoff retry för LLM-anrop
-
-**Dashboard:**
-- ✅ Auth (Supabase, login/signup, rollhantering: orchestrator/admin/viewer/nobody)
-- ✅ Agentöversikt med puls/status/heartbeat
-- ✅ Godkännandekö (approve/reject/revision + dual-write audit trail)
-- ✅ Kill switch (toggle + realtidsuppdatering)
-- ✅ Aktivitetslogg med paginering (20/sida)
-- ✅ Realtime-sync (7 tabeller via Supabase PostgreSQL Changes)
-- ✅ i18n (svenska + engelska, 409 strängar per språk)
-- ✅ Teman (5 färgscheman × ljust/mörkt, persisterat till DB)
-- ✅ PWA-stöd (service worker, manifest, offline caching)
-- ✅ Kostnadssida, kalendervy, inställningar
-- ✅ Responsiv design med mobil bottom-nav
-
-**Kvarstår från fas 1:**
-- ⏳ Gemini context caching – planerad
-- ⏳ GA4 Analytics API – planerad
-- ⏳ gws MCP – konfigurerad men ej kopplad till agenter
-- ⏳ 10 innehållsenheter producerade
-- ✅ Sökfunktion i dashboard (Command Palette, Cmd+K)
-- ✅ Error boundaries i dashboard (app-level + granulär)
-- ✅ Commands-tabell (migration 008, command-listener, API audit trail) (2026-03-19)
-- Go/no-go: 80% publiceringsredo
-
-### Fas 2: Expansion + Content Staging (Dag 5–12)
-
-- Strategy, Campaign, SEO, Lead, Analytics agenter kopplade till externa system
-- MCP-wrappers: LinkedIn, HubSpot, Buffer (`src/mcp/` – ej påbörjat)
+- Agenter kopplade till externa system (Strategy, Campaign, SEO, Lead, Analytics)
+- MCP-wrappers: LinkedIn, HubSpot, Buffer (`src/mcp/`)
 - Första agentdrivna kampanjen
-- Dashboard: rapporter, agentdetalj, push, mörkt läge (mörkt läge ✅ klar)
-- Dashboard: sökfunktion, notifikationssystem, error boundaries (✅ klar)
-- Dashboard: TypeScript strict mode (✅ klar)
-- CI/CD: GitHub Actions för test + build (✅ klar)
-- ESLint + Prettier för backend (✅ klar)
-- Commands-tabell: migration, command-listener, API audit trail (✅ klar)
 - Content Staging:
   - Standardiserat `content_json`-schema i gateway (Zod-validering)
   - Output-validering för alla content-producerande agenter
   - Dashboard: staging-vy med markdown-preview + kanalspecifika previews
   - Bildhantering via Google Drive-URL:er i `media[]`
-- Teknisk skuld: B1–B3, F1–F3 (se "Teknisk skuld"-sektionen)
 - Go/no-go: Kampanj i paritet
 
-### Fas 3: Optimering + Feedback (Dag 13–18)
+### Fas 3: Optimering + Feedback
 
 - Promptoptimering, ökad autonomi, kostnadsoptimering, ROI
 - Feedback & Agentoptimering:
-  - `feedback`-tabell i Supabase + RLS
   - Dashboard: rating-UI + trendgrafer i agentdetalj
   - Gateway: `feedback-summary.json` per agent i `system_context`
   - Dynamisk `sample_review_rate`
   - Few-shot "avoid"-exempel
 
-### Fas 4: Full drift (Dag 19–22)
+### Fas 4: Full drift
 
 - Dokumentation, SLA:er, backup-Orchestrator, kundcase
-
-**Totalt:** ~22 arbetsdagar (~4 veckor). Originalplanen antog 20 veckor. Faktisk hastighet ~5x snabbare.
 
 ---
 
@@ -1426,8 +1282,6 @@ Tempo: Fas 0 + fas 1 (deploy 0.1) genomfördes på 4 arbetsdagar. Tidsestimaten 
 | FIA-arkitekt / Tech Lead | 80–100% i ~3 veckor |
 | Marketing Orchestrator | 25% i ~3 veckor |
 
-Faktiskt tempo: Fas 0–1 genomfördes på 4 arbetsdagar av en person med Claude Code + Lovable.
-
 ### Drift (fas 3+)
 
 | Roll | Tid/vecka |
@@ -1439,25 +1293,18 @@ Faktiskt tempo: Fas 0–1 genomfördes på 4 arbetsdagar av en person med Claude
 
 ## Licenser
 
-### Dag 1
-
-| Tjänst | Kostnad/mån |
-|--------|-------------|
-| Anthropic Claude API | ~300–1 000 kr |
-| Google AI Studio API (Nano Banana 2) | ~100–350 kr |
-| Serper.dev | ~100–200 kr |
-| GCP Compute Engine | ~150–250 kr |
-| Slack Pro | ~80 kr/användare |
-| Supabase | 0–250 kr |
-| Lovable | 0–200 kr |
-| gws CLI | 0 kr (Apache-2.0) |
-
-### Fas 2
-
-| Tjänst | Kostnad/mån |
-|--------|-------------|
-| HubSpot | 0–800 kr |
-| Buffer | ~600 kr |
+| Tjänst | Kostnad/mån | Fas |
+|--------|-------------|-----|
+| Anthropic Claude API | ~300–1 000 kr | 1 |
+| Google AI Studio API (Nano Banana 2) | ~100–350 kr | 1 |
+| Serper.dev | ~100–200 kr | 1 |
+| GCP Compute Engine | ~150–250 kr | 1 |
+| Slack Pro | ~80 kr/användare | 1 |
+| Supabase | 0–250 kr | 1 |
+| Lovable | 0–200 kr | 1 |
+| gws CLI | 0 kr (Apache-2.0) | 1 |
+| HubSpot | 0–800 kr | 2 |
+| Buffer | ~600 kr | 2 |
 
 ---
 
@@ -1510,11 +1357,3 @@ GATEWAY_API_PORT           # 3001 (internt)
 QUEUE_MAX_CONCURRENCY      # 3 (default)
 USD_TO_SEK                 # 10.5 (växelkurs)
 ```
-
----
-
-## Vibecoding
-
-~75% av gateway-koden vibecoded med Claude Code. ~25% kräver manuell granskning (router, MCP-wrappers, context caching, loggning, SQL-migrationer). Dashboard: ~90% vibecoded i Lovable, ~10% manuell integration.
-
-Faktiskt resultat fas 0–1: 43 TypeScript-filer, komplett gateway + dashboard MVP, deploy 0.2 live – på 4 arbetsdagar.
