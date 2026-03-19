@@ -17,7 +17,7 @@ export function registerCommands(
   logger: Logger,
   supabase: SupabaseClient | null,
   killSwitch: KillSwitch | null,
-  taskQueue: TaskQueue | null = null
+  taskQueue: TaskQueue | null = null,
 ): void {
   app.command("/fia", async ({ command, ack, respond }) => {
     await ack();
@@ -42,15 +42,17 @@ export function registerCommands(
         }
 
         if (supabase) {
-          const { data: agents } = await supabase
-            .from("agents")
-            .select("name, slug, status")
-            .order("name");
+          const { data: agents } = await supabase.from("agents").select("name, slug, status").order("name");
 
           if (agents?.length) {
             statusText += "\n\n*Agents:*";
             for (const a of agents) {
-              const icon = a.status === "active" ? ":large_green_circle:" : a.status === "paused" ? ":double_vertical_bar:" : ":red_circle:";
+              const icon =
+                a.status === "active"
+                  ? ":large_green_circle:"
+                  : a.status === "paused"
+                    ? ":double_vertical_bar:"
+                    : ":red_circle:";
               statusText += `\n${icon} ${a.name} (${a.status})`;
             }
           }
@@ -173,7 +175,9 @@ export function registerCommands(
               const taskTypes = Object.keys(m.task_context);
               const routingTypes = Object.keys(m.routing).filter((k) => k !== "default");
               const allTypes = [...new Set([...taskTypes, ...routingTypes])];
-              lines.push(`  *${slug}* – ${allTypes.length > 0 ? allTypes.map((t) => `\`${t}\``).join(", ") : "`default`"}`);
+              lines.push(
+                `  *${slug}* – ${allTypes.length > 0 ? allTypes.map((t) => `\`${t}\``).join(", ") : "`default`"}`,
+              );
             } catch {
               lines.push(`  *${slug}* – \`default\``);
             }
@@ -205,8 +209,12 @@ export function registerCommands(
                 text: `:x: *${item.agentSlug}* misslyckades: ${error}`,
               });
             } else if (result) {
-              const statusIcon = result.status === "completed" ? ":white_check_mark:" :
-                result.status === "escalated" ? ":warning:" : ":x:";
+              const statusIcon =
+                result.status === "completed"
+                  ? ":white_check_mark:"
+                  : result.status === "escalated"
+                    ? ":warning:"
+                    : ":x:";
               await app.client.chat.postMessage({
                 channel: command.channel_id,
                 text: `${statusIcon} *${item.agentSlug}* klar (${result.status}). Task: \`${result.taskId}\``,
@@ -214,13 +222,18 @@ export function registerCommands(
             }
           };
 
-          const queueId = taskQueue.enqueue(agentSlug, {
-            type: taskType,
-            title: taskDesc,
-            input: taskDesc,
-            priority: "normal",
-            onProgress,
-          }, "normal", onComplete);
+          const queueId = taskQueue.enqueue(
+            agentSlug,
+            {
+              type: taskType,
+              title: taskDesc,
+              input: taskDesc,
+              priority: "normal",
+              onProgress,
+            },
+            "normal",
+            onComplete,
+          );
 
           await respond({
             response_type: "ephemeral",
@@ -307,9 +320,10 @@ export function registerCommands(
 
           await respond({
             response_type: "in_channel",
-            text: total > 0
-              ? `:broom: *Purged ${total} stale tasks* (${recovered.queued} queued, ${recovered.inProgress} in_progress) → error.`
-              : `:white_check_mark: Inga stale tasks hittades (kollar tasks äldre än 30 min).`,
+            text:
+              total > 0
+                ? `:broom: *Purged ${total} stale tasks* (${recovered.queued} queued, ${recovered.inProgress} in_progress) → error.`
+                : `:white_check_mark: Inga stale tasks hittades (kollar tasks äldre än 30 min).`,
           });
         } catch (err) {
           await respond({ response_type: "ephemeral", text: `:x: Purge misslyckades: ${(err as Error).message}` });
@@ -357,7 +371,7 @@ export function registerCommands(
 
         helpLines.push(
           "",
-          `_REST API: port ${config.gatewayApiPort} | Dashboard: tasks/commands via Supabase Realtime_`
+          `_REST API: port ${config.gatewayApiPort} | Dashboard: tasks/commands via Supabase Realtime_`,
         );
 
         await respond({

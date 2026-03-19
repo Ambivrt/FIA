@@ -10,6 +10,7 @@ declare global {
   namespace Express {
     interface Request {
       user?: AuthUser;
+      correlationId?: string;
     }
   }
 }
@@ -24,17 +25,16 @@ export function requireAuth(supabase: SupabaseClient) {
 
     const token = header.slice(7);
 
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
     if (error || !user) {
       res.status(401).json({ error: { code: "UNAUTHORIZED", message: "Invalid or expired token." } });
       return;
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
 
     req.user = { id: user.id, role: profile?.role ?? "viewer" };
     next();

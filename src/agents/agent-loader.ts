@@ -36,10 +36,7 @@ export interface LoadedSkill {
   source: "shared" | "agent";
 }
 
-export function loadAgentManifest(
-  knowledgeDir: string,
-  slug: string
-): AgentManifest {
+export function loadAgentManifest(knowledgeDir: string, slug: string): AgentManifest {
   const agentDir = path.join(knowledgeDir, "agents", slug);
   const yamlPath = path.join(agentDir, "agent.yaml");
 
@@ -61,11 +58,7 @@ export function loadAgentManifest(
   return manifest;
 }
 
-export function resolveAgentFiles(
-  knowledgeDir: string,
-  slug: string,
-  relativePaths: string[]
-): string {
+export function resolveAgentFiles(knowledgeDir: string, slug: string, relativePaths: string[]): string {
   const agentDir = path.join(knowledgeDir, "agents", slug);
   return relativePaths
     .map((rel) => {
@@ -93,11 +86,7 @@ export function parseSkillReference(ref: string): { scope: "shared" | "agent"; n
   return { scope, name };
 }
 
-export function resolveSkillPath(
-  knowledgeDir: string,
-  slug: string,
-  ref: string
-): string {
+export function resolveSkillPath(knowledgeDir: string, slug: string, ref: string): string {
   const { scope, name } = parseSkillReference(ref);
   if (scope === "shared") {
     return path.join(knowledgeDir, "skills", name, "SKILL.md");
@@ -130,11 +119,7 @@ export function parseSkillFrontmatter(raw: string): { metadata: SkillMetadata; b
   };
 }
 
-export function loadSkills(
-  knowledgeDir: string,
-  slug: string,
-  manifest: AgentManifest
-): LoadedSkill[] {
+export function loadSkills(knowledgeDir: string, slug: string, manifest: AgentManifest): LoadedSkill[] {
   if (!manifest.skills || manifest.skills.length === 0) {
     // Fallback: load legacy root SKILL.md as single skill
     const legacyPath = path.join(knowledgeDir, "agents", slug, "SKILL.md");

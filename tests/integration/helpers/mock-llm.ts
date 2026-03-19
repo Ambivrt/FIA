@@ -9,16 +9,10 @@ import { LLMResponse } from "../../../src/llm/types";
 export type MockResponseMap = Record<string, LLMResponse>;
 
 export function createMockLlm(responses: MockResponseMap) {
-  return (
-    _config: any,
-    _logger: any,
-    routing: any,
-    taskType: string,
-    request: any
-  ): Promise<LLMResponse> => {
+  return (_config: any, _logger: any, routing: any, taskType: string, request: any): Promise<LLMResponse> => {
     // Determine which model would be selected
     const entry = routing[taskType] ?? routing.default;
-    const alias = typeof entry === "string" ? entry : entry?.primary ?? "unknown";
+    const alias = typeof entry === "string" ? entry : (entry?.primary ?? "unknown");
 
     const response = responses[alias];
     if (!response) {

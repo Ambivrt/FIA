@@ -22,7 +22,7 @@ export class KillSwitch {
 
   constructor(
     private readonly supabase: SupabaseClient | null,
-    private readonly logger: Logger
+    private readonly logger: Logger,
   ) {}
 
   setTaskQueue(queue: TaskQueue): void {
@@ -67,10 +67,7 @@ export class KillSwitch {
     });
 
     if (this.supabase) {
-      const { error } = await this.supabase
-        .from("agents")
-        .update({ status: "paused" })
-        .in("slug", ["content", "campaign", "seo", "lead"]);
+      const { error } = await this.supabase.from("agents").update({ status: "paused" }).neq("slug", "brand");
 
       if (error) {
         this.logger.error("Failed to pause agents in Supabase", {
@@ -107,10 +104,7 @@ export class KillSwitch {
     });
 
     if (this.supabase) {
-      const { error } = await this.supabase
-        .from("agents")
-        .update({ status: "active" })
-        .eq("status", "paused");
+      const { error } = await this.supabase.from("agents").update({ status: "active" }).eq("status", "paused");
 
       if (error) {
         this.logger.error("Failed to resume agents in Supabase", {

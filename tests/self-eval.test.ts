@@ -46,10 +46,7 @@ const mockLogger: Logger = {
 const selfEvalConfig: SelfEvalConfig = {
   enabled: true,
   model: "claude-sonnet",
-  criteria: [
-    "Följer texten tonalitetsreglerna?",
-    "Passar längd och format för målkanalen?",
-  ],
+  criteria: ["Följer texten tonalitetsreglerna?", "Passar längd och format för målkanalen?"],
   threshold: 0.7,
 };
 
@@ -132,13 +129,7 @@ describe("runSelfEval", () => {
       },
     });
 
-    const result = await runSelfEval(
-      mockConfig,
-      mockLogger,
-      "content",
-      "Test output text",
-      selfEvalConfig
-    );
+    const result = await runSelfEval(mockConfig, mockLogger, "content", "Test output text", selfEvalConfig);
 
     expect(result.pass).toBe(true);
     expect(result.score).toBe(0.9);

@@ -7,10 +7,7 @@ export interface ActivityInput {
   details_json?: Record<string, unknown>;
 }
 
-export async function logActivity(
-  supabase: SupabaseClient,
-  entry: ActivityInput
-): Promise<void> {
+export async function logActivity(supabase: SupabaseClient, entry: ActivityInput): Promise<void> {
   const { error } = await supabase.from("activity_log").insert(entry);
   if (error) throw new Error(`Failed to log activity: ${error.message}`);
 }

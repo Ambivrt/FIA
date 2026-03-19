@@ -1,4 +1,6 @@
 import express from "express";
+import rateLimit from "express-rate-limit";
+import { v4 as uuidv4 } from "uuid";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { AppConfig } from "../utils/config";
 import { Logger } from "../gateway/logger";
@@ -14,16 +16,34 @@ export function createApiServer(
   config: AppConfig,
   logger: Logger,
   supabase: SupabaseClient,
-  killSwitch: KillSwitch
+  killSwitch: KillSwitch,
 ): express.Express {
   const app = express();
 
   app.use(express.json());
 
-  // Health check (no auth)
+  // Assign correlation ID to every request
+  app.use((req, _res, next) => {
+    req.correlationId = (req.headers["x-correlation-id"] as string) ?? uuidv4();
+    next();
+  });
+
+  // Health check (no auth, no rate limit)
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
+
+  // Rate limiting on all /api routes
+  app.use(
+    "/api",
+    rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100,
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: { error: { code: "RATE_LIMIT", message: "Too many requests. Try again later." } },
+    }),
+  );
 
   // All other routes require auth
   app.use("/api", requireAuth(supabase));

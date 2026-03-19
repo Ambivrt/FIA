@@ -1,5 +1,14 @@
 import { AppConfig } from "../utils/config";
-import { LLMRequest, LLMResponse, ModelAlias, MODEL_MAP, ImageGenerationRequest, ImageGenerationResponse, RoutingEntry, normalizeRoutingEntry } from "../llm/types";
+import {
+  LLMRequest,
+  LLMResponse,
+  ModelAlias,
+  MODEL_MAP,
+  ImageGenerationRequest,
+  ImageGenerationResponse,
+  RoutingEntry,
+  normalizeRoutingEntry,
+} from "../llm/types";
 import { callClaude } from "../llm/claude";
 import { searchGoogle } from "../llm/google-search";
 import { generateImage } from "../llm/nano-banana";
@@ -24,7 +33,10 @@ export function resolveRoute(routing: AgentRouting, taskType: string): RouteResu
   return aliasToRoute(primary);
 }
 
-export function resolveRouteWithFallback(routing: AgentRouting, taskType: string): { primary: RouteResult; fallback?: RouteResult } {
+export function resolveRouteWithFallback(
+  routing: AgentRouting,
+  taskType: string,
+): { primary: RouteResult; fallback?: RouteResult } {
   const raw = routing[taskType] ?? routing.default;
   const entry = normalizeRoutingEntry(raw as string | RoutingEntry);
   return {
@@ -51,20 +63,14 @@ function aliasToRoute(alias: ModelAlias): RouteResult {
   return { alias, modelId, provider };
 }
 
-async function callProvider(
-  config: AppConfig,
-  route: RouteResult,
-  request: LLMRequest
-): Promise<LLMResponse> {
+async function callProvider(config: AppConfig, route: RouteResult, request: LLMRequest): Promise<LLMResponse> {
   switch (route.provider) {
     case "claude":
       return callClaude(config, route.modelId, request);
     case "google-search": {
       const start = Date.now();
       const results = await searchGoogle(config, request.userPrompt);
-      const text = results
-        .map((r, i) => `${i + 1}. **${r.title}**\n   ${r.snippet}\n   ${r.url}`)
-        .join("\n\n");
+      const text = results.map((r, i) => `${i + 1}. **${r.title}**\n   ${r.snippet}\n   ${r.url}`).join("\n\n");
       return {
         text,
         model: "google-custom-search",
@@ -84,7 +90,7 @@ export async function routeRequest(
   logger: Logger,
   routing: AgentRouting,
   taskType: string,
-  request: LLMRequest
+  request: LLMRequest,
 ): Promise<LLMResponse> {
   const { primary, fallback } = resolveRouteWithFallback(routing, taskType);
 
@@ -113,7 +119,7 @@ export async function routeRequest(
 export async function routeImageRequest(
   config: AppConfig,
   logger: Logger,
-  request: ImageGenerationRequest
+  request: ImageGenerationRequest,
 ): Promise<ImageGenerationResponse> {
   logger.debug("Routing image generation → nano-banana-2", {
     action: "route_image",

@@ -94,7 +94,7 @@ export async function runSelfEval(
   logger: Logger,
   agentSlug: string,
   output: string,
-  selfEvalConfig: SelfEvalConfig
+  selfEvalConfig: SelfEvalConfig,
 ): Promise<SelfEvalResult> {
   const evalPrompt = buildSelfEvalPrompt(output, selfEvalConfig.criteria);
 

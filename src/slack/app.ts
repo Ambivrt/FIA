@@ -18,7 +18,7 @@ export async function createSlackApp(
   logger: Logger,
   supabase?: SupabaseClient | null,
   killSwitch?: KillSwitch,
-  taskQueue?: TaskQueue | null
+  taskQueue?: TaskQueue | null,
 ): Promise<App> {
   const receiver = new SocketModeReceiver({
     appToken: config.slackAppToken,

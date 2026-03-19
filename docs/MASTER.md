@@ -1150,31 +1150,31 @@ Modiga, Hängivna, Lustfyllda
 
 ---
 
-## Teknisk skuld (2026-03-19)
+## Teknisk skuld (2026-03-19) — ✅ Backend åtgärdad 2026-03-19
 
 Identifierade brister vid kodgranskning. Prioriterade efter allvarlighetsgrad.
 
-### Backend – Hög prioritet
+### Backend – Hög prioritet (alla åtgärdade)
 
-| # | Fil | Problem | Risk |
-|---|-----|---------|------|
-| B1 | `src/agents/agent-loader.ts` | `parseSkillReference()` saknar bounds check på `indexOf(":")` | Krasch vid felformaterad skill-referens |
-| B2 | `src/agents/brand/brand-agent.ts` | `rejectionCounts` Map växer obegränsat | Minnesläcka vid långkörning |
-| B3 | `src/context/context-manager.ts` | Filcache har ingen TTL | Inaktuella data kräver omstart |
+| # | Fil | Problem | Status |
+|---|-----|---------|--------|
+| ~~B1~~ | `src/agents/agent-loader.ts` | `parseSkillReference()` saknar bounds check | ✅ Redan fixat (validering fanns) |
+| ~~B2~~ | `src/agents/brand/brand-agent.ts` | `rejectionCounts` Map växer obegränsat | ✅ Timestamp + 24h cleanup |
+| ~~B3~~ | `src/context/context-manager.ts` | Filcache har ingen TTL | ✅ 5 min TTL med `CACHE_TTL_MS` |
 
-### Backend – Medel prioritet
+### Backend – Medel prioritet (alla åtgärdade)
 
-| # | Fil | Problem | Risk |
-|---|-----|---------|------|
-| B4 | `src/api/routes/tasks.ts` | Sort-parameter saknar whitelist-validering | Kolumnenumering via felmedd. |
-| B5 | `src/api/server.ts` | Ingen API rate limiting | Brute force möjlig |
-| B6 | `src/gateway/scheduler.ts` | Generisk felhantering, skiljer inte timeout från auth-fel | Tysta fel, svår felsökning |
-| B7 | `src/gateway/task-queue.ts` | Ingen prioritetsåldring | Low-priority tasks kan svältas |
-| B8 | — | Ingen CI/CD-pipeline (GitHub Actions) | Tester körs enbart lokalt |
-| B9 | — | Ingen ESLint/Prettier | Kodstil hålls manuellt |
-| B10 | `src/gateway/logger.ts` | Ingen felhantering om `JSON.stringify()` misslyckas | Loggpost förloras tyst |
-| B11 | — | Inga korrelations-ID:n i loggar | Svårt att spåra multi-agent-flöden |
-| B12 | `src/utils/kill-switch.ts` | Hårdkodade agent-slugs i kill switch | Nya agenter pausas inte |
+| # | Fil | Problem | Status |
+|---|-----|---------|--------|
+| ~~B4~~ | `src/api/routes/tasks.ts` | Sort-parameter saknar whitelist-validering | ✅ Whitelist med fallback till `created_at` |
+| ~~B5~~ | `src/api/server.ts` | Ingen API rate limiting | ✅ `express-rate-limit` (100 req/15 min) |
+| ~~B6~~ | `src/gateway/scheduler.ts` | Generisk felhantering | ✅ Typklassificering (timeout/auth/llm/network) |
+| ~~B7~~ | `src/gateway/task-queue.ts` | Ingen prioritetsåldring | ✅ Aging: +1 nivå var 30:e minut |
+| ~~B8~~ | `.github/workflows/ci.yml` | Ingen CI/CD-pipeline | ✅ GitHub Actions: typecheck + lint + test |
+| ~~B9~~ | `eslint.config.mjs`, `.prettierrc` | Ingen ESLint/Prettier | ✅ Flat config + Prettier, `npm run lint/format` |
+| ~~B10~~ | `src/gateway/logger.ts` | `JSON.stringify()` kan krascha | ✅ try/catch med fallback-logg |
+| ~~B11~~ | Genomgripande | Inga korrelations-ID:n | ✅ `correlation_id` i LogEntry, AgentTask, API middleware |
+| ~~B12~~ | `src/utils/kill-switch.ts` | Hårdkodade agent-slugs | ✅ `.neq("slug", "brand")` – pausar alla utom Brand |
 
 ### Frontend – Hög prioritet
 

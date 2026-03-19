@@ -9,10 +9,7 @@ export interface MetricInput {
   metadata_json?: Record<string, unknown>;
 }
 
-export async function writeMetric(
-  supabase: SupabaseClient,
-  metric: MetricInput
-): Promise<void> {
+export async function writeMetric(supabase: SupabaseClient, metric: MetricInput): Promise<void> {
   const { error } = await supabase.from("metrics").insert(metric);
   if (error) {
     // Metric write failures are non-fatal – log but don't block task execution

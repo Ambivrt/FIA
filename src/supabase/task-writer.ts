@@ -21,15 +21,8 @@ export interface ApprovalInput {
   feedback?: string;
 }
 
-export async function createTask(
-  supabase: SupabaseClient,
-  task: TaskInput
-): Promise<string> {
-  const { data, error } = await supabase
-    .from("tasks")
-    .insert(task)
-    .select("id")
-    .single();
+export async function createTask(supabase: SupabaseClient, task: TaskInput): Promise<string> {
+  const { data, error } = await supabase.from("tasks").insert(task).select("id").single();
 
   if (error) throw new Error(`Failed to create task: ${error.message}`);
   return data.id;
@@ -39,11 +32,9 @@ export async function updateTaskStatus(
   supabase: SupabaseClient,
   taskId: string,
   status: string,
-  extras?: Record<string, unknown>
+  extras?: Record<string, unknown>,
 ): Promise<void> {
-  const completedAt = (status === "published" || status === "approved")
-    ? new Date().toISOString()
-    : undefined;
+  const completedAt = status === "published" || status === "approved" ? new Date().toISOString() : undefined;
 
   const updatePayload: Record<string, unknown> = { status };
 
@@ -63,17 +54,12 @@ export async function updateTaskStatus(
     updatePayload.completed_at = completedAt;
   }
 
-  const { error } = await supabase
-    .from("tasks")
-    .update(updatePayload)
-    .eq("id", taskId);
+  const { error } = await supabase.from("tasks").update(updatePayload).eq("id", taskId);
 
   if (error) throw new Error(`Failed to update task ${taskId}: ${error.message}`);
 }
 
-export async function recoverOrphanedTasks(
-  supabase: SupabaseClient
-): Promise<{ queued: number; inProgress: number }> {
+export async function recoverOrphanedTasks(supabase: SupabaseClient): Promise<{ queued: number; inProgress: number }> {
   const now = new Date().toISOString();
 
   const { data: qData, error: qErr } = await supabase
@@ -97,7 +83,7 @@ export async function recoverOrphanedTasks(
 
 export async function purgeOrphanedTasks(
   supabase: SupabaseClient,
-  maxAgeMinutes: number = 30
+  maxAgeMinutes: number = 30,
 ): Promise<{ queued: number; inProgress: number }> {
   const now = new Date().toISOString();
   const cutoff = new Date(Date.now() - maxAgeMinutes * 60 * 1000).toISOString();
@@ -123,15 +109,8 @@ export async function purgeOrphanedTasks(
   return { queued: qData?.length ?? 0, inProgress: ipData?.length ?? 0 };
 }
 
-export async function createApproval(
-  supabase: SupabaseClient,
-  approval: ApprovalInput
-): Promise<string> {
-  const { data, error } = await supabase
-    .from("approvals")
-    .insert(approval)
-    .select("id")
-    .single();
+export async function createApproval(supabase: SupabaseClient, approval: ApprovalInput): Promise<string> {
+  const { data, error } = await supabase.from("approvals").insert(approval).select("id").single();
 
   if (error) throw new Error(`Failed to create approval: ${error.message}`);
   return data.id;

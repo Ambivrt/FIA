@@ -89,13 +89,27 @@ describe("loadConfig", () => {
   it("includes all expected fields in result", () => {
     const config = loadConfig();
     const expectedFields = [
-      "nodeEnv", "logDir", "logLevel", "knowledgeDir",
-      "anthropicApiKey", "geminiApiKey", "serperApiKey",
-      "slackBotToken", "slackAppToken", "slackSigningSecret",
-      "supabaseUrl", "supabaseServiceRoleKey", "supabaseAnonKey",
-      "gwsCredentialsFile", "hubspotApiKey", "linkedinAccessToken",
-      "ga4CredentialsPath", "bufferAccessToken",
-      "gatewayApiPort", "usdToSek", "queueMaxConcurrency",
+      "nodeEnv",
+      "logDir",
+      "logLevel",
+      "knowledgeDir",
+      "anthropicApiKey",
+      "geminiApiKey",
+      "serperApiKey",
+      "slackBotToken",
+      "slackAppToken",
+      "slackSigningSecret",
+      "supabaseUrl",
+      "supabaseServiceRoleKey",
+      "supabaseAnonKey",
+      "gwsCredentialsFile",
+      "hubspotApiKey",
+      "linkedinAccessToken",
+      "ga4CredentialsPath",
+      "bufferAccessToken",
+      "gatewayApiPort",
+      "usdToSek",
+      "queueMaxConcurrency",
     ];
     for (const field of expectedFields) {
       expect(config).toHaveProperty(field);

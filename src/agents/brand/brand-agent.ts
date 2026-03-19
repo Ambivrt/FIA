@@ -35,6 +35,7 @@ export interface ReviewRequest {
   agentSlug: string;
   content: string;
   taskType: string;
+  correlationId?: string;
 }
 
 export interface ReviewResult {
@@ -47,18 +48,25 @@ export class BrandAgent extends BaseAgent {
   readonly name = "Brand Agent";
   readonly slug = "brand";
 
-  private rejectionCounts = new Map<string, number>();
+  private static readonly STALE_ENTRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+  private rejectionCounts = new Map<string, { count: number; lastSeen: number }>();
 
-  constructor(
-    config: AppConfig,
-    logger: Logger,
-    supabase: SupabaseClient,
-    manifest: AgentManifest
-  ) {
+  constructor(config: AppConfig, logger: Logger, supabase: SupabaseClient, manifest: AgentManifest) {
     super(config, logger, supabase, manifest);
   }
 
+  private cleanupStaleEntries(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.rejectionCounts) {
+      if (now - entry.lastSeen > BrandAgent.STALE_ENTRY_MS) {
+        this.rejectionCounts.delete(key);
+      }
+    }
+  }
+
   async review(request: ReviewRequest): Promise<ReviewResult> {
+    this.cleanupStaleEntries();
+
     const prompt = [
       "Granska följande innehåll för varumärkesöverensstämmelse.",
       "Kontrollera: tonalitet, budskapshierarki, visuella riktlinjer och Forefronts varumärkesvärden.",
@@ -100,15 +108,16 @@ export class BrandAgent extends BaseAgent {
 
     // Track rejections per task
     if (decision !== "approved") {
-      const count = (this.rejectionCounts.get(request.taskId) ?? 0) + 1;
-      this.rejectionCounts.set(request.taskId, count);
+      const existing = this.rejectionCounts.get(request.taskId);
+      const count = (existing?.count ?? 0) + 1;
+      this.rejectionCounts.set(request.taskId, { count, lastSeen: Date.now() });
 
       await this.writeRejectionPattern(request, feedback);
 
       // Escalate after threshold
       if (count >= this.manifest.escalation_threshold) {
         this.rejectionCounts.delete(request.taskId);
-        await this.escalateToOrchestrator(request.taskId, request.agentSlug, feedback);
+        await this.escalateToOrchestrator(request.taskId, request.agentSlug, feedback, request.correlationId);
         return { decision, feedback, escalated: true };
       }
     } else {
@@ -143,6 +152,7 @@ export class BrandAgent extends BaseAgent {
     this.logger.info(`Brand review: ${decision}`, {
       agent: this.slug,
       task_id: request.taskId,
+      correlation_id: request.correlationId,
       action: `review_${decision}`,
       model: response.model,
       brand_review: decision === "revision_requested" ? "rejected" : decision,
@@ -158,7 +168,8 @@ export class BrandAgent extends BaseAgent {
   private async escalateToOrchestrator(
     taskId: string,
     sourceAgent: string,
-    lastFeedback: string
+    lastFeedback: string,
+    correlationId?: string,
   ): Promise<void> {
     const agentId = await this.getAgentId();
 
@@ -184,6 +195,7 @@ export class BrandAgent extends BaseAgent {
     this.logger.warn(`Brand Agent escalating task ${taskId} to Orchestrator`, {
       agent: this.slug,
       task_id: taskId,
+      correlation_id: correlationId,
       action: "escalated",
       status: "escalated",
     });
@@ -196,15 +208,12 @@ export class BrandAgent extends BaseAgent {
         this.logger,
         sourceAgent,
         taskId,
-        `${this.manifest.escalation_threshold} avslag i rad. Senaste feedback: ${lastFeedback}`
+        `${this.manifest.escalation_threshold} avslag i rad. Senaste feedback: ${lastFeedback}`,
       );
     }
   }
 
-  private async writeRejectionPattern(
-    request: ReviewRequest,
-    feedback: string
-  ): Promise<void> {
+  private async writeRejectionPattern(request: ReviewRequest, feedback: string): Promise<void> {
     try {
       const memoryPath = "memory/rejection-patterns.json";
       let patterns: Array<{

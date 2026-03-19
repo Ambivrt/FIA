@@ -6,6 +6,7 @@ export interface LogEntry {
   timestamp: string;
   level: string;
   message: string;
+  correlation_id?: string;
   agent?: string;
   task_id?: string;
   model?: string;
@@ -58,7 +59,18 @@ export function createLogger(config: AppConfig): Logger {
       ...meta,
     };
 
-    const line = JSON.stringify(entry);
+    let line: string;
+    try {
+      line = JSON.stringify(entry);
+    } catch {
+      // Fallback for circular references, BigInt, or other non-serializable values
+      line = JSON.stringify({
+        timestamp: entry.timestamp,
+        level: entry.level,
+        message: entry.message,
+        error: "Failed to serialize log entry",
+      });
+    }
     logStream.write(line + "\n");
     process.stdout.write(line + "\n");
   }

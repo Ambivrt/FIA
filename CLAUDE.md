@@ -151,6 +151,6 @@ Se `.env.example` för alla nyckelnamn. Aldrig i kod. Kritiska:
 
 - [ ] MCP-wrappers: HubSpot, LinkedIn, Buffer (`src/mcp/` – ej påbörjat)
 - [ ] Content staging med Zod-validering av content_json
-- [ ] CI/CD (GitHub Actions)
-- [ ] ESLint + Prettier
-- [ ] Teknisk skuld: agent-loader bounds check, brand-agent memory cleanup, context cache TTL
+- [x] CI/CD (GitHub Actions) — `.github/workflows/ci.yml`
+- [x] ESLint + Prettier — `eslint.config.mjs`, `.prettierrc`
+- [x] Teknisk skuld B1–B12: alla 12 backend-fixar åtgärdade (2026-03-19)

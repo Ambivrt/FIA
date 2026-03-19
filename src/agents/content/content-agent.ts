@@ -39,12 +39,7 @@ export class ContentAgent extends BaseAgent {
   readonly name = "Content Agent";
   readonly slug = "content";
 
-  constructor(
-    config: AppConfig,
-    logger: Logger,
-    supabase: SupabaseClient,
-    manifest: AgentManifest
-  ) {
+  constructor(config: AppConfig, logger: Logger, supabase: SupabaseClient, manifest: AgentManifest) {
     super(config, logger, supabase, manifest);
   }
 
@@ -67,12 +62,7 @@ export class ContentAgent extends BaseAgent {
           task_id: result.taskId,
         });
 
-        const screening = await quickBrandScreen(
-          this.config,
-          this.logger,
-          result.output,
-          task.type
-        );
+        const screening = await quickBrandScreen(this.config, this.logger, result.output, task.type);
 
         // Store screening result in pipeline (ensure pipeline exists)
         if (!result.pipeline) result.pipeline = {};
@@ -90,10 +80,14 @@ export class ContentAgent extends BaseAgent {
             issues: screening.issues,
           });
 
-          await task.onProgress?.("parallel_screen_revision", `:arrows_counterclockwise: Screening hittade problem — korrigerar...`, {
-            task_id: result.taskId,
-            issues: screening.issues,
-          });
+          await task.onProgress?.(
+            "parallel_screen_revision",
+            `:arrows_counterclockwise: Screening hittade problem — korrigerar...`,
+            {
+              task_id: result.taskId,
+              issues: screening.issues,
+            },
+          );
 
           // One pre-correction round before formal Brand review
           const revisionInput = [
@@ -154,10 +148,14 @@ export class ContentAgent extends BaseAgent {
       // Guard against infinite loops across the full pipeline (self-eval revisions + brand revisions)
       this.checkMaxIterations(result.taskId);
 
-      await task.onProgress?.("brand_reviewing", `:mag: Brand Agent granskar${attempts > 0 ? ` (${attempts + 1}/${maxAttempts})` : ""}...`, {
-        task_id: result.taskId,
-        attempt: attempts + 1,
-      });
+      await task.onProgress?.(
+        "brand_reviewing",
+        `:mag: Brand Agent granskar${attempts > 0 ? ` (${attempts + 1}/${maxAttempts})` : ""}...`,
+        {
+          task_id: result.taskId,
+          attempt: attempts + 1,
+        },
+      );
 
       const review = await brandAgent.review({
         taskId: result.taskId,
@@ -189,11 +187,15 @@ export class ContentAgent extends BaseAgent {
 
       if (attempts >= maxAttempts) break;
 
-      await task.onProgress?.("brand_rejected", `:arrows_counterclockwise: Brand Agent underkände (${attempts}/${maxAttempts}) — omgenererar...`, {
-        task_id: result.taskId,
-        attempt: attempts,
-        feedback: review.feedback,
-      });
+      await task.onProgress?.(
+        "brand_rejected",
+        `:arrows_counterclockwise: Brand Agent underkände (${attempts}/${maxAttempts}) — omgenererar...`,
+        {
+          task_id: result.taskId,
+          attempt: attempts,
+          feedback: review.feedback,
+        },
+      );
 
       // Re-generate with Brand Agent feedback, preserving original intent
       this.logger.info(`Content Agent re-generating (attempt ${attempts + 1}): ${task.title}`, {
@@ -202,9 +204,7 @@ export class ContentAgent extends BaseAgent {
         action: "regenerate",
       });
 
-      const feedbackSection = feedbackHistory
-        .map((f) => `Försök ${f.attempt}: ${f.feedback}`)
-        .join("\n");
+      const feedbackSection = feedbackHistory.map((f) => `Försök ${f.attempt}: ${f.feedback}`).join("\n");
 
       const revisedInput = [
         "=== ORIGINALBEGÄRAN (MÅSTE BEVARAS) ===",
@@ -213,7 +213,7 @@ export class ContentAgent extends BaseAgent {
         "VIKTIGT: Du MÅSTE behålla ämnet, motivet och intentionen från originalbegäran ovan.",
         "Ändra ENBART det som Brand Agent-feedbacken kräver (tonalitet, formulering, varumärkesröst).",
         "Om du inte kan uppfylla originalbegäran inom varumärkesramarna, svara med exakt:",
-        'INTENT_CONFLICT: [förklaring varför begäran inte kan uppfyllas inom varumärkesriktlinjerna]',
+        "INTENT_CONFLICT: [förklaring varför begäran inte kan uppfyllas inom varumärkesriktlinjerna]",
         "",
         "--- FEEDBACK FRÅN BRAND AGENT (all historik) ---",
         feedbackSection,
@@ -256,7 +256,6 @@ export class ContentAgent extends BaseAgent {
 
       // Check if Content Agent flagged an intent conflict
       if (intentConflict) {
-
         this.logger.warn(`Content Agent detected intent conflict: ${conflictReason}`, {
           agent: this.slug,
           task_id: result.taskId,
@@ -264,10 +263,14 @@ export class ContentAgent extends BaseAgent {
           status: "escalated",
         });
 
-        await task.onProgress?.("escalated", `:warning: Begäran kan inte uppfyllas inom varumärkesramarna — eskalerar till Orchestrator`, {
-          task_id: result.taskId,
-          feedback: conflictReason,
-        });
+        await task.onProgress?.(
+          "escalated",
+          `:warning: Begäran kan inte uppfyllas inom varumärkesramarna — eskalerar till Orchestrator`,
+          {
+            task_id: result.taskId,
+            feedback: conflictReason,
+          },
+        );
 
         await updateTaskStatus(this.supabase, result.taskId, "awaiting_review", {
           content_json: {
@@ -299,7 +302,7 @@ export class ContentAgent extends BaseAgent {
             this.logger,
             this.slug,
             result.taskId,
-            `Begäran kan inte uppfyllas inom varumärkesramarna.\n\nOriginalbegäran: ${task.input}\n\nAnledning: ${conflictReason}`
+            `Begäran kan inte uppfyllas inom varumärkesramarna.\n\nOriginalbegäran: ${task.input}\n\nAnledning: ${conflictReason}`,
           );
         }
 
@@ -310,11 +313,15 @@ export class ContentAgent extends BaseAgent {
 
       const totalTokens = response.tokensIn + response.tokensOut;
       const durationSec = (response.durationMs / 1000).toFixed(1);
-      await task.onProgress?.("llm_complete", `:white_check_mark: Omgenererat (${totalTokens} tokens, ${durationSec}s)`, {
-        task_id: result.taskId,
-        tokens: totalTokens,
-        duration_ms: response.durationMs,
-      });
+      await task.onProgress?.(
+        "llm_complete",
+        `:white_check_mark: Omgenererat (${totalTokens} tokens, ${durationSec}s)`,
+        {
+          task_id: result.taskId,
+          tokens: totalTokens,
+          duration_ms: response.durationMs,
+        },
+      );
 
       accumulatedCostUsd += response.costUsd;
       const totalCostSek = usdToSek(accumulatedCostUsd, this.config.usdToSek);

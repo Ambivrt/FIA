@@ -6,7 +6,7 @@ export function registerHandlers(app: App, logger: Logger): void {
   // Listen for messages in #fia-orchestrator for escalation handling
   app.message(async ({ message, say }) => {
     // Only process user messages (not bot messages)
-    if (!("user" in message) || ("bot_id" in message)) return;
+    if (!("user" in message) || "bot_id" in message) return;
 
     logger.debug("Slack message received", {
       action: "slack_message",
@@ -20,7 +20,7 @@ export async function sendEscalation(
   logger: Logger,
   agentSlug: string,
   taskId: string,
-  reason: string
+  reason: string,
 ): Promise<void> {
   try {
     await app.client.chat.postMessage({

@@ -10,12 +10,7 @@ export class CampaignAgent extends BaseAgent {
   readonly name = "Campaign Agent";
   readonly slug = "campaign";
 
-  constructor(
-    config: AppConfig,
-    logger: Logger,
-    supabase: SupabaseClient,
-    manifest: AgentManifest
-  ) {
+  constructor(config: AppConfig, logger: Logger, supabase: SupabaseClient, manifest: AgentManifest) {
     super(config, logger, supabase, manifest);
   }
 
@@ -76,10 +71,7 @@ export class CampaignAgent extends BaseAgent {
     const limit = this.manifest.budget_limit_sek!;
 
     // Pause agent in Supabase
-    await this.supabase
-      .from("agents")
-      .update({ status: "paused" })
-      .eq("slug", this.slug);
+    await this.supabase.from("agents").update({ status: "paused" }).eq("slug", this.slug);
 
     await logActivity(this.supabase, {
       agent_id: await this.getAgentId(),

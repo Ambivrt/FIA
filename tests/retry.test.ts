@@ -74,9 +74,7 @@ describe("withRetry", () => {
   it("retries on retryable error and succeeds", async () => {
     const err = new Error("Service unavailable") as any;
     err.status = 503;
-    const fn = jest.fn()
-      .mockRejectedValueOnce(err)
-      .mockResolvedValueOnce("recovered");
+    const fn = jest.fn().mockRejectedValueOnce(err).mockResolvedValueOnce("recovered");
 
     const result = await withRetry(fn, FAST_CONFIG);
     expect(result).toBe("recovered");
@@ -104,7 +102,8 @@ describe("withRetry", () => {
   it("retries exactly maxRetries times", async () => {
     const err = new Error("Rate limited") as any;
     err.status = 429;
-    const fn = jest.fn()
+    const fn = jest
+      .fn()
       .mockRejectedValueOnce(err)
       .mockRejectedValueOnce(err)
       .mockRejectedValueOnce(err)

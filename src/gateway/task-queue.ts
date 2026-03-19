@@ -1,5 +1,6 @@
 /// <reference types="node" />
 import { SupabaseClient } from "@supabase/supabase-js";
+import { v4 as uuidv4 } from "uuid";
 import { AppConfig } from "../utils/config";
 import { Logger } from "./logger";
 import { AgentTask, AgentResult, ProgressCallback } from "../agents/base-agent";
@@ -12,11 +13,10 @@ const PRIORITY_ORDER: Record<string, number> = {
   low: 3,
 };
 
-export type QueueCompleteCallback = (
-  item: QueueItem,
-  result?: AgentResult,
-  error?: string
-) => Promise<void>;
+/** Every AGING_RATE_MS, a task's effective priority improves by one level. */
+const AGING_RATE_MS = 30 * 60 * 1000; // 30 minutes
+
+export type QueueCompleteCallback = (item: QueueItem, result?: AgentResult, error?: string) => Promise<void>;
 
 export interface QueueItem {
   id: string;
@@ -52,20 +52,16 @@ export class TaskQueue {
     private readonly config: AppConfig,
     private readonly logger: Logger,
     private readonly supabase: SupabaseClient,
-    private readonly maxConcurrency: number
+    private readonly maxConcurrency: number,
   ) {}
 
-  enqueue(
-    agentSlug: string,
-    task: AgentTask,
-    priority: string = "normal",
-    onComplete?: QueueCompleteCallback
-  ): string {
+  enqueue(agentSlug: string, task: AgentTask, priority: string = "normal", onComplete?: QueueCompleteCallback): string {
     const id = `q-${Date.now()}-${++this.counter}`;
+    const correlationId = task.correlationId ?? uuidv4();
     const item: QueueItem = {
       id,
       agentSlug,
-      task: { ...task, priority },
+      task: { ...task, priority, correlationId },
       priority,
       enqueuedAt: new Date(),
       status: "queued",
@@ -139,9 +135,16 @@ export class TaskQueue {
   }
 
   private sortQueue(): void {
+    const now = Date.now();
+    const effectivePriority = (item: QueueItem): number => {
+      const base = PRIORITY_ORDER[item.priority] ?? 2;
+      const agingBoost = Math.floor((now - item.enqueuedAt.getTime()) / AGING_RATE_MS);
+      return Math.max(0, base - agingBoost);
+    };
+
     this.queue.sort((a, b) => {
-      const pa = PRIORITY_ORDER[a.priority] ?? 2;
-      const pb = PRIORITY_ORDER[b.priority] ?? 2;
+      const pa = effectivePriority(a);
+      const pb = effectivePriority(b);
       if (pa !== pb) return pa - pb;
       return a.enqueuedAt.getTime() - b.enqueuedAt.getTime();
     });
@@ -169,12 +172,7 @@ export class TaskQueue {
 
   private async executeItem(item: QueueItem): Promise<void> {
     try {
-      const agent = createAgent(
-        item.agentSlug,
-        this.config,
-        this.logger,
-        this.supabase
-      );
+      const agent = createAgent(item.agentSlug, this.config, this.logger, this.supabase);
 
       const result = await agent.execute(item.task);
       item.status = "completed";

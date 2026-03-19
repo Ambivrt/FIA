@@ -10,7 +10,10 @@
     "test": "jest --passWithNoTests",
     "test:router": "jest tests/router.test.ts",
     "test:brand": "jest tests/brand-agent.test.ts",
-    "test:integration": "jest --testPathPattern=tests/integration"
+    "test:integration": "jest --testPathPattern=tests/integration",
+    "lint": "eslint src/ tests/",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -19,6 +22,7 @@
     "@supabase/supabase-js": "^2.49.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.0",
+    "express-rate-limit": "^8.3.1",
     "node-cron": "^3.0.3",
     "uuid": "^11.1.0",
     "yaml": "^2.7.0",
@@ -30,8 +34,13 @@
     "@types/node": "^22.15.0",
     "@types/node-cron": "^3.0.11",
     "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.57.1",
+    "@typescript-eslint/parser": "^8.57.1",
+    "eslint": "^10.0.3",
+    "eslint-config-prettier": "^10.1.8",
     "jest": "^29.7.0",
     "nodemon": "^3.1.0",
+    "prettier": "^3.8.1",
     "ts-jest": "^29.3.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
