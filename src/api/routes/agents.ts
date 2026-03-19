@@ -62,6 +62,16 @@ export function agentRoutes(supabase: SupabaseClient): Router {
         details_json: { slug },
       });
 
+      // Audit trail
+      await supabase.from("commands").insert({
+        command_type: "pause_agent",
+        target_slug: slug,
+        payload_json: { slug, source: "api" },
+        issued_by: req.user!.id,
+        status: "completed",
+        processed_at: new Date().toISOString(),
+      });
+
       res.json({ data });
     } catch (err) {
       res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
@@ -90,6 +100,16 @@ export function agentRoutes(supabase: SupabaseClient): Router {
         user_id: req.user!.id,
         action: "agent_resumed",
         details_json: { slug },
+      });
+
+      // Audit trail
+      await supabase.from("commands").insert({
+        command_type: "resume_agent",
+        target_slug: slug,
+        payload_json: { slug, source: "api" },
+        issued_by: req.user!.id,
+        status: "completed",
+        processed_at: new Date().toISOString(),
       });
 
       res.json({ data });

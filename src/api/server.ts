@@ -52,7 +52,7 @@ export function createApiServer(
   app.use("/api/tasks", taskRoutes(supabase));
   app.use("/api/metrics", metricRoutes(supabase));
   app.use("/api/activity", activityRoutes(supabase));
-  app.use("/api/kill-switch", killSwitchRoutes(killSwitch));
+  app.use("/api/kill-switch", killSwitchRoutes(killSwitch, supabase));
 
   // Global error handler
   app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
