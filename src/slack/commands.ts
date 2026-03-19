@@ -344,6 +344,7 @@ export function registerCommands(
           "  `/fia reject <task-id> <feedback>` – Avslå uppgift med feedback",
           "  `/fia run <agent> <task-type> [description]` – Trigga agent manuellt",
           "  `/fia purge` – Rensa stale queued/in_progress tasks (>30 min)",
+          "  `/fia help` – Visa denna hjälptext",
           "",
           "*Agenter och uppgiftstyper:*",
         ];

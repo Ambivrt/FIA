@@ -997,6 +997,7 @@ Alla schemalagda tasks respekterar kill switch och agent-pausstatus.
 | `/fia reject <task-id>` | Avslå uppgift |
 | `/fia queue` | Visa köade uppgifter |
 | `/fia purge` | Rensa föräldralösa tasks |
+| `/fia help` | Visa alla kommandon, agenter, uppgiftstyper och schemalagda jobb |
 
 Slack-kanaler:
 
