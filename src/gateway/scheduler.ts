@@ -23,6 +23,7 @@ const AGENT_CHANNEL: Record<string, string> = {
   content: CHANNELS.content,
   campaign: CHANNELS.campaigns,
   analytics: CHANNELS.analytics,
+  intelligence: CHANNELS.intelligence,
   strategy: CHANNELS.orchestrator,
   lead: CHANNELS.orchestrator,
   seo: CHANNELS.orchestrator,
@@ -30,6 +31,7 @@ const AGENT_CHANNEL: Record<string, string> = {
 };
 
 export const SCHEDULE: ScheduleEntry[] = [
+  { expression: "30 6 * * 1-5", agent: "intelligence", task: "morning_scan", description: "Intelligence morgonscan" },
   { expression: "0 7 * * 1-5", agent: "analytics", task: "morning_pulse", description: "Analytics morgonpuls" },
   { expression: "0 8 * * 1", agent: "strategy", task: "weekly_planning", description: "Strategy veckoplanering" },
   {
@@ -38,7 +40,9 @@ export const SCHEDULE: ScheduleEntry[] = [
     task: "scheduled_content",
     description: "Content schemalagt innehåll",
   },
+  { expression: "0 9 * * 1", agent: "intelligence", task: "weekly_intelligence", description: "Intelligence veckobriefing" },
   { expression: "0 10 * * *", agent: "lead", task: "lead_scoring", description: "Lead scoring-uppdatering" },
+  { expression: "0 13 * * 1-5", agent: "intelligence", task: "midday_sweep", description: "Intelligence middagssweep" },
   { expression: "0 14 * * 5", agent: "analytics", task: "weekly_report", description: "Analytics veckorapport" },
   // First Monday of month (1st–7th, Monday)
   { expression: "0 9 1-7 * 1", agent: "strategy", task: "monthly_planning", description: "Strategy månadsplanering" },

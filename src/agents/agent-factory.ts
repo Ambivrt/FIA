@@ -10,6 +10,7 @@ import { CampaignAgent } from "./campaign/campaign-agent";
 import { SeoAgent } from "./seo/seo-agent";
 import { LeadAgent } from "./lead/lead-agent";
 import { AnalyticsAgent } from "./analytics/analytics-agent";
+import { IntelligenceAgent } from "./intelligence/intelligence-agent";
 
 const AGENT_CLASSES: Record<string, new (...args: ConstructorParameters<typeof BaseAgent>) => BaseAgent> = {
   content: ContentAgent,
@@ -19,6 +20,7 @@ const AGENT_CLASSES: Record<string, new (...args: ConstructorParameters<typeof B
   seo: SeoAgent,
   lead: LeadAgent,
   analytics: AnalyticsAgent,
+  intelligence: IntelligenceAgent,
 };
 
 export function createAgent(slug: string, config: AppConfig, logger: Logger, supabase: SupabaseClient): BaseAgent {

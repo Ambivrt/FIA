@@ -3,5 +3,6 @@ export const CHANNELS: Record<string, string> = {
   content: "#fia-content",
   campaigns: "#fia-campaigns",
   analytics: "#fia-analytics",
+  intelligence: "#fia-intelligence",
   logs: "#fia-logs",
 };
