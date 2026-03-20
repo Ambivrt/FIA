@@ -2,6 +2,7 @@ node_modules/
 dist/
 logs/
 .env
+credentials/
 *.js.map
 *.tsbuildinfo
 knowledge/agents/*/memory/*.json
