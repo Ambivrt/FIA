@@ -113,7 +113,7 @@ export function startTaskListener(
         } else {
           // Direct execution fallback
           try {
-            const agent = createAgent(agentSlug, config, logger, supabase);
+            const agent = await createAgent(agentSlug, config, logger, supabase);
             const onProgress: ProgressCallback = async (action, message, details) => {
               await logActivity(supabase, {
                 agent_id: task.agent_id,

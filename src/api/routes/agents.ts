@@ -5,7 +5,7 @@ import { requireRole } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { logActivity } from "../../supabase/activity-writer";
 
-const modelAliasEnum = z.enum(["claude-opus", "claude-sonnet", "nano-banana-2", "google-search"]);
+const modelAliasEnum = z.enum(["claude-opus", "claude-sonnet", "gemini-pro", "gemini-flash", "nano-banana-2", "google-search"]);
 
 const routingSchema = z.object({
   routing: z.record(
