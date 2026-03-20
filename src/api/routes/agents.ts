@@ -9,6 +9,7 @@ const modelAliasEnum = z.enum(["claude-opus", "claude-sonnet", "nano-banana-2", 
 
 const routingSchema = z.object({
   routing: z.record(
+    z.string(),
     z.union([
       modelAliasEnum,
       z.object({
