@@ -157,7 +157,9 @@ export function agentRoutes(supabase: SupabaseClient): Router {
       }
 
       const current = (agent.config_json as Record<string, unknown>) ?? {};
-      const merged = { ...current, routing };
+      const adminOverrides = new Set((current._admin_overrides as string[]) ?? []);
+      adminOverrides.add("routing");
+      const merged = { ...current, routing, _admin_overrides: [...adminOverrides] };
 
       const { error } = await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
 
@@ -194,7 +196,9 @@ export function agentRoutes(supabase: SupabaseClient): Router {
       }
 
       const current = (agent.config_json as Record<string, unknown>) ?? {};
-      const merged = { ...current, tools };
+      const adminOverrides = new Set((current._admin_overrides as string[]) ?? []);
+      adminOverrides.add("tools");
+      const merged = { ...current, tools, _admin_overrides: [...adminOverrides] };
 
       const { error } = await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
 

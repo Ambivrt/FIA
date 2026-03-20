@@ -40,6 +40,10 @@ async function main(): Promise<void> {
     supabase = createSupabaseClient(config);
     startHeartbeat(supabase, logger);
     logger.info("Supabase connected, heartbeat started", { action: "supabase_init" });
+
+    // Sync agent manifests → Supabase config_json (dashboard reads this)
+    const { syncAgentManifests } = await import("./supabase/manifest-sync");
+    await syncAgentManifests(supabase, config, logger);
   } else {
     logger.warn("Supabase not configured – skipping", { action: "supabase_init" });
   }
