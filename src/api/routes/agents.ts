@@ -4,9 +4,8 @@ import { z } from "zod";
 import { requireRole } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { logActivity } from "../../supabase/activity-writer";
-import { MODEL_MAP, type ModelAlias } from "../../llm/types";
 
-const VALID_MODEL_ALIASES = Object.keys(MODEL_MAP) as [ModelAlias, ...ModelAlias[]];
+const VALID_MODEL_ALIASES = ["claude-opus", "claude-sonnet", "nano-banana-2", "google-search"] as const;
 
 const modelAliasEnum = z.enum(VALID_MODEL_ALIASES);
 
