@@ -190,7 +190,7 @@ function makeDeepAnalysisResponse(): LLMResponse {
     tokensIn: 1200,
     tokensOut: 500,
     durationMs: 3000,
-    costUsd: 0.10,
+    costUsd: 0.1,
     toolUse: {
       toolName: "deep_analysis",
       input: {
@@ -300,7 +300,7 @@ describe("IntelligenceAgent", () => {
         tokensIn: 2000,
         tokensOut: 1500,
         durationMs: 5000,
-        costUsd: 0.20,
+        costUsd: 0.2,
       });
 
       // Set up the full Supabase mock chain for weekly briefing queries
@@ -349,7 +349,7 @@ describe("IntelligenceAgent", () => {
         tokensIn: 1200,
         tokensOut: 500,
         durationMs: 3000,
-        costUsd: 0.10,
+        costUsd: 0.1,
         toolUse: {
           toolName: "deep_analysis",
           input: {

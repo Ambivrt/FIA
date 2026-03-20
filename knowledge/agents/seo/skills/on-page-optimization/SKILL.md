@@ -7,6 +7,7 @@ version: 1.0.0
 # On-Page Optimization
 
 ## Regler
+
 1. Koordinera med Content Agent för innehållsrekommendationer
 2. Optimera meta-titlar, meta-beskrivningar och rubriker (H1–H3)
 3. Säkerställ intern länkning mellan relaterade sidor

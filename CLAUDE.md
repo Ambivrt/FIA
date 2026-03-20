@@ -8,20 +8,20 @@ AI-agentgateway som ersätter Forefronts marknadsavdelning. Sju agentkluster utf
 
 ## Teknikstack
 
-| Komponent | Teknologi |
-|-----------|-----------|
-| Runtime | Node.js daemon via PM2 |
-| Språk | TypeScript (strict mode) |
-| LLM-primär | Anthropic Claude API (Opus 4.6 + Sonnet 4.6) |
-| LLM-bild | Nano Banana 2 (Gemini 3.1 Flash Image) |
-| Sökning | Serper API (Google Search) |
-| Slack | Bolt SDK, Socket Mode |
-| Schemaläggning | node-cron |
-| Databas | Supabase PostgreSQL (EU-region) |
-| Google Workspace | gws CLI som MCP-server |
-| MCP-integrationer | HubSpot, LinkedIn, Buffer |
-| REST API | Express (internt, ej exponerat) |
-| Deploy | GCP Compute Engine (europe-north1), PM2 |
+| Komponent         | Teknologi                                    |
+| ----------------- | -------------------------------------------- |
+| Runtime           | Node.js daemon via PM2                       |
+| Språk             | TypeScript (strict mode)                     |
+| LLM-primär        | Anthropic Claude API (Opus 4.6 + Sonnet 4.6) |
+| LLM-bild          | Nano Banana 2 (Gemini 3.1 Flash Image)       |
+| Sökning           | Serper API (Google Search)                   |
+| Slack             | Bolt SDK, Socket Mode                        |
+| Schemaläggning    | node-cron                                    |
+| Databas           | Supabase PostgreSQL (EU-region)              |
+| Google Workspace  | gws CLI som MCP-server                       |
+| MCP-integrationer | HubSpot, LinkedIn, Buffer                    |
+| REST API          | Express (internt, ej exponerat)              |
+| Deploy            | GCP Compute Engine (europe-north1), PM2      |
 
 ## Kodkonventioner
 
@@ -77,26 +77,26 @@ pm2 restart fia-gateway
 
 Varje agents `agent.yaml` har ett `routing`-fält som mappar uppgiftstyp → modell. Routern läser detta – ingen hårdkodning.
 
-| Modell | Användning | Pris (1M tokens) |
-|--------|------------|-------------------|
-| Claude Opus 4.6 | Innehåll, strategi, analys, Brand Agent-granskning | $15 in / $75 ut |
-| Claude Sonnet 4.6 | Metadata, scoring, klassificering, A/B-varianter | $3 in / $15 ut |
-| Nano Banana 2 | Bildgenerering | ~$0.04/bild |
-| Serper API | Realtidssökning, trendspaning | $0.001/sökning |
+| Modell            | Användning                                         | Pris (1M tokens) |
+| ----------------- | -------------------------------------------------- | ---------------- |
+| Claude Opus 4.6   | Innehåll, strategi, analys, Brand Agent-granskning | $15 in / $75 ut  |
+| Claude Sonnet 4.6 | Metadata, scoring, klassificering, A/B-varianter   | $3 in / $15 ut   |
+| Nano Banana 2     | Bildgenerering                                     | ~$0.04/bild      |
+| Serper API        | Realtidssökning, trendspaning                      | $0.001/sökning   |
 
 ## Agenter
 
 Sju agenter under `knowledge/agents/<slug>/`. Varje har `agent.yaml` (manifest), `SKILL.md` (roll/guardrails), `context/` (mallar, few-shot) och `memory/` (skrivbar).
 
-| Agent | Slug | Autonomi | Nyckelansvar |
-|-------|------|----------|-------------|
-| Strategy | strategy | semi-autonomous | Planering, kvartals-/månadsplaner |
-| Content | content | autonomous | All textproduktion, blogg, sociala medier |
-| Campaign | campaign | autonomous | Kampanjer, email-sekvenser, annonser |
-| SEO | seo | autonomous | Sökoptimering, keyword-analys |
-| Lead | lead | autonomous | Lead scoring, nurture-sekvenser |
-| Analytics | analytics | autonomous | Rapporter, KPI-tracking, morgonpuls |
-| Brand | brand | autonomous | Kvalitetsgranskning (vetorätt) |
+| Agent     | Slug      | Autonomi        | Nyckelansvar                              |
+| --------- | --------- | --------------- | ----------------------------------------- |
+| Strategy  | strategy  | semi-autonomous | Planering, kvartals-/månadsplaner         |
+| Content   | content   | autonomous      | All textproduktion, blogg, sociala medier |
+| Campaign  | campaign  | autonomous      | Kampanjer, email-sekvenser, annonser      |
+| SEO       | seo       | autonomous      | Sökoptimering, keyword-analys             |
+| Lead      | lead      | autonomous      | Lead scoring, nurture-sekvenser           |
+| Analytics | analytics | autonomous      | Rapporter, KPI-tracking, morgonpuls       |
+| Brand     | brand     | autonomous      | Kvalitetsgranskning (vetorätt)            |
 
 ## Agentflöde
 

@@ -2,6 +2,7 @@ import { TaskQueue, QueueItem, QueueStatus } from "../src/gateway/task-queue";
 import { AppConfig } from "../src/utils/config";
 import { Logger } from "../src/gateway/logger";
 import { AgentTask } from "../src/agents/base-agent";
+import { createAgent } from "../src/agents/agent-factory";
 
 // Mock agent-factory to avoid real agent instantiation
 jest.mock("../src/agents/agent-factory", () => ({
@@ -166,14 +167,12 @@ describe("TaskQueue", () => {
   describe("concurrency", () => {
     it("respects max concurrency limit", async () => {
       // Create a queue with maxConcurrency=1 and tasks that resolve slowly
-      const { createAgent } = require("../src/agents/agent-factory");
-
       let resolveFirst: () => void;
       const firstPromise = new Promise<void>((resolve) => {
         resolveFirst = resolve;
       });
 
-      createAgent
+      (createAgent as jest.Mock)
         .mockReturnValueOnce({
           execute: jest.fn().mockImplementation(() =>
             firstPromise.then(() => ({

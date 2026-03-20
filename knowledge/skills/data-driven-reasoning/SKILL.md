@@ -7,6 +7,7 @@ version: 1.0.0
 # Data-Driven Reasoning
 
 ## Principer
+
 1. Basera rekommendationer på data från GA4, HubSpot och interna KPI:er – aldrig på magkänsla
 2. Prioritera långsiktig varumärkesbyggnad framför kortsiktiga vinster
 3. Flagga avvikelser automatiskt vid >20% förändring mot föregående period

@@ -52,9 +52,9 @@ tools:
   - gws:docs
 
 # Guardrails
-autonomy: autonomous          # autonomous | semi-autonomous | manual
-escalation_threshold: 3       # Avslag innan eskalering
-sample_review_rate: 0.2       # Stickprovsgranskning av Orchestrator
+autonomy: autonomous # autonomous | semi-autonomous | manual
+escalation_threshold: 3 # Avslag innan eskalering
+sample_review_rate: 0.2 # Stickprovsgranskning av Orchestrator
 
 # Skrivbara filer (allt annat read-only)
 writable:
@@ -71,15 +71,15 @@ writable:
 
 ## Agentöversikt
 
-| Slug | Routing default | Speciellt |
-|------|----------------|-----------|
-| strategy | claude-opus | `sample_review_rate: 1.0` (alla planer kräver godkännande) |
-| content | claude-opus | Few-shot (bra/dåligt), metadata via Sonnet, bilder via Nano Banana |
-| campaign | claude-opus | `budget_limit_sek: 10000` per kampanj |
-| seo | perplexity | Keyword-rankings ackumuleras i memory |
-| lead | claude-sonnet | `score_threshold_mql: 75` |
-| analytics | claude-sonnet | Skriver KPI-data till Supabase |
-| brand | claude-opus | `has_veto: true`, använder alltid Opus |
+| Slug      | Routing default | Speciellt                                                          |
+| --------- | --------------- | ------------------------------------------------------------------ |
+| strategy  | claude-opus     | `sample_review_rate: 1.0` (alla planer kräver godkännande)         |
+| content   | claude-opus     | Few-shot (bra/dåligt), metadata via Sonnet, bilder via Nano Banana |
+| campaign  | claude-opus     | `budget_limit_sek: 10000` per kampanj                              |
+| seo       | perplexity      | Keyword-rankings ackumuleras i memory                              |
+| lead      | claude-sonnet   | `score_threshold_mql: 75`                                          |
+| analytics | claude-sonnet   | Skriver KPI-data till Supabase                                     |
+| brand     | claude-opus     | `has_veto: true`, använder alltid Opus                             |
 
 ## Varumärkeskontext (brand/)
 

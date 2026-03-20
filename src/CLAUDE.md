@@ -19,14 +19,14 @@ index.ts → gateway/gateway.ts (huvudklass)
 
 ## Viktiga filer
 
-| Fil | Kritisk | Beskrivning |
-|-----|---------|-------------|
-| `gateway/router.ts` | JA | Multi-modell-routing. Läser agent.yaml routing-fält. Granska manuellt vid ändringar. |
-| `gateway/logger.ts` | JA | Strukturerad JSON-loggning (audit trail). Varje agentbeslut loggas. |
-| `agents/agent-loader.ts` | JA | Läser agent.yaml, resolvar filer, bygger systemprompt + task_context. |
-| `agents/base-agent.ts` | JA | Abstrakt basklass – execute(), getSystemPrompt(), escalate(), writeMemory(). |
-| `llm/claude.ts` | – | Anthropic SDK-klient (Opus 4.6 + Sonnet 4.6). |
-| `supabase/client.ts` | – | Supabase-klient med service role key. |
+| Fil                      | Kritisk | Beskrivning                                                                          |
+| ------------------------ | ------- | ------------------------------------------------------------------------------------ |
+| `gateway/router.ts`      | JA      | Multi-modell-routing. Läser agent.yaml routing-fält. Granska manuellt vid ändringar. |
+| `gateway/logger.ts`      | JA      | Strukturerad JSON-loggning (audit trail). Varje agentbeslut loggas.                  |
+| `agents/agent-loader.ts` | JA      | Läser agent.yaml, resolvar filer, bygger systemprompt + task_context.                |
+| `agents/base-agent.ts`   | JA      | Abstrakt basklass – execute(), getSystemPrompt(), escalate(), writeMemory().         |
+| `llm/claude.ts`          | –       | Anthropic SDK-klient (Opus 4.6 + Sonnet 4.6).                                        |
+| `supabase/client.ts`     | –       | Supabase-klient med service role key.                                                |
 
 ## Kodmönster
 
@@ -37,8 +37,8 @@ Alla agenter ärver `BaseAgent`. Manifest (`agent.yaml`) styr routing, tools och
 ```typescript
 // Ny agent: skapa src/agents/<slug>/<slug>-agent.ts
 export class FooAgent extends BaseAgent {
-  name = 'Foo Agent';
-  slug = 'foo';
+  name = "Foo Agent";
+  slug = "foo";
 
   async execute(task: AgentTask): Promise<AgentResult> {
     const systemPrompt = this.getSystemPrompt();
@@ -100,10 +100,10 @@ Auth: `Authorization: Bearer <supabase-jwt>`, valideras mot Supabase Auth + prof
 
 ## Schemalagda uppgifter
 
-| Tid | Agent | Uppgift |
-|-----|-------|---------|
-| 07:00 mån-fre | Analytics | Morgonpuls |
-| 08:00 måndag | Strategy | Veckoplanering |
-| 09:00 mån/ons/fre | Content | Schemalagt innehåll |
-| 10:00 dagligen | Lead | Lead scoring |
-| 14:00 fredag | Analytics | Veckorapport |
+| Tid               | Agent     | Uppgift             |
+| ----------------- | --------- | ------------------- |
+| 07:00 mån-fre     | Analytics | Morgonpuls          |
+| 08:00 måndag      | Strategy  | Veckoplanering      |
+| 09:00 mån/ons/fre | Content   | Schemalagt innehåll |
+| 10:00 dagligen    | Lead      | Lead scoring        |
+| 14:00 fredag      | Analytics | Veckorapport        |

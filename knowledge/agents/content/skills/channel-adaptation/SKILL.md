@@ -7,6 +7,7 @@ version: 1.0.0
 # Channel Adaptation
 
 ## Regler
+
 1. Anpassa längd och format efter kanal – LinkedIn ≠ blogg ≠ nyhetsbrev
 2. **Blogg:** 800–1500 ord, SEO-optimerat, tydlig struktur med rubriker
 3. **LinkedIn:** 150–300 ord, personligt tilltal, hook i första meningen

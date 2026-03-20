@@ -89,105 +89,120 @@ export function taskRoutes(supabase: SupabaseClient): Router {
   });
 
   // POST /api/tasks/:id/approve
-  router.post("/:id/approve", requireRole("orchestrator", "admin"), validateBody(approveSchema), async (req, res) => {
-    try {
-      const taskId = req.params.id as string;
-      const { feedback } = req.body;
-      await updateTaskStatus(supabase, taskId, "approved");
-      await createApproval(supabase, {
-        task_id: taskId,
-        reviewer_type: "orchestrator",
-        reviewer_id: req.user!.id,
-        decision: "approved",
-        feedback,
-      });
-      await logActivity(supabase, {
-        user_id: req.user!.id,
-        action: "task_approved",
-        details_json: { task_id: taskId },
-      });
+  router.post(
+    "/:id/approve",
+    requireRole("orchestrator", "admin", "operator"),
+    validateBody(approveSchema),
+    async (req, res) => {
+      try {
+        const taskId = req.params.id as string;
+        const { feedback } = req.body;
+        await updateTaskStatus(supabase, taskId, "approved");
+        await createApproval(supabase, {
+          task_id: taskId,
+          reviewer_type: "orchestrator",
+          reviewer_id: req.user!.id,
+          decision: "approved",
+          feedback,
+        });
+        await logActivity(supabase, {
+          user_id: req.user!.id,
+          action: "task_approved",
+          details_json: { task_id: taskId },
+        });
 
-      await supabase.from("commands").insert({
-        command_type: "approve_task",
-        payload_json: { task_id: taskId, feedback, source: "api" },
-        issued_by: req.user!.id,
-        status: "completed",
-        processed_at: new Date().toISOString(),
-      });
+        await supabase.from("commands").insert({
+          command_type: "approve_task",
+          payload_json: { task_id: taskId, feedback, source: "api" },
+          issued_by: req.user!.id,
+          status: "completed",
+          processed_at: new Date().toISOString(),
+        });
 
-      res.json({ data: { id: taskId, status: "approved" } });
-    } catch (err) {
-      res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
-    }
-  });
+        res.json({ data: { id: taskId, status: "approved" } });
+      } catch (err) {
+        res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+      }
+    },
+  );
 
   // POST /api/tasks/:id/reject
-  router.post("/:id/reject", requireRole("orchestrator", "admin"), validateBody(rejectSchema), async (req, res) => {
-    try {
-      const taskId = req.params.id as string;
-      const { feedback } = req.body;
+  router.post(
+    "/:id/reject",
+    requireRole("orchestrator", "admin", "operator"),
+    validateBody(rejectSchema),
+    async (req, res) => {
+      try {
+        const taskId = req.params.id as string;
+        const { feedback } = req.body;
 
-      await updateTaskStatus(supabase, taskId, "rejected");
-      await createApproval(supabase, {
-        task_id: taskId,
-        reviewer_type: "orchestrator",
-        reviewer_id: req.user!.id,
-        decision: "rejected",
-        feedback,
-      });
-      await logActivity(supabase, {
-        user_id: req.user!.id,
-        action: "task_rejected",
-        details_json: { task_id: taskId, feedback },
-      });
+        await updateTaskStatus(supabase, taskId, "rejected");
+        await createApproval(supabase, {
+          task_id: taskId,
+          reviewer_type: "orchestrator",
+          reviewer_id: req.user!.id,
+          decision: "rejected",
+          feedback,
+        });
+        await logActivity(supabase, {
+          user_id: req.user!.id,
+          action: "task_rejected",
+          details_json: { task_id: taskId, feedback },
+        });
 
-      await supabase.from("commands").insert({
-        command_type: "reject_task",
-        payload_json: { task_id: taskId, feedback, source: "api" },
-        issued_by: req.user!.id,
-        status: "completed",
-        processed_at: new Date().toISOString(),
-      });
+        await supabase.from("commands").insert({
+          command_type: "reject_task",
+          payload_json: { task_id: taskId, feedback, source: "api" },
+          issued_by: req.user!.id,
+          status: "completed",
+          processed_at: new Date().toISOString(),
+        });
 
-      res.json({ data: { id: taskId, status: "rejected" } });
-    } catch (err) {
-      res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
-    }
-  });
+        res.json({ data: { id: taskId, status: "rejected" } });
+      } catch (err) {
+        res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+      }
+    },
+  );
 
   // POST /api/tasks/:id/revision
-  router.post("/:id/revision", requireRole("orchestrator", "admin"), validateBody(revisionSchema), async (req, res) => {
-    try {
-      const taskId = req.params.id as string;
-      const { feedback } = req.body;
+  router.post(
+    "/:id/revision",
+    requireRole("orchestrator", "admin", "operator"),
+    validateBody(revisionSchema),
+    async (req, res) => {
+      try {
+        const taskId = req.params.id as string;
+        const { feedback } = req.body;
 
-      await updateTaskStatus(supabase, taskId, "awaiting_review");
-      await createApproval(supabase, {
-        task_id: taskId,
-        reviewer_type: "orchestrator",
-        reviewer_id: req.user!.id,
-        decision: "revision_requested",
-        feedback,
-      });
-      await logActivity(supabase, {
-        user_id: req.user!.id,
-        action: "task_revision_requested",
-        details_json: { task_id: taskId, feedback },
-      });
+        await updateTaskStatus(supabase, taskId, "awaiting_review");
+        await createApproval(supabase, {
+          task_id: taskId,
+          reviewer_type: "orchestrator",
+          reviewer_id: req.user!.id,
+          decision: "revision_requested",
+          feedback,
+        });
+        await logActivity(supabase, {
+          user_id: req.user!.id,
+          action: "task_revision_requested",
+          details_json: { task_id: taskId, feedback },
+        });
 
-      await supabase.from("commands").insert({
-        command_type: "revision_task",
-        payload_json: { task_id: taskId, feedback, source: "api" },
-        issued_by: req.user!.id,
-        status: "completed",
-        processed_at: new Date().toISOString(),
-      });
+        await supabase.from("commands").insert({
+          command_type: "revision_task",
+          payload_json: { task_id: taskId, feedback, source: "api" },
+          issued_by: req.user!.id,
+          status: "completed",
+          processed_at: new Date().toISOString(),
+        });
 
-      res.json({ data: { id: taskId, status: "awaiting_review" } });
-    } catch (err) {
-      res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
-    }
-  });
+        res.json({ data: { id: taskId, status: "awaiting_review" } });
+      } catch (err) {
+        res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+      }
+    },
+  );
 
   return router;
 }

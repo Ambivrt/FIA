@@ -222,11 +222,14 @@ export class IntelligenceAgent extends BaseAgent {
             });
           }
         } catch (err) {
-          this.logger.warn(`Search failed for keyword "${keyword}" in domain ${domain.slug}: ${(err as Error).message}`, {
-            agent: this.slug,
-            action: "search_error",
-            domain: domain.slug,
-          });
+          this.logger.warn(
+            `Search failed for keyword "${keyword}" in domain ${domain.slug}: ${(err as Error).message}`,
+            {
+              agent: this.slug,
+              action: "search_error",
+              domain: domain.slug,
+            },
+          );
         }
       }
 
@@ -293,10 +296,7 @@ export class IntelligenceAgent extends BaseAgent {
 
   private static readonly SCORING_BATCH_SIZE = 50;
 
-  private async scoreFindings(
-    findings: RawFinding[],
-    watchConfig: WatchDomainsConfig,
-  ): Promise<ScoredFinding[]> {
+  private async scoreFindings(findings: RawFinding[], watchConfig: WatchDomainsConfig): Promise<ScoredFinding[]> {
     if (findings.length === 0) return [];
 
     const scored: ScoredFinding[] = [];
@@ -311,15 +311,9 @@ export class IntelligenceAgent extends BaseAgent {
     return scored.sort((a, b) => b.signal_score - a.signal_score);
   }
 
-  private async scoreBatch(
-    findings: RawFinding[],
-    watchConfig: WatchDomainsConfig,
-  ): Promise<ScoredFinding[]> {
+  private async scoreBatch(findings: RawFinding[], watchConfig: WatchDomainsConfig): Promise<ScoredFinding[]> {
     const findingsText = findings
-      .map(
-        (f, i) =>
-          `[${i}] ${f.title}\nURL: ${f.url}\nSnippet: ${f.snippet}\nDomän: ${f.domain_slug}`,
-      )
+      .map((f, i) => `[${i}] ${f.title}\nURL: ${f.url}\nSnippet: ${f.snippet}\nDomän: ${f.domain_slug}`)
       .join("\n\n");
 
     const scoringPrompt = [
@@ -345,13 +339,15 @@ export class IntelligenceAgent extends BaseAgent {
 
     if (response.toolUse && response.toolUse.toolName === "signal_scoring") {
       const input = response.toolUse.input as Record<string, unknown>;
-      const scores = Array.isArray(input?.scores) ? input.scores as Array<{
-        url: string;
-        domain_relevance: number;
-        forefront_impact: number;
-        actionability: number;
-        recency_novelty: number;
-      }> : [];
+      const scores = Array.isArray(input?.scores)
+        ? (input.scores as Array<{
+            url: string;
+            domain_relevance: number;
+            forefront_impact: number;
+            actionability: number;
+            recency_novelty: number;
+          }>)
+        : [];
 
       if (scores.length === 0) {
         this.logger.warn(`Scoring batch returned no valid scores (${findings.length} findings)`, {
@@ -457,10 +453,7 @@ export class IntelligenceAgent extends BaseAgent {
     return analyzed;
   }
 
-  private async handleRapidResponses(
-    analyzed: AnalyzedFinding[],
-    taskId: string,
-  ): Promise<number> {
+  private async handleRapidResponses(analyzed: AnalyzedFinding[], taskId: string): Promise<number> {
     let triggered = 0;
 
     for (const finding of analyzed) {
@@ -490,11 +483,7 @@ export class IntelligenceAgent extends BaseAgent {
       if (finding.suggested_action === "rapid_response") {
         try {
           // Create a task for Content Agent
-          const { data: contentAgent } = await this.supabase
-            .from("agents")
-            .select("id")
-            .eq("slug", "content")
-            .single();
+          const { data: contentAgent } = await this.supabase.from("agents").select("id").eq("slug", "content").single();
 
           if (contentAgent) {
             const rapidTaskId = await createTask(this.supabase, {
@@ -563,15 +552,20 @@ export class IntelligenceAgent extends BaseAgent {
       const history = this.loadSourceHistory();
 
       // Step 2: Gather findings via Serper
-      await task.onProgress?.("searching", `:globe_with_meridians: Söker ${watchConfig.domains.length} domäner + ${watchConfig.pinned_sources.length} fasta källor...`, {
-        task_id: taskId,
-      });
+      await task.onProgress?.(
+        "searching",
+        `:globe_with_meridians: Söker ${watchConfig.domains.length} domäner + ${watchConfig.pinned_sources.length} fasta källor...`,
+        {
+          task_id: taskId,
+        },
+      );
 
       const findings = await this.gatherFindings(watchConfig, history);
-      const totalSearches = watchConfig.domains.reduce(
-        (acc, d) => acc + d.keywords.primary.length + (d.keywords.swedish?.length ?? 0) + (d.entities?.length ?? 0),
-        0,
-      ) + watchConfig.pinned_sources.reduce((acc, p) => acc + (p.keywords?.length ?? 2), 0);
+      const totalSearches =
+        watchConfig.domains.reduce(
+          (acc, d) => acc + d.keywords.primary.length + (d.keywords.swedish?.length ?? 0) + (d.entities?.length ?? 0),
+          0,
+        ) + watchConfig.pinned_sources.reduce((acc, p) => acc + (p.keywords?.length ?? 2), 0);
 
       this.logger.info(`Gathered ${findings.length} unique findings from ${totalSearches} searches`, {
         agent: this.slug,
@@ -593,9 +587,13 @@ export class IntelligenceAgent extends BaseAgent {
       let analyzed: AnalyzedFinding[] = [];
 
       if (highRelevance.length > 0) {
-        await task.onProgress?.("analyzing", `:microscope: Djupanalyserar ${highRelevance.length} högrelevanta fynd...`, {
-          task_id: taskId,
-        });
+        await task.onProgress?.(
+          "analyzing",
+          `:microscope: Djupanalyserar ${highRelevance.length} högrelevanta fynd...`,
+          {
+            task_id: taskId,
+          },
+        );
 
         analyzed = await this.deepAnalyze(scored);
       }
@@ -777,10 +775,11 @@ export class IntelligenceAgent extends BaseAgent {
         .join("\n\n---\n\n");
 
       const domainList = watchConfig.domains.map((d) => `- ${d.name} (${d.slug})`).join("\n");
-      const competitorList = watchConfig.domains
-        .find((d) => d.slug === "competitors")
-        ?.entities?.map((e) => e.name)
-        .join(", ") ?? "Inga";
+      const competitorList =
+        watchConfig.domains
+          .find((d) => d.slug === "competitors")
+          ?.entities?.map((e) => e.name)
+          .join(", ") ?? "Inga";
 
       const weekNumber = this.getWeekNumber(new Date());
       const year = new Date().getFullYear();

@@ -4,14 +4,14 @@ Supabase PostgreSQL (EU-region). Gateway skriver, Dashboard läser via Realtime.
 
 ## Tabeller
 
-| Tabell | Syfte | Skrivs av |
-|--------|-------|-----------|
-| `profiles` | Användare (1:1 med auth.users) | Supabase Auth |
-| `agents` | Registret (7 agenter), status, heartbeat | Gateway (heartbeat.ts) |
-| `tasks` | Alla agentuppgifter, godkännandeflöde | Gateway (task-writer.ts) |
-| `approvals` | Granskningshistorik (Brand Agent + mänskliga) | Gateway + API |
-| `metrics` | KPI-data per period | Analytics Agent |
-| `activity_log` | Audit trail – alla beslut | Gateway (activity-writer.ts) |
+| Tabell         | Syfte                                         | Skrivs av                    |
+| -------------- | --------------------------------------------- | ---------------------------- |
+| `profiles`     | Användare (1:1 med auth.users)                | Supabase Auth                |
+| `agents`       | Registret (7 agenter), status, heartbeat      | Gateway (heartbeat.ts)       |
+| `tasks`        | Alla agentuppgifter, godkännandeflöde         | Gateway (task-writer.ts)     |
+| `approvals`    | Granskningshistorik (Brand Agent + mänskliga) | Gateway + API                |
+| `metrics`      | KPI-data per period                           | Analytics Agent              |
+| `activity_log` | Audit trail – alla beslut                     | Gateway (activity-writer.ts) |
 
 ## Nyckelschema
 

@@ -7,6 +7,7 @@ version: 1.0.0
 # A/B Testing
 
 ## Regler
+
 1. A/B-testa alltid minst två varianter per kampanj
 2. Dokumentera resultat i memory/ab-test-results.json
 3. Varianterna ska skilja sig i en enda variabel (ämnesrad, CTA, layout)

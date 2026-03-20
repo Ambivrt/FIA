@@ -11,6 +11,7 @@ Vi jobbade med ett bolag som ville implementera prediktivt underhåll. Smart id�
 Så vi började inte med AI. Vi började med att städa.
 
 Sex månader senare hade de:
+
 - En gemensam dataplattform
 - Processer som faktiskt fungerade utan manuella workarounds
 - Och ja – ett AI-system som levererade värde från dag ett
@@ -24,6 +25,7 @@ Hur ser er grund ut? Berätta gärna i kommentarerna.
 ---
 
 ## Varför detta är bra
+
 - **Hook:** fångar med relevant fråga
 - **Personlig:** jag-form, verklig situation
 - **Konkret:** specifikt exempel, inte abstrakt

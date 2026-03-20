@@ -1,6 +1,7 @@
 # Exempel: Brand Review – GODKÄND
 
 ## Innehåll som granskades
+
 **Typ:** LinkedIn-inlägg
 **Källa:** Content Agent
 
@@ -11,6 +12,7 @@
 > Den mest underskattade delen av digitalisering är inte tekniken. Det är att veta vilka frågor man ska ställa innan man börjar bygga.
 >
 > Tre saker vi alltid frågar innan vi startar ett projekt:
+>
 > 1. Vad händer om vi inte gör något alls?
 > 2. Vem påverkas mest – och har vi pratat med dem?
 > 3. Hur mäter vi framgång om ett år?

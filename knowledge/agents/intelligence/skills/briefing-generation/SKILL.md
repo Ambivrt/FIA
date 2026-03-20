@@ -12,6 +12,7 @@ och övriga FIA-agenter.
 ## Rapportformat: Morgonscan / Middagssweep
 
 Struktur:
+
 1. **Sammanfattning** (3–5 rader): Dagens viktigaste i en mening per fynd
 2. **Toppfynd** (score >= 0.7): Full djupanalys med implications och suggested_action
 3. **Bevakningsradar** (score 0.6–0.69): Enrads-sammanfattning per fynd, grupperat per domän
@@ -20,6 +21,7 @@ Struktur:
 ## Rapportformat: Veckobriefing
 
 Struktur:
+
 1. **Veckans viktigaste** (top 5): Rankat efter composite score, med trend (ny/uppföljning)
 2. **Per domän**: 2–3 viktigaste per bevakningsdomän
 3. **Konkurrentöversikt**: Vad har namngivna konkurrenter gjort denna vecka?

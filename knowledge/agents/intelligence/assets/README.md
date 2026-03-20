@@ -5,11 +5,11 @@ scorar relevans, genererar briefs och triggar rapid response vid högrelevanta f
 
 ## Schemalagda körningar
 
-| Tid | Uppgift | Beskrivning |
-|-----|---------|-------------|
-| 06:30 mån–fre | morning_scan | Daglig morgonbevakning |
-| 13:00 mån–fre | midday_sweep | Daglig middagsbevakning |
-| 09:00 måndag | weekly_intelligence | Veckobriefing |
+| Tid           | Uppgift             | Beskrivning             |
+| ------------- | ------------------- | ----------------------- |
+| 06:30 mån–fre | morning_scan        | Daglig morgonbevakning  |
+| 13:00 mån–fre | midday_sweep        | Daglig middagsbevakning |
+| 09:00 måndag  | weekly_intelligence | Veckobriefing           |
 
 ## Konfiguration
 
