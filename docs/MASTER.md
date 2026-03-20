@@ -104,6 +104,8 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 | ----------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | Claude Opus 4.6   | `claude-opus-4-6`        | Orkestrerande huvud-LLM: strategi, komplex analys, varumärkesgranskning (Brand Agent), högrisk-innehåll, blogg, kampanjstrategi | $15 in / $75 ut      |
 | Claude Sonnet 4.6 | `claude-sonnet-4-6`      | Metadata, alt-texter, A/B-varianter, lead scoring, klassificering, nurture-sekvenser, rapporter                                 | $3 in / $15 ut       |
+| Gemini 2.5 Pro    | `gemini-2.5-pro`         | Fallback för textgenerering, djupanalys                                                                                         | $1.25 in / $10 ut    |
+| Gemini 2.5 Flash  | `gemini-2.5-flash`       | Fallback för textgenerering, snabba uppgifter                                                                                   | $0.15 in / $0.60 ut  |
 | Nano Banana 2     | `gemini-2.5-flash-image` | Bildgenerering: social media-grafik, blogg-illustrationer, annonskreativ                                                        | ~$0.04/bild          |
 | Serper.dev        | `google-custom-search`   | Realtidssökning: omvärldsbevakning, trendspaning, SEO-analys, faktakontroll                                                     | $0.001/sökning       |
 
@@ -111,7 +113,7 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 Varje agents `agent.yaml` definierar ett `routing`-fält som mappar uppgiftstyp → modellalias. Gatewayen läser detta vid laddning – ingen hårdkodning av modellval i kod.
 
-**Giltiga modellalias:** `claude-opus`, `claude-sonnet`, `nano-banana-2`, `google-search`.
+**Giltiga modellalias:** `claude-opus`, `claude-sonnet`, `gemini-pro`, `gemini-flash`, `nano-banana-2`, `google-search`.
 
 Modellaliasens mappning till API-modell-ID:
 
@@ -119,6 +121,8 @@ Modellaliasens mappning till API-modell-ID:
 const MODEL_MAP = {
   "claude-opus": "claude-opus-4-6",
   "claude-sonnet": "claude-sonnet-4-6",
+  "gemini-pro": "gemini-2.5-pro",
+  "gemini-flash": "gemini-2.5-flash",
   "nano-banana-2": "gemini-2.5-flash-image",
   "google-search": "google-custom-search", // Serper API
 };
@@ -132,8 +136,8 @@ Routern stöder ett fallback-system. Varje routing-entry kan vara antingen en en
 
 ```yaml
 routing:
-  default: claude-opus                    # Legacy: enkel sträng
-  deep_analysis:                          # Objekt med fallback
+  default: claude-opus # Legacy: enkel sträng
+  deep_analysis: # Objekt med fallback
     primary: claude-opus
     fallback: claude-sonnet
 ```
@@ -144,12 +148,13 @@ Zod-validering i API:t (`PATCH /api/agents/:slug/routing`) accepterar båda form
 
 ```typescript
 z.union([
-  modelAliasEnum,                        // Enkel sträng (legacy)
-  z.object({                             // Objekt med fallback
+  modelAliasEnum, // Enkel sträng (legacy)
+  z.object({
+    // Objekt med fallback
     primary: modelAliasEnum,
     fallback: modelAliasEnum.optional(),
   }),
-])
+]);
 ```
 
 ---
@@ -164,7 +169,8 @@ z.union([
 | Task Queue        | In-memory prioritetskö               | Max 3 concurrent, prioritetsordning (urgent → low)              |
 | Slack             | Bolt SDK (Socket Mode)               | Orchestrator-gränssnitt                                         |
 | Modell-router     | Manifest-driven (agent.yaml)         | Dirigerar uppgifter till rätt LLM                               |
-| LLM               | Anthropic SDK (`@anthropic-ai/sdk`)  | Claude Opus 4.6 / Sonnet 4.6 (tool_use för strukturerad output) |
+| LLM (primär)      | Anthropic SDK (`@anthropic-ai/sdk`)  | Claude Opus 4.6 / Sonnet 4.6 (tool_use för strukturerad output) |
+| LLM (fallback)    | Google GenAI SDK (`@google/genai`)   | Gemini 2.5 Pro / Flash – textgenerering vid fallback            |
 | Bildgenerering    | Google GenAI SDK (`@google/genai`)   | Nano Banana 2 via Gemini API                                    |
 | Sökning           | Serper.dev API                       | Realtidsdata (Googles sökresultat)                              |
 | Kontexthantering  | agent.yaml + markdown + JSON         | system_context, task_context per agent                          |
@@ -233,14 +239,14 @@ Filer som alla innehållsagenter delar. Laddas av prompt-builder.
 
 Modulärt skill-system. Varje skill är en `SKILL.md`-fil som kan delas mellan agenter.
 
-| Skill                 | Slug                    | Används av                               |
-| --------------------- | ----------------------- | ---------------------------------------- |
-| Forefront Identity    | `forefront-identity`    | Alla 8 agenter                                    |
-| Brand Compliance      | `brand-compliance`      | Content, Brand, Campaign, Lead, Strategy           |
-| Swedish Tone          | `swedish-tone`          | Content, Campaign                                  |
-| Data-Driven Reasoning | `data-driven-reasoning` | Strategy, Campaign, SEO, Analytics, Intelligence   |
-| Escalation Protocol   | `escalation-protocol`   | Alla 8 agenter                                     |
-| GDPR Compliance       | `gdpr-compliance`       | Lead, Analytics                                    |
+| Skill                 | Slug                    | Används av                                       |
+| --------------------- | ----------------------- | ------------------------------------------------ |
+| Forefront Identity    | `forefront-identity`    | Alla 8 agenter                                   |
+| Brand Compliance      | `brand-compliance`      | Content, Brand, Campaign, Lead, Strategy         |
+| Swedish Tone          | `swedish-tone`          | Content, Campaign                                |
+| Data-Driven Reasoning | `data-driven-reasoning` | Strategy, Campaign, SEO, Analytics, Intelligence |
+| Escalation Protocol   | `escalation-protocol`   | Alla 8 agenter                                   |
+| GDPR Compliance       | `gdpr-compliance`       | Lead, Analytics                                  |
 
 Skills refereras i `agent.yaml` med prefix: `shared:forefront-identity` för delade, `agent:content-production` för agentspecifika.
 
@@ -1103,9 +1109,9 @@ Claude API:s tool_use används för att få strukturerad output från agenter. F
 | Verktyg                 | Agent                   | Syfte                                                                                           |
 | ----------------------- | ----------------------- | ----------------------------------------------------------------------------------------------- |
 | `content_response`      | Content, Campaign, Lead | Strukturerad content-output (title, body, summary, metadata)                                    |
-| `brand_review_decision` | Brand                   | Strukturerat granskningsbeslut (approved/rejected, feedback, scores)                             |
+| `brand_review_decision` | Brand                   | Strukturerat granskningsbeslut (approved/rejected, feedback, scores)                            |
 | `signal_scoring`        | Intelligence            | Strukturerad signalscoring (domain_relevance, forefront_impact, actionability, recency_novelty) |
-| `deep_analysis`         | Intelligence            | Strukturerad djupanalys (summary, implications, suggested_action, confidence)                    |
+| `deep_analysis`         | Intelligence            | Strukturerad djupanalys (summary, implications, suggested_action, confidence)                   |
 
 ---
 
@@ -1207,6 +1213,7 @@ Modiga, Hängivna, Lustfyllda
 | Post                         | Låg           | Hög           |
 | ---------------------------- | ------------- | ------------- |
 | Claude API (Opus + Sonnet)   | 3 000 kr      | 10 000 kr     |
+| Gemini API (Pro + Flash)     | 100 kr        | 500 kr        |
 | Nano Banana 2                | 200 kr        | 500 kr        |
 | Serper.dev                   | 200 kr        | 500 kr        |
 | GCP Compute Engine           | 150 kr        | 250 kr        |
@@ -1379,18 +1386,18 @@ Deploy 0.2 (2026-03-15). Gateway + Dashboard MVP live. 4 arbetsdagar, en person 
 
 ## Licenser
 
-| Tjänst                               | Kostnad/mån       | Fas |
-| ------------------------------------ | ----------------- | --- |
-| Anthropic Claude API                 | ~300–1 000 kr     | 1   |
-| Google AI Studio API (Nano Banana 2) | ~100–350 kr       | 1   |
-| Serper.dev                           | ~100–200 kr       | 1   |
-| GCP Compute Engine                   | ~150–250 kr       | 1   |
-| Slack Pro                            | ~80 kr/användare  | 1   |
-| Supabase                             | 0–250 kr          | 1   |
-| Lovable                              | 0–200 kr          | 1   |
-| gws CLI                              | 0 kr (Apache-2.0) | 1   |
-| HubSpot                              | 0–800 kr          | 2   |
-| Buffer                               | ~600 kr           | 2   |
+| Tjänst                        | Kostnad/mån       | Fas |
+| ----------------------------- | ----------------- | --- |
+| Anthropic Claude API          | ~300–1 000 kr     | 1   |
+| Google AI Studio API (Gemini) | ~100–500 kr       | 1   |
+| Serper.dev                    | ~100–200 kr       | 1   |
+| GCP Compute Engine            | ~150–250 kr       | 1   |
+| Slack Pro                     | ~80 kr/användare  | 1   |
+| Supabase                      | 0–250 kr          | 1   |
+| Lovable                       | 0–200 kr          | 1   |
+| gws CLI                       | 0 kr (Apache-2.0) | 1   |
+| HubSpot                       | 0–800 kr          | 2   |
+| Buffer                        | ~600 kr           | 2   |
 
 ---
 
@@ -1398,18 +1405,18 @@ Deploy 0.2 (2026-03-15). Gateway + Dashboard MVP live. 4 arbetsdagar, en person 
 
 ### Produktion
 
-| Paket                   | Version | Syfte                              |
-| ----------------------- | ------- | ---------------------------------- |
-| `@anthropic-ai/sdk`     | ^0.39.0 | Claude API (Opus 4.6 + Sonnet 4.6) |
-| `@google/genai`         | ^1.0.0  | Nano Banana 2 bildgenerering       |
-| `@slack/bolt`           | ^4.1.0  | Slack SDK (Socket Mode)            |
-| `@supabase/supabase-js` | ^2.49.0 | Supabase-klient                    |
-| `express`               | ^4.21.0 | REST API (internt)                 |
-| `node-cron`             | ^3.0.3  | Schemaläggning                     |
-| `yaml`                  | ^2.7.0  | Parsning av agent.yaml             |
-| `zod`                   | ^4.3.6  | Validering                         |
-| `uuid`                  | ^11.1.0 | Task-ID:n                          |
-| `dotenv`                | ^16.4.7 | Miljövariabler                     |
+| Paket                   | Version | Syfte                                        |
+| ----------------------- | ------- | -------------------------------------------- |
+| `@anthropic-ai/sdk`     | ^0.39.0 | Claude API (Opus 4.6 + Sonnet 4.6)           |
+| `@google/genai`         | ^1.0.0  | Gemini API (textgenerering + bildgenerering) |
+| `@slack/bolt`           | ^4.1.0  | Slack SDK (Socket Mode)                      |
+| `@supabase/supabase-js` | ^2.49.0 | Supabase-klient                              |
+| `express`               | ^4.21.0 | REST API (internt)                           |
+| `node-cron`             | ^3.0.3  | Schemaläggning                               |
+| `yaml`                  | ^2.7.0  | Parsning av agent.yaml                       |
+| `zod`                   | ^4.3.6  | Validering                                   |
+| `uuid`                  | ^11.1.0 | Task-ID:n                                    |
+| `dotenv`                | ^16.4.7 | Miljövariabler                               |
 
 ### Utveckling
 
@@ -1428,7 +1435,7 @@ Se `.env.example` för alla nyckelnamn. Aldrig i kod. Kritiska:
 
 ```
 ANTHROPIC_API_KEY          # Claude API (krävs)
-GEMINI_API_KEY             # Nano Banana 2 (valfritt)
+GEMINI_API_KEY             # Gemini API – text + bild (valfritt)
 SERPER_API_KEY             # Google Search via Serper (valfritt)
 SLACK_BOT_TOKEN            # Slack
 SLACK_APP_TOKEN            # Slack Socket Mode

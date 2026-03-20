@@ -13,6 +13,8 @@ export interface ModelPricing {
 const TOKEN_PRICING: Record<string, ModelPricing> = {
   "claude-opus-4-6": { inputPer1MTokens: 15, outputPer1MTokens: 75 },
   "claude-sonnet-4-6": { inputPer1MTokens: 3, outputPer1MTokens: 15 },
+  "gemini-2.5-pro": { inputPer1MTokens: 1.25, outputPer1MTokens: 10 },
+  "gemini-2.5-flash": { inputPer1MTokens: 0.15, outputPer1MTokens: 0.6 },
 };
 
 /** Flat per-call pricing (USD) for non-token models */
