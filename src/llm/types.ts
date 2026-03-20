@@ -1,6 +1,18 @@
-export type ModelAlias = "claude-opus" | "claude-sonnet" | "gemini-pro" | "gemini-flash" | "nano-banana-2" | "google-search";
+export type ModelAlias =
+  | "claude-opus"
+  | "claude-sonnet"
+  | "gemini-pro"
+  | "gemini-flash"
+  | "nano-banana-2"
+  | "google-search";
 
-export type ModelId = "claude-opus-4-6" | "claude-sonnet-4-6" | "gemini-2.5-pro" | "gemini-2.5-flash" | "gemini-2.5-flash-image" | "google-custom-search";
+export type ModelId =
+  | "claude-opus-4-6"
+  | "claude-sonnet-4-6"
+  | "gemini-2.5-pro"
+  | "gemini-2.5-flash"
+  | "gemini-2.5-flash-image"
+  | "google-custom-search";
 
 export const MODEL_MAP: Record<ModelAlias, ModelId> = {
   "claude-opus": "claude-opus-4-6",

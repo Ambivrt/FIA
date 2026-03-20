@@ -25,9 +25,7 @@ export async function callGemini(config: AppConfig, model: string, request: LLMR
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const systemInstruction = request.systemPrompt
-        ? [{ text: request.systemPrompt }]
-        : undefined;
+      const systemInstruction = request.systemPrompt ? [{ text: request.systemPrompt }] : undefined;
 
       const response = await client.models.generateContent({
         model,
@@ -39,10 +37,11 @@ export async function callGemini(config: AppConfig, model: string, request: LLMR
         },
       });
 
-      const text = response.candidates?.[0]?.content?.parts
-        ?.filter((p) => "text" in p && p.text)
-        .map((p) => p.text)
-        .join("") ?? "";
+      const text =
+        response.candidates?.[0]?.content?.parts
+          ?.filter((p) => "text" in p && p.text)
+          .map((p) => p.text)
+          .join("") ?? "";
 
       const tokensIn = response.usageMetadata?.promptTokenCount ?? 0;
       const tokensOut = response.usageMetadata?.candidatesTokenCount ?? 0;

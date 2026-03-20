@@ -136,8 +136,8 @@ Routern stöder ett fallback-system. Varje routing-entry kan vara antingen en en
 
 ```yaml
 routing:
-  default: claude-opus                    # Legacy: enkel sträng
-  deep_analysis:                          # Objekt med fallback
+  default: claude-opus # Legacy: enkel sträng
+  deep_analysis: # Objekt med fallback
     primary: claude-opus
     fallback: claude-sonnet
 ```
@@ -148,12 +148,13 @@ Zod-validering i API:t (`PATCH /api/agents/:slug/routing`) accepterar båda form
 
 ```typescript
 z.union([
-  modelAliasEnum,                        // Enkel sträng (legacy)
-  z.object({                             // Objekt med fallback
+  modelAliasEnum, // Enkel sträng (legacy)
+  z.object({
+    // Objekt med fallback
     primary: modelAliasEnum,
     fallback: modelAliasEnum.optional(),
   }),
-])
+]);
 ```
 
 ---
@@ -238,14 +239,14 @@ Filer som alla innehållsagenter delar. Laddas av prompt-builder.
 
 Modulärt skill-system. Varje skill är en `SKILL.md`-fil som kan delas mellan agenter.
 
-| Skill                 | Slug                    | Används av                               |
-| --------------------- | ----------------------- | ---------------------------------------- |
-| Forefront Identity    | `forefront-identity`    | Alla 8 agenter                                    |
-| Brand Compliance      | `brand-compliance`      | Content, Brand, Campaign, Lead, Strategy           |
-| Swedish Tone          | `swedish-tone`          | Content, Campaign                                  |
-| Data-Driven Reasoning | `data-driven-reasoning` | Strategy, Campaign, SEO, Analytics, Intelligence   |
-| Escalation Protocol   | `escalation-protocol`   | Alla 8 agenter                                     |
-| GDPR Compliance       | `gdpr-compliance`       | Lead, Analytics                                    |
+| Skill                 | Slug                    | Används av                                       |
+| --------------------- | ----------------------- | ------------------------------------------------ |
+| Forefront Identity    | `forefront-identity`    | Alla 8 agenter                                   |
+| Brand Compliance      | `brand-compliance`      | Content, Brand, Campaign, Lead, Strategy         |
+| Swedish Tone          | `swedish-tone`          | Content, Campaign                                |
+| Data-Driven Reasoning | `data-driven-reasoning` | Strategy, Campaign, SEO, Analytics, Intelligence |
+| Escalation Protocol   | `escalation-protocol`   | Alla 8 agenter                                   |
+| GDPR Compliance       | `gdpr-compliance`       | Lead, Analytics                                  |
 
 Skills refereras i `agent.yaml` med prefix: `shared:forefront-identity` för delade, `agent:content-production` för agentspecifika.
 
@@ -1108,9 +1109,9 @@ Claude API:s tool_use används för att få strukturerad output från agenter. F
 | Verktyg                 | Agent                   | Syfte                                                                                           |
 | ----------------------- | ----------------------- | ----------------------------------------------------------------------------------------------- |
 | `content_response`      | Content, Campaign, Lead | Strukturerad content-output (title, body, summary, metadata)                                    |
-| `brand_review_decision` | Brand                   | Strukturerat granskningsbeslut (approved/rejected, feedback, scores)                             |
+| `brand_review_decision` | Brand                   | Strukturerat granskningsbeslut (approved/rejected, feedback, scores)                            |
 | `signal_scoring`        | Intelligence            | Strukturerad signalscoring (domain_relevance, forefront_impact, actionability, recency_novelty) |
-| `deep_analysis`         | Intelligence            | Strukturerad djupanalys (summary, implications, suggested_action, confidence)                    |
+| `deep_analysis`         | Intelligence            | Strukturerad djupanalys (summary, implications, suggested_action, confidence)                   |
 
 ---
 
@@ -1385,18 +1386,18 @@ Deploy 0.2 (2026-03-15). Gateway + Dashboard MVP live. 4 arbetsdagar, en person 
 
 ## Licenser
 
-| Tjänst                               | Kostnad/mån       | Fas |
-| ------------------------------------ | ----------------- | --- |
-| Anthropic Claude API                 | ~300–1 000 kr     | 1   |
-| Google AI Studio API (Gemini)        | ~100–500 kr       | 1   |
-| Serper.dev                           | ~100–200 kr       | 1   |
-| GCP Compute Engine                   | ~150–250 kr       | 1   |
-| Slack Pro                            | ~80 kr/användare  | 1   |
-| Supabase                             | 0–250 kr          | 1   |
-| Lovable                              | 0–200 kr          | 1   |
-| gws CLI                              | 0 kr (Apache-2.0) | 1   |
-| HubSpot                              | 0–800 kr          | 2   |
-| Buffer                               | ~600 kr           | 2   |
+| Tjänst                        | Kostnad/mån       | Fas |
+| ----------------------------- | ----------------- | --- |
+| Anthropic Claude API          | ~300–1 000 kr     | 1   |
+| Google AI Studio API (Gemini) | ~100–500 kr       | 1   |
+| Serper.dev                    | ~100–200 kr       | 1   |
+| GCP Compute Engine            | ~150–250 kr       | 1   |
+| Slack Pro                     | ~80 kr/användare  | 1   |
+| Supabase                      | 0–250 kr          | 1   |
+| Lovable                       | 0–200 kr          | 1   |
+| gws CLI                       | 0 kr (Apache-2.0) | 1   |
+| HubSpot                       | 0–800 kr          | 2   |
+| Buffer                        | ~600 kr           | 2   |
 
 ---
 
@@ -1404,18 +1405,18 @@ Deploy 0.2 (2026-03-15). Gateway + Dashboard MVP live. 4 arbetsdagar, en person 
 
 ### Produktion
 
-| Paket                   | Version | Syfte                              |
-| ----------------------- | ------- | ---------------------------------- |
-| `@anthropic-ai/sdk`     | ^0.39.0 | Claude API (Opus 4.6 + Sonnet 4.6) |
+| Paket                   | Version | Syfte                                        |
+| ----------------------- | ------- | -------------------------------------------- |
+| `@anthropic-ai/sdk`     | ^0.39.0 | Claude API (Opus 4.6 + Sonnet 4.6)           |
 | `@google/genai`         | ^1.0.0  | Gemini API (textgenerering + bildgenerering) |
-| `@slack/bolt`           | ^4.1.0  | Slack SDK (Socket Mode)            |
-| `@supabase/supabase-js` | ^2.49.0 | Supabase-klient                    |
-| `express`               | ^4.21.0 | REST API (internt)                 |
-| `node-cron`             | ^3.0.3  | Schemaläggning                     |
-| `yaml`                  | ^2.7.0  | Parsning av agent.yaml             |
-| `zod`                   | ^4.3.6  | Validering                         |
-| `uuid`                  | ^11.1.0 | Task-ID:n                          |
-| `dotenv`                | ^16.4.7 | Miljövariabler                     |
+| `@slack/bolt`           | ^4.1.0  | Slack SDK (Socket Mode)                      |
+| `@supabase/supabase-js` | ^2.49.0 | Supabase-klient                              |
+| `express`               | ^4.21.0 | REST API (internt)                           |
+| `node-cron`             | ^3.0.3  | Schemaläggning                               |
+| `yaml`                  | ^2.7.0  | Parsning av agent.yaml                       |
+| `zod`                   | ^4.3.6  | Validering                                   |
+| `uuid`                  | ^11.1.0 | Task-ID:n                                    |
+| `dotenv`                | ^16.4.7 | Miljövariabler                               |
 
 ### Utveckling
 
