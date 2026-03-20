@@ -10,6 +10,7 @@ import {
   normalizeRoutingEntry,
 } from "../llm/types";
 import { callClaude } from "../llm/claude";
+import { callGemini } from "../llm/gemini";
 import { searchGoogle } from "../llm/google-search";
 import { generateImage } from "../llm/nano-banana";
 import { calculateFlatCostUsd } from "../llm/pricing";
@@ -24,7 +25,7 @@ export interface AgentRouting {
 export interface RouteResult {
   alias: ModelAlias;
   modelId: string;
-  provider: "claude" | "google-search" | "nano-banana";
+  provider: "claude" | "gemini" | "google-search" | "nano-banana";
 }
 
 export function resolveRoute(routing: AgentRouting, taskType: string): RouteResult {
@@ -52,6 +53,8 @@ function aliasToRoute(alias: ModelAlias): RouteResult {
   let provider: RouteResult["provider"];
   if (alias === "claude-opus" || alias === "claude-sonnet") {
     provider = "claude";
+  } else if (alias === "gemini-pro" || alias === "gemini-flash") {
+    provider = "gemini";
   } else if (alias === "google-search") {
     provider = "google-search";
   } else if (alias === "nano-banana-2") {
@@ -67,6 +70,8 @@ async function callProvider(config: AppConfig, route: RouteResult, request: LLMR
   switch (route.provider) {
     case "claude":
       return callClaude(config, route.modelId, request);
+    case "gemini":
+      return callGemini(config, route.modelId, request);
     case "google-search": {
       const start = Date.now();
       const results = await searchGoogle(config, request.userPrompt);

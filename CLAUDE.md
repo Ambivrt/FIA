@@ -77,12 +77,14 @@ pm2 restart fia-gateway
 
 Varje agents `agent.yaml` har ett `routing`-fält som mappar uppgiftstyp → modell. Routern läser detta – ingen hårdkodning.
 
-| Modell            | Användning                                         | Pris (1M tokens) |
-| ----------------- | -------------------------------------------------- | ---------------- |
-| Claude Opus 4.6   | Innehåll, strategi, analys, Brand Agent-granskning | $15 in / $75 ut  |
-| Claude Sonnet 4.6 | Metadata, scoring, klassificering, A/B-varianter   | $3 in / $15 ut   |
-| Nano Banana 2     | Bildgenerering                                     | ~$0.04/bild      |
-| Serper API        | Realtidssökning, trendspaning                      | $0.001/sökning   |
+| Modell            | Användning                                         | Pris (1M tokens)   |
+| ----------------- | -------------------------------------------------- | ------------------ |
+| Claude Opus 4.6   | Innehåll, strategi, analys, Brand Agent-granskning | $15 in / $75 ut    |
+| Claude Sonnet 4.6 | Metadata, scoring, klassificering, A/B-varianter   | $3 in / $15 ut     |
+| Gemini 2.5 Pro    | Fallback för text, djupanalys                      | $1.25 in / $10 ut  |
+| Gemini 2.5 Flash  | Fallback för text, snabba uppgifter                | $0.15 in / $0.60 ut|
+| Nano Banana 2     | Bildgenerering                                     | ~$0.04/bild        |
+| Serper API        | Realtidssökning, trendspaning                      | $0.001/sökning     |
 
 ## Agenter
 
