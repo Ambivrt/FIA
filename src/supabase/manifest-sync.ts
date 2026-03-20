@@ -69,11 +69,7 @@ export function mergeConfigJson(
   return merged as unknown as AgentConfigJson;
 }
 
-export async function syncAgentManifests(
-  supabase: SupabaseClient,
-  config: AppConfig,
-  logger: Logger,
-): Promise<void> {
+export async function syncAgentManifests(supabase: SupabaseClient, config: AppConfig, logger: Logger): Promise<void> {
   const slugs = getAllAgentSlugs();
   let synced = 0;
   let failed = 0;
@@ -119,10 +115,7 @@ export async function syncAgentManifests(
       const existing = agent.config_json as Record<string, unknown> | null;
       const merged = mergeConfigJson(manifestConfig, existing);
 
-      const { error: updateErr } = await supabase
-        .from("agents")
-        .update({ config_json: merged })
-        .eq("id", agent.id);
+      const { error: updateErr } = await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
 
       if (updateErr) {
         logger.warn(`Failed to update config_json for "${slug}": ${updateErr.message}`, {

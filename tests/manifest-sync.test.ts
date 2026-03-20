@@ -218,10 +218,7 @@ describe("syncAgentManifests", () => {
     await syncAgentManifests(mockSupabase as never, { knowledgeDir: "/fake" } as never, mockLogger);
 
     expect(mockUpdate).toHaveBeenCalledTimes(2);
-    expect(mockLogger.info).toHaveBeenCalledWith(
-      expect.stringContaining("2 synced, 0 failed"),
-      expect.any(Object),
-    );
+    expect(mockLogger.info).toHaveBeenCalledWith(expect.stringContaining("2 synced, 0 failed"), expect.any(Object));
   });
 
   it("inserts new agent when not found in Supabase", async () => {
@@ -247,21 +244,21 @@ describe("syncAgentManifests", () => {
 
     mockLoadAgentManifest.mockImplementation((_dir: string, slug: string) => {
       if (slug === "content") throw new Error("manifest not found");
-      return makeManifest({ name: "Brand Agent", slug: "brand", routing: { default: "claude-opus" }, tools: [], task_context: {} });
+      return makeManifest({
+        name: "Brand Agent",
+        slug: "brand",
+        routing: { default: "claude-opus" },
+        tools: [],
+        task_context: {},
+      });
     });
 
     mockSelectSingle.mockResolvedValueOnce({ data: { id: "id-brand", config_json: {} }, error: null });
 
     await syncAgentManifests(mockSupabase as never, { knowledgeDir: "/fake" } as never, mockLogger);
 
-    expect(mockLogger.warn).toHaveBeenCalledWith(
-      expect.stringContaining("content"),
-      expect.any(Object),
-    );
-    expect(mockLogger.info).toHaveBeenCalledWith(
-      expect.stringContaining("1 synced, 1 failed"),
-      expect.any(Object),
-    );
+    expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining("content"), expect.any(Object));
+    expect(mockLogger.info).toHaveBeenCalledWith(expect.stringContaining("1 synced, 1 failed"), expect.any(Object));
   });
 
   it("preserves admin overrides during sync", async () => {
