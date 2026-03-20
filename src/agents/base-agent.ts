@@ -13,6 +13,7 @@ import { logActivity } from "../supabase/activity-writer";
 import { writeMetric } from "../supabase/metrics-writer";
 import { usdToSek } from "../llm/pricing";
 import { runSelfEval } from "./self-eval";
+import { buildToolDefinitions, dispatchToolUse, hasTools } from "../mcp/tool-registry";
 
 export type ProgressCallback = (action: string, message: string, details?: Record<string, unknown>) => Promise<void>;
 
@@ -87,6 +88,63 @@ export abstract class BaseAgent {
     });
   }
 
+  /**
+   * Call LLM with manifest-defined tools (GWS, etc.) and handle tool_use loop.
+   * If the LLM requests a tool, executes it and feeds the result back for a final response.
+   */
+  protected async callLLMWithTools(taskType: string, userPrompt: string): Promise<LLMResponse> {
+    if (!hasTools(this.manifest.tools)) {
+      return this.callLLM(taskType, userPrompt);
+    }
+
+    const toolDefs = await buildToolDefinitions(this.manifest.tools);
+    if (toolDefs.length === 0) {
+      return this.callLLM(taskType, userPrompt);
+    }
+
+    this.logger.info(`${this.name}: ${toolDefs.length} GWS tools available`, {
+      agent: this.slug,
+      action: "tools_loaded",
+      tool_count: toolDefs.length,
+      tools: toolDefs.map((t) => t.name),
+    });
+
+    const response = await this.callLLM(taskType, userPrompt, {
+      tools: toolDefs,
+      toolChoice: { type: "auto" },
+    });
+
+    // If LLM didn't request a tool, return as-is
+    if (!response.toolUse) {
+      return response;
+    }
+
+    // Execute the tool and feed result back to LLM
+    this.logger.info(`${this.name}: executing tool ${response.toolUse.toolName}`, {
+      agent: this.slug,
+      action: "tool_use",
+      tool: response.toolUse.toolName,
+      input: response.toolUse.input,
+    });
+
+    const toolResult = await dispatchToolUse(response.toolUse, this.config);
+
+    // Call LLM again with tool result
+    const followUp = await this.callLLM(
+      taskType,
+      [userPrompt, "", `## Tool Result (${response.toolUse.toolName})`, toolResult].join("\n"),
+    );
+
+    // Accumulate token counts
+    return {
+      ...followUp,
+      tokensIn: response.tokensIn + followUp.tokensIn,
+      tokensOut: response.tokensOut + followUp.tokensOut,
+      costUsd: response.costUsd + followUp.costUsd,
+      durationMs: response.durationMs + followUp.durationMs,
+    };
+  }
+
   async execute(task: AgentTask): Promise<AgentResult> {
     const cid = task.correlationId;
     this.logger.info(`${this.name} executing: ${task.title}`, {
@@ -122,7 +180,7 @@ export abstract class BaseAgent {
         task_type: task.type,
       });
 
-      const response = await this.callLLM(task.type, task.input);
+      const response = await this.callLLMWithTools(task.type, task.input);
 
       const durationSec = (response.durationMs / 1000).toFixed(1);
       const generationTokens = response.tokensIn + response.tokensOut;

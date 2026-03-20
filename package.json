@@ -16,6 +16,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@alanse/mcp-server-google-workspace": "^1.0.2",
     "@anthropic-ai/sdk": "^0.39.0",
     "@google/genai": "^1.0.0",
     "@slack/bolt": "^4.1.0",

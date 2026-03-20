@@ -18,7 +18,7 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 | Supabase (DB)        | 10 tabeller, RLS, Realtime                          | EU-region aktiv  |
 | GCP (hosting)        | Compute Engine konfigurerad                         | europe-north1-b  |
 | Slack                | Bolt SDK + Socket Mode live                         | Aktiv            |
-| MCP-integrationer    | gws konfigurerad, ej kopplad till agenter           | Fas 2            |
+| MCP-integrationer    | gws kopplad till agenter (Drive, Docs, Sheets)      | Live             |
 
 ### Backend – Gateway (Ambivrt/FIA)
 
@@ -26,12 +26,12 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 **Kvarstår:**
 
-| Komponent                                              | Status                   |
-| ------------------------------------------------------ | ------------------------ |
-| MCP-wrappers (HubSpot, LinkedIn, Buffer)               | Ej påbörjat              |
-| gws MCP kopplad till agenter                           | Konfigurerad, ej kopplad |
-| Content staging (Zod-validering av content_json)       | Fas 2                    |
-| Feedback-loop (feedback-summary, dynamisk review rate) | Fas 3                    |
+| Komponent                                              | Status      |
+| ------------------------------------------------------ | ----------- |
+| MCP-wrappers (HubSpot, LinkedIn, Buffer)               | Ej påbörjat |
+| gws MCP kopplad till agenter                           | Klart       |
+| Content staging (Zod-validering av content_json)       | Fas 2       |
+| Feedback-loop (feedback-summary, dynamisk review rate) | Fas 3       |
 
 ### Frontend – Dashboard PWA (Ambivrt/fia-frontend)
 
