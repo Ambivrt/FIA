@@ -648,7 +648,7 @@ export class IntelligenceAgent extends BaseAgent {
         },
       };
 
-      await updateTaskStatus(this.supabase, taskId, "completed", {
+      await updateTaskStatus(this.supabase, taskId, "published", {
         content_json: contentJson,
         model_used: "claude-sonnet + claude-opus",
         cost_sek: searchCostSek,
@@ -761,7 +761,7 @@ export class IntelligenceAgent extends BaseAgent {
         .eq("agent_id", agentRow)
         .in("type", ["morning_scan", "midday_sweep"])
         .gte("created_at", weekAgo)
-        .eq("status", "completed")
+        .eq("status", "published")
         .order("created_at", { ascending: true });
 
       // Load source history for trend analysis
@@ -830,7 +830,7 @@ export class IntelligenceAgent extends BaseAgent {
 
       const costSek = usdToSek(response.costUsd, this.config.usdToSek);
 
-      await updateTaskStatus(this.supabase, taskId, "completed", {
+      await updateTaskStatus(this.supabase, taskId, "published", {
         content_json: contentJson,
         model_used: response.model,
         tokens_used: response.tokensIn + response.tokensOut,
