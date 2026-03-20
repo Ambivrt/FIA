@@ -23,7 +23,12 @@ const AGENT_CLASSES: Record<string, new (...args: ConstructorParameters<typeof B
   intelligence: IntelligenceAgent,
 };
 
-export async function createAgent(slug: string, config: AppConfig, logger: Logger, supabase: SupabaseClient): Promise<BaseAgent> {
+export async function createAgent(
+  slug: string,
+  config: AppConfig,
+  logger: Logger,
+  supabase: SupabaseClient,
+): Promise<BaseAgent> {
   const AgentClass = AGENT_CLASSES[slug];
   if (!AgentClass) {
     throw new Error(`Unknown agent slug: ${slug}. Valid: ${Object.keys(AGENT_CLASSES).join(", ")}`);
@@ -33,11 +38,7 @@ export async function createAgent(slug: string, config: AppConfig, logger: Logge
 
   // Apply admin overrides from Supabase config_json (dashboard edits)
   try {
-    const { data: agent } = await supabase
-      .from("agents")
-      .select("config_json")
-      .eq("slug", slug)
-      .single();
+    const { data: agent } = await supabase.from("agents").select("config_json").eq("slug", slug).single();
 
     if (agent?.config_json) {
       const cfg = agent.config_json as Record<string, unknown>;
@@ -54,7 +55,9 @@ export async function createAgent(slug: string, config: AppConfig, logger: Logge
     }
   } catch {
     // Graceful degradation: use YAML manifest if Supabase fetch fails
-    logger.warn(`Could not fetch admin overrides for ${slug}, using manifest defaults`, { action: "admin_override_fallback" });
+    logger.warn(`Could not fetch admin overrides for ${slug}, using manifest defaults`, {
+      action: "admin_override_fallback",
+    });
   }
 
   return new AgentClass(config, logger, supabase, manifest);
