@@ -4,17 +4,19 @@ import { z } from "zod";
 import { requireRole } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { logActivity } from "../../supabase/activity-writer";
-import { MODEL_MAP, ModelAlias } from "../../llm/types";
+import { MODEL_MAP, type ModelAlias } from "../../llm/types";
 
-const VALID_MODEL_ALIASES = Object.keys(MODEL_MAP) as ModelAlias[];
+const VALID_MODEL_ALIASES = Object.keys(MODEL_MAP) as [ModelAlias, ...ModelAlias[]];
+
+const modelAliasEnum = z.enum(VALID_MODEL_ALIASES);
 
 const routingSchema = z.object({
   routing: z.record(
     z.union([
-      z.enum(VALID_MODEL_ALIASES as [string, ...string[]]),
+      modelAliasEnum,
       z.object({
-        primary: z.enum(VALID_MODEL_ALIASES as [string, ...string[]]),
-        fallback: z.enum(VALID_MODEL_ALIASES as [string, ...string[]]).optional(),
+        primary: modelAliasEnum,
+        fallback: modelAliasEnum.optional(),
       }),
     ]),
   ),
