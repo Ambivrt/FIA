@@ -172,7 +172,7 @@ export class TaskQueue {
 
   private async executeItem(item: QueueItem): Promise<void> {
     try {
-      const agent = createAgent(item.agentSlug, this.config, this.logger, this.supabase);
+      const agent = await createAgent(item.agentSlug, this.config, this.logger, this.supabase);
 
       const result = await agent.execute(item.task);
       item.status = "completed";

@@ -23,13 +23,43 @@ const AGENT_CLASSES: Record<string, new (...args: ConstructorParameters<typeof B
   intelligence: IntelligenceAgent,
 };
 
-export function createAgent(slug: string, config: AppConfig, logger: Logger, supabase: SupabaseClient): BaseAgent {
+export async function createAgent(
+  slug: string,
+  config: AppConfig,
+  logger: Logger,
+  supabase: SupabaseClient,
+): Promise<BaseAgent> {
   const AgentClass = AGENT_CLASSES[slug];
   if (!AgentClass) {
     throw new Error(`Unknown agent slug: ${slug}. Valid: ${Object.keys(AGENT_CLASSES).join(", ")}`);
   }
 
   const manifest = loadAgentManifest(config.knowledgeDir, slug);
+
+  // Apply admin overrides from Supabase config_json (dashboard edits)
+  try {
+    const { data: agent } = await supabase.from("agents").select("config_json").eq("slug", slug).single();
+
+    if (agent?.config_json) {
+      const cfg = agent.config_json as Record<string, unknown>;
+      const overrides = (cfg._admin_overrides as string[]) ?? [];
+
+      if (overrides.includes("routing") && cfg.routing) {
+        manifest.routing = cfg.routing as typeof manifest.routing;
+        logger.debug(`Applied admin routing override for ${slug}`, { action: "admin_override", field: "routing" });
+      }
+      if (overrides.includes("tools") && cfg.tools) {
+        manifest.tools = cfg.tools as string[];
+        logger.debug(`Applied admin tools override for ${slug}`, { action: "admin_override", field: "tools" });
+      }
+    }
+  } catch {
+    // Graceful degradation: use YAML manifest if Supabase fetch fails
+    logger.warn(`Could not fetch admin overrides for ${slug}, using manifest defaults`, {
+      action: "admin_override_fallback",
+    });
+  }
+
   return new AgentClass(config, logger, supabase, manifest);
 }
 

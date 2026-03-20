@@ -139,7 +139,7 @@ export function startScheduler(
       } else {
         // Fallback: direct execution
         try {
-          const agentInstance = createAgent(entry.agent, config, logger, supabase);
+          const agentInstance = await createAgent(entry.agent, config, logger, supabase);
 
           if (slackApp) {
             try {

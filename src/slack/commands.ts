@@ -247,7 +247,7 @@ export function registerCommands(
           });
           (async () => {
             try {
-              const agent = createAgent(agentSlug, config, logger, supabase);
+              const agent = await createAgent(agentSlug, config, logger, supabase);
               const onProgress: ProgressCallback = async (action, message, details) => {
                 await app.client.chat.postMessage({
                   channel: command.channel_id,
