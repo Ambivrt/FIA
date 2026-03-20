@@ -25,6 +25,14 @@ export async function createSlackApp(
     logLevel: LogLevel.WARN,
   });
 
+  // Increase ping/pong timeouts for GCP network latency (default: 5000ms)
+  const smClient = receiver.client as unknown as {
+    clientPingTimeoutMS: number;
+    serverPingTimeoutMS: number;
+  };
+  smClient.clientPingTimeoutMS = 15_000;
+  smClient.serverPingTimeoutMS = 45_000;
+
   const app = new App({
     token: config.slackBotToken,
     signingSecret: config.slackSigningSecret,
