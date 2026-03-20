@@ -12,7 +12,7 @@ index.ts → gateway/gateway.ts (huvudklass)
   ├── slack/        – Bolt SDK app, commands (/fia), handlers, channels
   ├── supabase/     – client, heartbeat, task-writer, metrics-writer, activity-writer, command-listener
   ├── api/          – Express REST API (internt), routes (agents, tasks, metrics, kill-switch), JWT auth
-  ├── mcp/          – Tunna wrappers: hubspot.ts, linkedin.ts, buffer.ts
+  ├── mcp/          – Tunna wrappers: gws.ts (Google Workspace), tool-registry.ts, hubspot.ts, linkedin.ts, buffer.ts
   ├── context/      – context-manager (läser kunskapsbas), prompt-builder (systemprompt)
   └── utils/        – config (.env), errors, kill-switch
 ```

@@ -45,7 +45,7 @@ fia/
 │   ├── slack/                   # Bolt SDK, kommandon, handlers
 │   ├── supabase/                # DB-klient, heartbeat, writers, listeners
 │   ├── api/                     # REST API (Express, routes, auth middleware)
-│   ├── mcp/                     # MCP-wrappers (HubSpot, LinkedIn, Buffer)
+│   ├── mcp/                     # MCP-wrappers (GWS, HubSpot, LinkedIn, Buffer)
 │   ├── context/                 # Kontexthantering, prompt-builder
 │   └── utils/                   # Config, errors, kill-switch
 ├── knowledge/                   # Kunskapsbas (se knowledge/CLAUDE.md)
@@ -144,7 +144,7 @@ Se `.env.example` för alla nyckelnamn. Aldrig i kod. Kritiska:
 
 ### Pågår
 
-- [ ] gws MCP kopplad till agenter (konfigurerad, ej kopplad)
+- [x] gws MCP kopplad till agenter (via @alanse/mcp-server-google-workspace + CLI fallback)
 - [ ] Gemini context caching
 - [ ] GA4 Analytics API
 - [ ] 10 innehållsenheter producerade
