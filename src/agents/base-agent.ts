@@ -92,10 +92,7 @@ export abstract class BaseAgent {
    * Call LLM with manifest-defined tools (GWS, etc.) and handle tool_use loop.
    * If the LLM requests a tool, executes it and feeds the result back for a final response.
    */
-  protected async callLLMWithTools(
-    taskType: string,
-    userPrompt: string,
-  ): Promise<LLMResponse> {
+  protected async callLLMWithTools(taskType: string, userPrompt: string): Promise<LLMResponse> {
     if (!hasTools(this.manifest.tools)) {
       return this.callLLM(taskType, userPrompt);
     }
@@ -133,12 +130,10 @@ export abstract class BaseAgent {
     const toolResult = await dispatchToolUse(response.toolUse, this.config);
 
     // Call LLM again with tool result
-    const followUp = await this.callLLM(taskType, [
-      userPrompt,
-      "",
-      `## Tool Result (${response.toolUse.toolName})`,
-      toolResult,
-    ].join("\n"));
+    const followUp = await this.callLLM(
+      taskType,
+      [userPrompt, "", `## Tool Result (${response.toolUse.toolName})`, toolResult].join("\n"),
+    );
 
     // Accumulate token counts
     return {

@@ -13,9 +13,7 @@ import { buildGwsToolDefinitions, handleGwsToolUse, isGwsTool } from "./gws";
 /**
  * Build all ToolDefinitions for an agent based on its manifest tools list.
  */
-export async function buildToolDefinitions(
-  agentTools: string[],
-): Promise<ToolDefinition[]> {
+export async function buildToolDefinitions(agentTools: string[]): Promise<ToolDefinition[]> {
   const definitions: ToolDefinition[] = [];
 
   // GWS tools
@@ -32,10 +30,7 @@ export async function buildToolDefinitions(
  * Dispatch a tool_use call to the correct handler.
  * Returns the tool result as a string (JSON or text).
  */
-export async function dispatchToolUse(
-  toolUse: ToolUseResult,
-  config: AppConfig,
-): Promise<string> {
+export async function dispatchToolUse(toolUse: ToolUseResult, config: AppConfig): Promise<string> {
   if (isGwsTool(toolUse.toolName)) {
     return handleGwsToolUse(toolUse, config);
   }

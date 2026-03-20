@@ -59,7 +59,10 @@ jest.mock("@alanse/mcp-server-google-workspace/dist/tools/index.js", () => ({
         required: ["spreadsheetId"],
       },
       handler: jest.fn().mockResolvedValue({
-        values: [["A1", "B1"], ["A2", "B2"]],
+        values: [
+          ["A1", "B1"],
+          ["A2", "B2"],
+        ],
       }),
     },
   ],
@@ -133,31 +136,20 @@ describe("GWS Wrapper", () => {
     } as any;
 
     it("calls MCP handler for drive_list_files", async () => {
-      const result = await handleGwsToolUse(
-        { toolName: "drive_list_files", input: {} },
-        mockConfig,
-      );
+      const result = await handleGwsToolUse({ toolName: "drive_list_files", input: {} }, mockConfig);
       const parsed = JSON.parse(result);
       expect(parsed.files).toBeDefined();
       expect(parsed.files[0].id).toBe("abc123");
     });
 
     it("calls MCP handler for gdocs_create", async () => {
-      const result = await handleGwsToolUse(
-        { toolName: "gdocs_create", input: { title: "Test" } },
-        mockConfig,
-      );
+      const result = await handleGwsToolUse({ toolName: "gdocs_create", input: { title: "Test" } }, mockConfig);
       const parsed = JSON.parse(result);
       expect(parsed.documentId).toBe("doc123");
     });
 
     it("throws for unknown tool", async () => {
-      await expect(
-        handleGwsToolUse(
-          { toolName: "nonexistent_tool", input: {} },
-          mockConfig,
-        ),
-      ).rejects.toThrow();
+      await expect(handleGwsToolUse({ toolName: "nonexistent_tool", input: {} }, mockConfig)).rejects.toThrow();
     });
   });
 });
@@ -196,20 +188,14 @@ describe("Tool Registry", () => {
     const mockConfig = { gwsCredentialsFile: "" } as any;
 
     it("dispatches GWS tools correctly", async () => {
-      const result = await dispatchToolUse(
-        { toolName: "drive_list_files", input: {} },
-        mockConfig,
-      );
+      const result = await dispatchToolUse({ toolName: "drive_list_files", input: {} }, mockConfig);
       expect(result).toBeTruthy();
     });
 
     it("throws for unknown tool prefixes", async () => {
-      await expect(
-        dispatchToolUse(
-          { toolName: "unknown_tool", input: {} },
-          mockConfig,
-        ),
-      ).rejects.toThrow('Unknown tool: "unknown_tool"');
+      await expect(dispatchToolUse({ toolName: "unknown_tool", input: {} }, mockConfig)).rejects.toThrow(
+        'Unknown tool: "unknown_tool"',
+      );
     });
   });
 });

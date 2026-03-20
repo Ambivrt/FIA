@@ -91,12 +91,7 @@ const CURATED_TOOLS: Record<string, string[]> = {
     "gsheets_append_data",
     "gsheets_batch_update",
   ],
-  "gws:gmail": [
-    "gmail_search_messages",
-    "gmail_get_message",
-    "gmail_send_message",
-    "gmail_draft_message",
-  ],
+  "gws:gmail": ["gmail_search_messages", "gmail_get_message", "gmail_send_message", "gmail_draft_message"],
   "gws:calendar": [
     "calendar_list_events",
     "calendar_get_event",
@@ -145,10 +140,7 @@ export async function buildGwsToolDefinitions(agentTools: string[]): Promise<Too
  * Execute a GWS tool_use call from the LLM.
  * Tries the MCP package handler first, falls back to gws CLI.
  */
-export async function handleGwsToolUse(
-  toolUse: ToolUseResult,
-  config: AppConfig,
-): Promise<string> {
+export async function handleGwsToolUse(toolUse: ToolUseResult, config: AppConfig): Promise<string> {
   // Try MCP package handler first
   const allTools = await loadMcpTools();
   const tool = allTools.find((t) => t.name === toolUse.toolName);
@@ -190,10 +182,7 @@ export function isGwsTool(toolName: string): boolean {
  * Maps tool names like "drive_list_files" → "gws drive files list --format json".
  * Returns null if CLI is not available.
  */
-async function tryGwsCli(
-  toolUse: ToolUseResult,
-  config: AppConfig,
-): Promise<string | null> {
+async function tryGwsCli(toolUse: ToolUseResult, config: AppConfig): Promise<string | null> {
   const gwsBin = resolveGwsBin();
   if (!gwsBin) return null;
 
@@ -231,10 +220,7 @@ function resolveGwsBin(): string | null {
  * "drive_list_files" → ["drive", "files", "list"]
  * "gdocs_create" → ["docs", "documents", "create"]
  */
-function toolNameToCliArgs(
-  toolName: string,
-  input: Record<string, unknown>,
-): string[] | null {
+function toolNameToCliArgs(toolName: string, input: Record<string, unknown>): string[] | null {
   const CLI_MAP: Record<string, string[]> = {
     drive_list_files: ["drive", "files", "list"],
     drive_search: ["drive", "files", "list"],

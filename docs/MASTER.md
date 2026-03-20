@@ -26,12 +26,12 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 **Kvarstår:**
 
-| Komponent                                              | Status                   |
-| ------------------------------------------------------ | ------------------------ |
-| MCP-wrappers (HubSpot, LinkedIn, Buffer)               | Ej påbörjat              |
-| gws MCP kopplad till agenter                           | Klart                    |
-| Content staging (Zod-validering av content_json)       | Fas 2                    |
-| Feedback-loop (feedback-summary, dynamisk review rate) | Fas 3                    |
+| Komponent                                              | Status      |
+| ------------------------------------------------------ | ----------- |
+| MCP-wrappers (HubSpot, LinkedIn, Buffer)               | Ej påbörjat |
+| gws MCP kopplad till agenter                           | Klart       |
+| Content staging (Zod-validering av content_json)       | Fas 2       |
+| Feedback-loop (feedback-summary, dynamisk review rate) | Fas 3       |
 
 ### Frontend – Dashboard PWA (Ambivrt/fia-frontend)
 
