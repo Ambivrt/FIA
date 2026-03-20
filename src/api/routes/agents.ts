@@ -1,7 +1,28 @@
 import { Router } from "express";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { requireRole } from "../middleware/auth";
+import { validateBody } from "../middleware/validate";
 import { logActivity } from "../../supabase/activity-writer";
+import { MODEL_MAP, ModelAlias } from "../../llm/types";
+
+const VALID_MODEL_ALIASES = Object.keys(MODEL_MAP) as ModelAlias[];
+
+const routingSchema = z.object({
+  routing: z.record(
+    z.union([
+      z.enum(VALID_MODEL_ALIASES as [string, ...string[]]),
+      z.object({
+        primary: z.enum(VALID_MODEL_ALIASES as [string, ...string[]]),
+        fallback: z.enum(VALID_MODEL_ALIASES as [string, ...string[]]).optional(),
+      }),
+    ]),
+  ),
+});
+
+const toolsSchema = z.object({
+  tools: z.array(z.string().min(1).max(100)),
+});
 
 export function agentRoutes(supabase: SupabaseClient): Router {
   const router = Router();
@@ -113,6 +134,86 @@ export function agentRoutes(supabase: SupabaseClient): Router {
       });
 
       res.json({ data });
+    } catch (err) {
+      res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+    }
+  });
+
+  // PATCH /api/agents/:slug/routing – admin only
+  router.patch("/:slug/routing", requireRole("admin"), validateBody(routingSchema), async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const { routing } = req.body;
+
+      const { data: agent, error: fetchErr } = await supabase
+        .from("agents")
+        .select("id, config_json")
+        .eq("slug", slug)
+        .single();
+
+      if (fetchErr || !agent) {
+        res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
+        return;
+      }
+
+      const current = (agent.config_json as Record<string, unknown>) ?? {};
+      const merged = { ...current, routing };
+
+      const { error } = await supabase
+        .from("agents")
+        .update({ config_json: merged })
+        .eq("id", agent.id);
+
+      if (error) throw error;
+
+      await logActivity(supabase, {
+        agent_id: agent.id,
+        user_id: req.user!.id,
+        action: "routing_updated",
+        details_json: { slug, routing },
+      });
+
+      res.json({ data: { slug, routing } });
+    } catch (err) {
+      res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+    }
+  });
+
+  // PATCH /api/agents/:slug/tools – admin only
+  router.patch("/:slug/tools", requireRole("admin"), validateBody(toolsSchema), async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const { tools } = req.body;
+
+      const { data: agent, error: fetchErr } = await supabase
+        .from("agents")
+        .select("id, config_json")
+        .eq("slug", slug)
+        .single();
+
+      if (fetchErr || !agent) {
+        res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
+        return;
+      }
+
+      const current = (agent.config_json as Record<string, unknown>) ?? {};
+      const merged = { ...current, tools };
+
+      const { error } = await supabase
+        .from("agents")
+        .update({ config_json: merged })
+        .eq("id", agent.id);
+
+      if (error) throw error;
+
+      await logActivity(supabase, {
+        agent_id: agent.id,
+        user_id: req.user!.id,
+        action: "tools_updated",
+        details_json: { slug, tools },
+      });
+
+      res.json({ data: { slug, tools } });
     } catch (err) {
       res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
     }

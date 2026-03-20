@@ -89,7 +89,7 @@ export function taskRoutes(supabase: SupabaseClient): Router {
   });
 
   // POST /api/tasks/:id/approve
-  router.post("/:id/approve", requireRole("orchestrator", "admin"), validateBody(approveSchema), async (req, res) => {
+  router.post("/:id/approve", requireRole("orchestrator", "admin", "operator"), validateBody(approveSchema), async (req, res) => {
     try {
       const taskId = req.params.id as string;
       const { feedback } = req.body;
@@ -122,7 +122,7 @@ export function taskRoutes(supabase: SupabaseClient): Router {
   });
 
   // POST /api/tasks/:id/reject
-  router.post("/:id/reject", requireRole("orchestrator", "admin"), validateBody(rejectSchema), async (req, res) => {
+  router.post("/:id/reject", requireRole("orchestrator", "admin", "operator"), validateBody(rejectSchema), async (req, res) => {
     try {
       const taskId = req.params.id as string;
       const { feedback } = req.body;
@@ -156,7 +156,7 @@ export function taskRoutes(supabase: SupabaseClient): Router {
   });
 
   // POST /api/tasks/:id/revision
-  router.post("/:id/revision", requireRole("orchestrator", "admin"), validateBody(revisionSchema), async (req, res) => {
+  router.post("/:id/revision", requireRole("orchestrator", "admin", "operator"), validateBody(revisionSchema), async (req, res) => {
     try {
       const taskId = req.params.id as string;
       const { feedback } = req.body;
