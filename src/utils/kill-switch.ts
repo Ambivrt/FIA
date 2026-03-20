@@ -7,7 +7,7 @@ interface KillSwitchState {
   active: boolean;
   activatedAt: string | null;
   activatedBy: string | null;
-  source: string | null;
+  source: "slack" | "api" | "realtime" | "restore" | null;
 }
 
 export class KillSwitch {
@@ -76,6 +76,23 @@ export class KillSwitch {
         });
       }
 
+      // Sync system_settings so dashboard sees the change via Realtime
+      const { error: settingsError } = await this.supabase
+        .from("system_settings")
+        .update({
+          value: { active: true },
+          updated_at: new Date().toISOString(),
+          updated_by: userId ?? null,
+        })
+        .eq("key", "kill_switch");
+
+      if (settingsError) {
+        this.logger.error("Failed to update system_settings for kill switch", {
+          action: "kill_switch_activate",
+          error: settingsError.message,
+        });
+      }
+
       await logActivity(this.supabase, {
         user_id: userId,
         action: "kill_switch_activated",
@@ -104,7 +121,11 @@ export class KillSwitch {
     });
 
     if (this.supabase) {
-      const { error } = await this.supabase.from("agents").update({ status: "active" }).eq("status", "paused");
+      const { error } = await this.supabase
+        .from("agents")
+        .update({ status: "active" })
+        .eq("status", "paused")
+        .neq("slug", "brand");
 
       if (error) {
         this.logger.error("Failed to resume agents in Supabase", {
@@ -113,10 +134,70 @@ export class KillSwitch {
         });
       }
 
+      // Sync system_settings so dashboard sees the change via Realtime
+      const { error: settingsError } = await this.supabase
+        .from("system_settings")
+        .update({
+          value: { active: false },
+          updated_at: new Date().toISOString(),
+          updated_by: userId ?? null,
+        })
+        .eq("key", "kill_switch");
+
+      if (settingsError) {
+        this.logger.error("Failed to update system_settings for kill switch", {
+          action: "kill_switch_deactivate",
+          error: settingsError.message,
+        });
+      }
+
       await logActivity(this.supabase, {
         user_id: userId,
         action: "kill_switch_deactivated",
         details_json: { source },
+      });
+    }
+  }
+
+  async restoreFromDatabase(): Promise<void> {
+    if (!this.supabase) return;
+
+    const { data, error } = await this.supabase
+      .from("system_settings")
+      .select("value, updated_at, updated_by")
+      .eq("key", "kill_switch")
+      .single();
+
+    if (error) {
+      this.logger.warn("Failed to restore kill switch state from database", {
+        action: "kill_switch_restore",
+        error: error.message,
+      });
+      return;
+    }
+
+    const val = data.value as { active?: boolean } | null;
+    if (val?.active) {
+      this.state = {
+        active: true,
+        activatedAt: data.updated_at ?? new Date().toISOString(),
+        activatedBy: data.updated_by ?? null,
+        source: "restore",
+      };
+
+      if (this.taskQueue) {
+        this.taskQueue.pause();
+      }
+
+      this.logger.warn("Kill switch restored as ACTIVE from database", {
+        action: "kill_switch_restore",
+        status: "success",
+        details: { activated_at: data.updated_at, activated_by: data.updated_by },
+      });
+    } else {
+      this.logger.info("Kill switch restored as inactive from database", {
+        action: "kill_switch_restore",
+        status: "success",
       });
     }
   }

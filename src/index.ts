@@ -61,6 +61,11 @@ async function main(): Promise<void> {
     });
   }
 
+  // --- Restore kill switch state from database ---
+  if (supabase) {
+    await killSwitch.restoreFromDatabase();
+  }
+
   // --- Recover orphaned tasks ---
   if (supabase) {
     const { recoverOrphanedTasks } = await import("./supabase/task-writer");
