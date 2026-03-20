@@ -24,15 +24,16 @@ Dag → Morgonpuls (Analytics Agent → #fia-orchestrator)
 
 ## Prioriteringsmatris
 
-| Hög påverkan + Låg insats | Hög påverkan + Hög insats |
-|---------------------------|---------------------------|
-| Gör direkt | Planera noggrant |
+| Hög påverkan + Låg insats     | Hög påverkan + Hög insats     |
+| ----------------------------- | ----------------------------- |
+| Gör direkt                    | Planera noggrant              |
 | **Låg påverkan + Låg insats** | **Låg påverkan + Hög insats** |
-| Automatisera eller delegera | Avvakta eller skippa |
+| Automatisera eller delegera   | Avvakta eller skippa          |
 
 ## Fokusområden per kvartal
 
 Varje kvartal har max 3 fokusområden. Välj baserat på:
+
 - Affärsmål och pipeline-behov
 - Säsongsvariation och marknadstrender
 - Resultat från föregående kvartal

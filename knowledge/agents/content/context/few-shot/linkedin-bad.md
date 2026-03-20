@@ -13,6 +13,7 @@ Kontakta oss idag för att ta reda på hur Forefront kan hjälpa er organisation
 ---
 
 ## Varför detta är dåligt
+
 - **Corporate-speak:** "ledande aktör", "realisera ambitioner", "helhetslösningar"
 - **Opersonligt:** "Forefront är stolta" – vem pratar egentligen?
 - **Ingen substans:** vad har de faktiskt gjort?

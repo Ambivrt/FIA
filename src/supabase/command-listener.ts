@@ -14,15 +14,8 @@ interface Command {
   created_at: string;
 }
 
-async function markCommand(
-  supabase: SupabaseClient,
-  commandId: string,
-  status: "completed" | "failed",
-): Promise<void> {
-  await supabase
-    .from("commands")
-    .update({ status, processed_at: new Date().toISOString() })
-    .eq("id", commandId);
+async function markCommand(supabase: SupabaseClient, commandId: string, status: "completed" | "failed"): Promise<void> {
+  await supabase.from("commands").update({ status, processed_at: new Date().toISOString() }).eq("id", commandId);
 }
 
 export function startCommandListener(supabase: SupabaseClient, logger: Logger, killSwitch: KillSwitch): void {
@@ -54,7 +47,10 @@ export function startCommandListener(supabase: SupabaseClient, logger: Logger, k
             if (slug) {
               await supabase.from("agents").update({ status: "paused" }).eq("slug", slug);
             } else if (p.agent_id) {
-              await supabase.from("agents").update({ status: "paused" }).eq("id", p.agent_id as string);
+              await supabase
+                .from("agents")
+                .update({ status: "paused" })
+                .eq("id", p.agent_id as string);
             }
             await logActivity(supabase, {
               user_id: cmd.issued_by,
@@ -69,7 +65,10 @@ export function startCommandListener(supabase: SupabaseClient, logger: Logger, k
             if (slug) {
               await supabase.from("agents").update({ status: "active" }).eq("slug", slug);
             } else if (p.agent_id) {
-              await supabase.from("agents").update({ status: "active" }).eq("id", p.agent_id as string);
+              await supabase
+                .from("agents")
+                .update({ status: "active" })
+                .eq("id", p.agent_id as string);
             }
             await logActivity(supabase, {
               user_id: cmd.issued_by,

@@ -7,6 +7,7 @@ version: 1.0.0
 # GDPR Compliance
 
 ## Regler
+
 1. Ingen persondata utanför godkända system (HubSpot, Supabase)
 2. Inkludera aldrig personuppgifter i LLM-prompts
 3. Respektera samtycke – behandla bara data som användaren godkänt

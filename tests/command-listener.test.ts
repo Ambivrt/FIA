@@ -126,10 +126,7 @@ describe("CommandListener", () => {
       },
     });
 
-    expect(mockLogActivity).toHaveBeenCalledWith(
-      mockSupabase,
-      expect.objectContaining({ action: "agent_paused" }),
-    );
+    expect(mockLogActivity).toHaveBeenCalledWith(mockSupabase, expect.objectContaining({ action: "agent_paused" }));
   });
 
   it("processes approve_task command", async () => {

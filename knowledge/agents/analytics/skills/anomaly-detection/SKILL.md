@@ -7,6 +7,7 @@ version: 1.0.0
 # Anomaly Detection
 
 ## Regler
+
 1. Flagga automatiskt vid avvikelser >20% mot föregående mätperiod
 2. Inkludera kontext: vilken metrik, aktuellt värde, förväntat värde och procentuell förändring
 3. Positiva avvikelser (oväntat bra resultat) rapporteras som möjligheter

@@ -12,12 +12,12 @@ npm run test:brand   # Enbart brand-agent.test.ts
 
 ## Befintliga tester
 
-| Fil | Testar |
-|-----|--------|
-| `router.test.ts` | Modell-routing baserat på agent.yaml |
-| `brand-agent.test.ts` | Brand Agent granskningslogik, eskalering |
+| Fil                    | Testar                                              |
+| ---------------------- | --------------------------------------------------- |
+| `router.test.ts`       | Modell-routing baserat på agent.yaml                |
+| `brand-agent.test.ts`  | Brand Agent granskningslogik, eskalering            |
 | `agent-loader.test.ts` | Agent-loader: parsning av agent.yaml, filresolution |
-| `logger.test.ts` | Loggformat, audit trail-struktur |
+| `logger.test.ts`       | Loggformat, audit trail-struktur                    |
 
 ## Konventioner
 

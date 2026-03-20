@@ -41,17 +41,19 @@ function request(app: express.Express, path: string): Promise<{ status: number; 
   return new Promise((resolve, reject) => {
     const server = app.listen(0, () => {
       const port = (server.address() as any).port;
-      http.get(`http://127.0.0.1:${port}${path}`, (res) => {
-        let data = "";
-        res.on("data", (chunk) => (data += chunk));
-        res.on("end", () => {
+      http
+        .get(`http://127.0.0.1:${port}${path}`, (res) => {
+          let data = "";
+          res.on("data", (chunk) => (data += chunk));
+          res.on("end", () => {
+            server.close();
+            resolve({ status: res.statusCode!, body: JSON.parse(data) });
+          });
+        })
+        .on("error", (err) => {
           server.close();
-          resolve({ status: res.statusCode!, body: JSON.parse(data) });
+          reject(err);
         });
-      }).on("error", (err) => {
-        server.close();
-        reject(err);
-      });
     });
   });
 }

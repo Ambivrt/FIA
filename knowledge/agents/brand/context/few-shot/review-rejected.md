@@ -1,6 +1,7 @@
 # Exempel: Brand Review – UNDERKÄND
 
 ## Innehåll som granskades
+
 **Typ:** Blogginlägg
 **Källa:** Content Agent
 

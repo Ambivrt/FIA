@@ -159,10 +159,7 @@ export function agentRoutes(supabase: SupabaseClient): Router {
       const current = (agent.config_json as Record<string, unknown>) ?? {};
       const merged = { ...current, routing };
 
-      const { error } = await supabase
-        .from("agents")
-        .update({ config_json: merged })
-        .eq("id", agent.id);
+      const { error } = await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
 
       if (error) throw error;
 
@@ -199,10 +196,7 @@ export function agentRoutes(supabase: SupabaseClient): Router {
       const current = (agent.config_json as Record<string, unknown>) ?? {};
       const merged = { ...current, tools };
 
-      const { error } = await supabase
-        .from("agents")
-        .update({ config_json: merged })
-        .eq("id", agent.id);
+      const { error } = await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
 
       if (error) throw error;
 

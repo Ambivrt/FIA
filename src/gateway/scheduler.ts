@@ -40,7 +40,12 @@ export const SCHEDULE: ScheduleEntry[] = [
     task: "scheduled_content",
     description: "Content schemalagt innehåll",
   },
-  { expression: "0 9 * * 1", agent: "intelligence", task: "weekly_intelligence", description: "Intelligence veckobriefing" },
+  {
+    expression: "0 9 * * 1",
+    agent: "intelligence",
+    task: "weekly_intelligence",
+    description: "Intelligence veckobriefing",
+  },
   { expression: "0 10 * * *", agent: "lead", task: "lead_scoring", description: "Lead scoring-uppdatering" },
   { expression: "0 13 * * 1-5", agent: "intelligence", task: "midday_sweep", description: "Intelligence middagssweep" },
   { expression: "0 14 * * 5", agent: "analytics", task: "weekly_report", description: "Analytics veckorapport" },

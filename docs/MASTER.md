@@ -11,14 +11,14 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 ### Övergripande status
 
-| Delsystem | Status | Deploy |
-|-----------|--------|--------|
-| Gateway (backend) | Solid MVP, alla 7 agenter live, 15 testfiler, CI/CD | 0.2 (2026-03-15) |
-| Dashboard (frontend) | Robust MVP, strict TS, error boundaries, i18n, PWA | Live på Lovable |
-| Supabase (DB) | 10 tabeller, RLS, Realtime | EU-region aktiv |
-| GCP (hosting) | Compute Engine konfigurerad | europe-north1-b |
-| Slack | Bolt SDK + Socket Mode live | Aktiv |
-| MCP-integrationer | gws konfigurerad, ej kopplad till agenter | Fas 2 |
+| Delsystem            | Status                                              | Deploy           |
+| -------------------- | --------------------------------------------------- | ---------------- |
+| Gateway (backend)    | Solid MVP, alla 7 agenter live, 15 testfiler, CI/CD | 0.2 (2026-03-15) |
+| Dashboard (frontend) | Robust MVP, strict TS, error boundaries, i18n, PWA  | Live på Lovable  |
+| Supabase (DB)        | 10 tabeller, RLS, Realtime                          | EU-region aktiv  |
+| GCP (hosting)        | Compute Engine konfigurerad                         | europe-north1-b  |
+| Slack                | Bolt SDK + Socket Mode live                         | Aktiv            |
+| MCP-integrationer    | gws konfigurerad, ej kopplad till agenter           | Fas 2            |
 
 ### Backend – Gateway (Ambivrt/FIA)
 
@@ -26,12 +26,12 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 **Kvarstår:**
 
-| Komponent | Status |
-|-----------|--------|
-| MCP-wrappers (HubSpot, LinkedIn, Buffer) | Ej påbörjat |
-| gws MCP kopplad till agenter | Konfigurerad, ej kopplad |
-| Content staging (Zod-validering av content_json) | Fas 2 |
-| Feedback-loop (feedback-summary, dynamisk review rate) | Fas 3 |
+| Komponent                                              | Status                   |
+| ------------------------------------------------------ | ------------------------ |
+| MCP-wrappers (HubSpot, LinkedIn, Buffer)               | Ej påbörjat              |
+| gws MCP kopplad till agenter                           | Konfigurerad, ej kopplad |
+| Content staging (Zod-validering av content_json)       | Fas 2                    |
+| Feedback-loop (feedback-summary, dynamisk review rate) | Fas 3                    |
 
 ### Frontend – Dashboard PWA (Ambivrt/fia-frontend)
 
@@ -39,10 +39,10 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 **Kvarstår:**
 
-| Komponent | Status |
-|-----------|--------|
-| Content staging / preview | Fas 2 |
-| Feedback-UI / rating | Fas 3 |
+| Komponent                 | Status |
+| ------------------------- | ------ |
+| Content staging / preview | Fas 2  |
+| Feedback-UI / rating      | Fas 3  |
 
 ---
 
@@ -100,12 +100,12 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 ## LLM-modeller (multi-modell-routing)
 
-| Modell | Model ID | Användning i FIA | Pris (per 1M tokens) |
-|--------|----------|-------------------|----------------------|
-| Claude Opus 4.6 | `claude-opus-4-6` | Orkestrerande huvud-LLM: strategi, komplex analys, varumärkesgranskning (Brand Agent), högrisk-innehåll, blogg, kampanjstrategi | $15 in / $75 ut |
-| Claude Sonnet 4.6 | `claude-sonnet-4-6` | Metadata, alt-texter, A/B-varianter, lead scoring, klassificering, nurture-sekvenser, rapporter | $3 in / $15 ut |
-| Nano Banana 2 | `gemini-2.5-flash-image` | Bildgenerering: social media-grafik, blogg-illustrationer, annonskreativ | ~$0.04/bild |
-| Serper.dev | `google-custom-search` | Realtidssökning: omvärldsbevakning, trendspaning, SEO-analys, faktakontroll | $0.001/sökning |
+| Modell            | Model ID                 | Användning i FIA                                                                                                                | Pris (per 1M tokens) |
+| ----------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| Claude Opus 4.6   | `claude-opus-4-6`        | Orkestrerande huvud-LLM: strategi, komplex analys, varumärkesgranskning (Brand Agent), högrisk-innehåll, blogg, kampanjstrategi | $15 in / $75 ut      |
+| Claude Sonnet 4.6 | `claude-sonnet-4-6`      | Metadata, alt-texter, A/B-varianter, lead scoring, klassificering, nurture-sekvenser, rapporter                                 | $3 in / $15 ut       |
+| Nano Banana 2     | `gemini-2.5-flash-image` | Bildgenerering: social media-grafik, blogg-illustrationer, annonskreativ                                                        | ~$0.04/bild          |
+| Serper.dev        | `google-custom-search`   | Realtidssökning: omvärldsbevakning, trendspaning, SEO-analys, faktakontroll                                                     | $0.001/sökning       |
 
 ### Routinglogik
 
@@ -117,10 +117,10 @@ Modellaliasens mappning till API-modell-ID:
 
 ```typescript
 const MODEL_MAP = {
-  "claude-opus":    "claude-opus-4-6",
-  "claude-sonnet":  "claude-sonnet-4-6",
-  "nano-banana-2":  "gemini-2.5-flash-image",
-  "google-search":  "google-custom-search",  // Serper API
+  "claude-opus": "claude-opus-4-6",
+  "claude-sonnet": "claude-sonnet-4-6",
+  "nano-banana-2": "gemini-2.5-flash-image",
+  "google-search": "google-custom-search", // Serper API
 };
 ```
 
@@ -130,26 +130,26 @@ const MODEL_MAP = {
 
 ## Gateway-komponenttabell
 
-| Komponent | Teknik | Syfte |
-|-----------|--------|-------|
-| Runtime | Node.js ≥20 LTS (PM2) | Always-on daemon |
-| Språk | TypeScript (strict mode) | Typsäkerhet |
-| Scheduler | node-cron | Tidsbaserade triggers (7 cron-jobb) |
-| Task Queue | In-memory prioritetskö | Max 3 concurrent, prioritetsordning (urgent → low) |
-| Slack | Bolt SDK (Socket Mode) | Orchestrator-gränssnitt |
-| Modell-router | Manifest-driven (agent.yaml) | Dirigerar uppgifter till rätt LLM |
-| LLM | Anthropic SDK (`@anthropic-ai/sdk`) | Claude Opus 4.6 / Sonnet 4.6 (tool_use för strukturerad output) |
-| Bildgenerering | Google GenAI SDK (`@google/genai`) | Nano Banana 2 via Gemini API |
-| Sökning | Serper.dev API | Realtidsdata (Googles sökresultat) |
-| Kontexthantering | agent.yaml + markdown + JSON | system_context, task_context per agent |
-| Skill-system | Modulärt (shared: + agent:) | 6 delade skills + agentspecifika skills |
-| Loggning | Strukturerad JSON → Supabase | Audit trail |
-| Databas-klient | `@supabase/supabase-js` | Heartbeats, tasks, metrics, activity_log |
-| Realtime-lyssnare | Supabase Realtime | Kommandon + task-uppdateringar från Dashboard |
-| REST API | Express (intern, port 3001) | Dashboard-kommandon via Edge Functions |
-| Validering | Zod | Config-validering, API-inputvalidering |
-| Google Workspace | gws CLI v0.4.4 via MCP | Drive, Gmail, Calendar, Sheets, Docs |
-| Hosting | GCP Compute Engine (europe-north1-b) | EU, GDPR |
+| Komponent         | Teknik                               | Syfte                                                           |
+| ----------------- | ------------------------------------ | --------------------------------------------------------------- |
+| Runtime           | Node.js ≥20 LTS (PM2)                | Always-on daemon                                                |
+| Språk             | TypeScript (strict mode)             | Typsäkerhet                                                     |
+| Scheduler         | node-cron                            | Tidsbaserade triggers (7 cron-jobb)                             |
+| Task Queue        | In-memory prioritetskö               | Max 3 concurrent, prioritetsordning (urgent → low)              |
+| Slack             | Bolt SDK (Socket Mode)               | Orchestrator-gränssnitt                                         |
+| Modell-router     | Manifest-driven (agent.yaml)         | Dirigerar uppgifter till rätt LLM                               |
+| LLM               | Anthropic SDK (`@anthropic-ai/sdk`)  | Claude Opus 4.6 / Sonnet 4.6 (tool_use för strukturerad output) |
+| Bildgenerering    | Google GenAI SDK (`@google/genai`)   | Nano Banana 2 via Gemini API                                    |
+| Sökning           | Serper.dev API                       | Realtidsdata (Googles sökresultat)                              |
+| Kontexthantering  | agent.yaml + markdown + JSON         | system_context, task_context per agent                          |
+| Skill-system      | Modulärt (shared: + agent:)          | 6 delade skills + agentspecifika skills                         |
+| Loggning          | Strukturerad JSON → Supabase         | Audit trail                                                     |
+| Databas-klient    | `@supabase/supabase-js`              | Heartbeats, tasks, metrics, activity_log                        |
+| Realtime-lyssnare | Supabase Realtime                    | Kommandon + task-uppdateringar från Dashboard                   |
+| REST API          | Express (intern, port 3001)          | Dashboard-kommandon via Edge Functions                          |
+| Validering        | Zod                                  | Config-validering, API-inputvalidering                          |
+| Google Workspace  | gws CLI v0.4.4 via MCP               | Drive, Gmail, Calendar, Sheets, Docs                            |
+| Hosting           | GCP Compute Engine (europe-north1-b) | EU, GDPR                                                        |
 
 ---
 
@@ -178,15 +178,15 @@ GA4 stöds INTE via gws – kräver direkta API-anrop mot `analyticsdata.googlea
 
 ### MCP-servrar – översikt
 
-| System | Integration | Status |
-|--------|-------------|--------|
-| Google Workspace | gws CLI (MCP-server) | Klar – fas 1 |
-| — Gmail, Calendar, Drive, Sheets, Docs | via `gws mcp -s` | Klar – fas 1 |
-| — GA4 | Direkt API (`analyticsdata.googleapis.com`) | Fas 2 |
-| Slack | Bolt SDK (Socket Mode) | Klar |
-| HubSpot | Community MCP | Valideras fas 2 |
-| LinkedIn | Custom MCP-wrapper | Fas 2 |
-| Buffer | Custom MCP-wrapper | Fas 2 |
+| System                                 | Integration                                 | Status          |
+| -------------------------------------- | ------------------------------------------- | --------------- |
+| Google Workspace                       | gws CLI (MCP-server)                        | Klar – fas 1    |
+| — Gmail, Calendar, Drive, Sheets, Docs | via `gws mcp -s`                            | Klar – fas 1    |
+| — GA4                                  | Direkt API (`analyticsdata.googleapis.com`) | Fas 2           |
+| Slack                                  | Bolt SDK (Socket Mode)                      | Klar            |
+| HubSpot                                | Community MCP                               | Valideras fas 2 |
+| LinkedIn                               | Custom MCP-wrapper                          | Fas 2           |
+| Buffer                                 | Custom MCP-wrapper                          | Fas 2           |
 
 ---
 
@@ -207,14 +207,14 @@ Filer som alla innehållsagenter delar. Laddas av prompt-builder.
 
 Modulärt skill-system. Varje skill är en `SKILL.md`-fil som kan delas mellan agenter.
 
-| Skill | Slug | Används av |
-|-------|------|-----------|
-| Forefront Identity | `forefront-identity` | Alla 7 agenter |
-| Brand Compliance | `brand-compliance` | Content, Brand, Campaign, Lead, Strategy |
-| Swedish Tone | `swedish-tone` | Content, Campaign |
-| Data-Driven Reasoning | `data-driven-reasoning` | Strategy, Campaign, SEO, Analytics |
-| Escalation Protocol | `escalation-protocol` | Alla 7 agenter |
-| GDPR Compliance | `gdpr-compliance` | Lead, Analytics |
+| Skill                 | Slug                    | Används av                               |
+| --------------------- | ----------------------- | ---------------------------------------- |
+| Forefront Identity    | `forefront-identity`    | Alla 7 agenter                           |
+| Brand Compliance      | `brand-compliance`      | Content, Brand, Campaign, Lead, Strategy |
+| Swedish Tone          | `swedish-tone`          | Content, Campaign                        |
+| Data-Driven Reasoning | `data-driven-reasoning` | Strategy, Campaign, SEO, Analytics       |
+| Escalation Protocol   | `escalation-protocol`   | Alla 7 agenter                           |
+| GDPR Compliance       | `gdpr-compliance`       | Lead, Analytics                          |
 
 Skills refereras i `agent.yaml` med prefix: `shared:forefront-identity` för delade, `agent:content-production` för agentspecifika.
 
@@ -243,7 +243,7 @@ name: Content Agent
 slug: content
 version: 1.1.0
 
-skills:                    # Modulärt skill-system (nytt i v1.1.0)
+skills: # Modulärt skill-system (nytt i v1.1.0)
   - shared:forefront-identity
   - shared:brand-compliance
   - shared:swedish-tone
@@ -256,15 +256,15 @@ routing:
   metadata: claude-sonnet
   images: nano-banana-2
 
-system_context:            # Alltid i systemprompt
+system_context: # Alltid i systemprompt
   - context/tone-examples.md
 
-task_context:              # On-demand per uppgiftstyp
+task_context: # On-demand per uppgiftstyp
   blog_post:
     - context/templates/blog-post.md
     - context/few-shot/blog-good.md
 
-tools:                     # MCP-servrar och gws-tjänster
+tools: # MCP-servrar och gws-tjänster
   - gws:drive
   - gws:docs
 
@@ -272,7 +272,7 @@ autonomy: autonomous
 escalation_threshold: 3
 sample_review_rate: 0.2
 
-writable:                  # Filer agenten får skriva till
+writable: # Filer agenten får skriva till
   - memory/learnings.json
 ```
 
@@ -494,12 +494,12 @@ writable: [memory/rejection-patterns.json]
 
 ### Autonominivåer per innehållstyp
 
-| Typ | Autonomi | Stickprov |
-|-----|----------|-----------|
-| Social media (organiskt) | Full autonom | 1 av 5 |
-| Blogginlägg | Autonom + Brand Agent | 1 av 3 |
-| Nyhetsbrev | Autonom + Brand Agent + Orchestrator | Alla |
-| Kundcase / pressrelease | Semi-autonom, Orchestrator godkänner | Alla |
+| Typ                      | Autonomi                             | Stickprov |
+| ------------------------ | ------------------------------------ | --------- |
+| Social media (organiskt) | Full autonom                         | 1 av 5    |
+| Blogginlägg              | Autonom + Brand Agent                | 1 av 3    |
+| Nyhetsbrev               | Autonom + Brand Agent + Orchestrator | Alla      |
+| Kundcase / pressrelease  | Semi-autonom, Orchestrator godkänner | Alla      |
 
 ---
 
@@ -703,15 +703,15 @@ Notering: Hanterar dashboard-baserad schemaläggning. Gateway har egen node-cron
 
 ### Migrationer
 
-| # | Fil | Beskrivning |
-|---|-----|-------------|
-| 001 | `001_initial_schema.sql` | Komplett schema med 6 tabeller + RLS |
-| 002 | `002_remove_task_type_check.sql` | Tog bort rigid type-enum (`agent.yaml` är källa) |
-| 003 | `003_add_error_status.sql` | Lade till `error` i task status-constraint |
-| 004 | `004_add_source_and_metrics_constraint.sql` | `source`-fält på tasks, metrics-constraint |
-| 005 | `005_fix_metrics_constraint.sql` | Fixade metrics-constraint |
-| 006 | `006_add_update_task_status_fn.sql` | RPC-funktion `update_task_status()` |
-| 007 | `007_drop_cost_ledger_trigger.sql` | Droppade `cost_ledger`-tabell och trigger |
+| #   | Fil                                         | Beskrivning                                      |
+| --- | ------------------------------------------- | ------------------------------------------------ |
+| 001 | `001_initial_schema.sql`                    | Komplett schema med 6 tabeller + RLS             |
+| 002 | `002_remove_task_type_check.sql`            | Tog bort rigid type-enum (`agent.yaml` är källa) |
+| 003 | `003_add_error_status.sql`                  | Lade till `error` i task status-constraint       |
+| 004 | `004_add_source_and_metrics_constraint.sql` | `source`-fält på tasks, metrics-constraint       |
+| 005 | `005_fix_metrics_constraint.sql`            | Fixade metrics-constraint                        |
+| 006 | `006_add_update_task_status_fn.sql`         | RPC-funktion `update_task_status()`              |
+| 007 | `007_drop_cost_ledger_trigger.sql`          | Droppade `cost_ledger`-tabell och trigger        |
 
 ### Row Level Security
 
@@ -827,11 +827,11 @@ Frontend och backend är helt separerade. Frontenden kommunicerar enbart via: (1
 
 ### Ansvarsfördelning
 
-| Lager | Ansvarig för | Ansvarar INTE för |
-|-------|-------------|-------------------|
-| Frontend | Rendering, navigation, UX, PWA | Affärslogik, autentiseringslogik |
-| FIA API | Auth, auktorisering, validering, commands | Rendering, layout |
-| Gateway | Agentexekvering, LLM-anrop, MCP, schemaläggning | Användarhantering, UI |
+| Lager    | Ansvarig för                                    | Ansvarar INTE för                |
+| -------- | ----------------------------------------------- | -------------------------------- |
+| Frontend | Rendering, navigation, UX, PWA                  | Affärslogik, autentiseringslogik |
+| FIA API  | Auth, auktorisering, validering, commands       | Rendering, layout                |
+| Gateway  | Agentexekvering, LLM-anrop, MCP, schemaläggning | Användarhantering, UI            |
 
 ### Frontendregler
 
@@ -843,30 +843,30 @@ Frontend och backend är helt separerade. Frontenden kommunicerar enbart via: (1
 
 ### Migrationsväg
 
-| Fas | Host | Ändring |
-|-----|------|---------|
-| MVP | Lovable | Custom domän |
-| V2 | Vercel/Netlify | Byt DNS + env |
-| V3 | Egen server | `npm run build` → Nginx |
+| Fas | Host           | Ändring                 |
+| --- | -------------- | ----------------------- |
+| MVP | Lovable        | Custom domän            |
+| V2  | Vercel/Netlify | Byt DNS + env           |
+| V3  | Egen server    | `npm run build` → Nginx |
 
 ### Dashboard – teknisk arkitektur
 
 #### Teknikstack
 
-| Komponent | Teknik | Version |
-|-----------|--------|---------|
-| UI-ramverk | React | 18.3.1 |
-| Byggverktyg | Vite (SWC) | 5.4.19 |
-| Språk | TypeScript | 5.8.3 |
-| Styling | Tailwind CSS + shadcn/ui (Radix) | 3.4.17 |
-| Server state | TanStack React Query | 5.83.0 |
-| Routing | React Router DOM | 6.30.1 |
-| Formulär | React Hook Form + Zod | 7.61.1 / 3.25.76 |
-| Grafer | Recharts | 2.15.4 |
-| Ikoner | Lucide React | 0.462.0 |
-| i18n | i18next + react-i18next | 25.8.17 / 16.5.6 |
-| Backend-klient | @supabase/supabase-js | 2.99.0 |
-| Test | Vitest + Testing Library | 3.2.4 |
+| Komponent      | Teknik                           | Version          |
+| -------------- | -------------------------------- | ---------------- |
+| UI-ramverk     | React                            | 18.3.1           |
+| Byggverktyg    | Vite (SWC)                       | 5.4.19           |
+| Språk          | TypeScript                       | 5.8.3            |
+| Styling        | Tailwind CSS + shadcn/ui (Radix) | 3.4.17           |
+| Server state   | TanStack React Query             | 5.83.0           |
+| Routing        | React Router DOM                 | 6.30.1           |
+| Formulär       | React Hook Form + Zod            | 7.61.1 / 3.25.76 |
+| Grafer         | Recharts                         | 2.15.4           |
+| Ikoner         | Lucide React                     | 0.462.0          |
+| i18n           | i18next + react-i18next          | 25.8.17 / 16.5.6 |
+| Backend-klient | @supabase/supabase-js            | 2.99.0           |
+| Test           | Vitest + Testing Library         | 3.2.4            |
 
 #### Komponentstruktur
 
@@ -955,14 +955,15 @@ src/
 
 In-memory prioritetskö med konfigurerbar max-concurrency.
 
-| Egenskap | Värde |
-|----------|-------|
-| Max concurrent | 3 (env: `QUEUE_MAX_CONCURRENCY`) |
-| Prioritetsordning | urgent (0) → high (1) → normal (2) → low (3) |
-| Status | queued, running, completed, failed |
-| Persistence | Ingen (in-memory). Föräldralösa tasks markeras `error` vid startup. |
+| Egenskap          | Värde                                                               |
+| ----------------- | ------------------------------------------------------------------- |
+| Max concurrent    | 3 (env: `QUEUE_MAX_CONCURRENCY`)                                    |
+| Prioritetsordning | urgent (0) → high (1) → normal (2) → low (3)                        |
+| Status            | queued, running, completed, failed                                  |
+| Persistence       | Ingen (in-memory). Föräldralösa tasks markeras `error` vid startup. |
 
 Funktioner:
+
 - Pausa/återuppta från Slack eller API
 - Progress-callback → Slack + activity_log
 - Recovery vid startup: `in_progress`-tasks utan ägare markeras som `error`
@@ -971,15 +972,15 @@ Funktioner:
 
 ## Schemalagda uppgifter
 
-| Tid | Agent | Uppgift | Cron |
-|-----|-------|---------|------|
-| 07:00 mån–fre | Analytics | Morgonpuls | `0 7 * * 1-5` |
-| 08:00 måndag | Strategy | Veckoplanering | `0 8 * * 1` |
-| 09:00 mån/ons/fre | Content | Schemalagt innehåll | `0 9 * * 1,3,5` |
-| 10:00 dagligen | Lead | Lead scoring | `0 10 * * *` |
-| 14:00 fredag | Analytics | Veckorapport | `0 14 * * 5` |
-| 09:00 första måndagen | Strategy | Månadsplanering | `0 9 1-7 * 1` |
-| 09:00 sista fredagen Q | Analytics | Kvartalsöversikt | `0 9 25-31 3,6,9,12 5` |
+| Tid                    | Agent     | Uppgift             | Cron                   |
+| ---------------------- | --------- | ------------------- | ---------------------- |
+| 07:00 mån–fre          | Analytics | Morgonpuls          | `0 7 * * 1-5`          |
+| 08:00 måndag           | Strategy  | Veckoplanering      | `0 8 * * 1`            |
+| 09:00 mån/ons/fre      | Content   | Schemalagt innehåll | `0 9 * * 1,3,5`        |
+| 10:00 dagligen         | Lead      | Lead scoring        | `0 10 * * *`           |
+| 14:00 fredag           | Analytics | Veckorapport        | `0 14 * * 5`           |
+| 09:00 första måndagen  | Strategy  | Månadsplanering     | `0 9 1-7 * 1`          |
+| 09:00 sista fredagen Q | Analytics | Kvartalsöversikt    | `0 9 25-31 3,6,9,12 5` |
 
 Alla schemalagda tasks respekterar kill switch och agent-pausstatus.
 
@@ -987,25 +988,25 @@ Alla schemalagda tasks respekterar kill switch och agent-pausstatus.
 
 ## Slack-kommandon
 
-| Kommando | Beskrivning |
-|----------|-------------|
-| `/fia status` | Systemstatus (agenter, kill switch, kö, scheduler) |
-| `/fia kill` | Aktivera kill switch |
-| `/fia resume` | Avaktivera kill switch |
-| `/fia run <agent> <task>` | Manuell trigger av agent |
-| `/fia approve <task-id>` | Godkänn uppgift |
-| `/fia reject <task-id>` | Avslå uppgift |
-| `/fia queue` | Visa köade uppgifter |
-| `/fia purge` | Rensa föräldralösa tasks |
-| `/fia help` | Visa alla kommandon, agenter, uppgiftstyper och schemalagda jobb |
+| Kommando                  | Beskrivning                                                      |
+| ------------------------- | ---------------------------------------------------------------- |
+| `/fia status`             | Systemstatus (agenter, kill switch, kö, scheduler)               |
+| `/fia kill`               | Aktivera kill switch                                             |
+| `/fia resume`             | Avaktivera kill switch                                           |
+| `/fia run <agent> <task>` | Manuell trigger av agent                                         |
+| `/fia approve <task-id>`  | Godkänn uppgift                                                  |
+| `/fia reject <task-id>`   | Avslå uppgift                                                    |
+| `/fia queue`              | Visa köade uppgifter                                             |
+| `/fia purge`              | Rensa föräldralösa tasks                                         |
+| `/fia help`               | Visa alla kommandon, agenter, uppgiftstyper och schemalagda jobb |
 
 Slack-kanaler:
 
-| Kanal | Innehåll |
-|-------|----------|
-| `#fia-content` | Content Agent progress |
-| `#fia-campaigns` | Campaign Agent progress |
-| `#fia-analytics` | Analytics Agent progress |
+| Kanal               | Innehåll                                        |
+| ------------------- | ----------------------------------------------- |
+| `#fia-content`      | Content Agent progress                          |
+| `#fia-campaigns`    | Campaign Agent progress                         |
+| `#fia-analytics`    | Analytics Agent progress                        |
 | `#fia-orchestrator` | Strategy/Lead/Brand/SEO progress + eskaleringar |
 
 ---
@@ -1014,10 +1015,10 @@ Slack-kanaler:
 
 Claude API:s tool_use används för att få strukturerad output från agenter. Två verktyg definierade:
 
-| Verktyg | Agent | Syfte |
-|---------|-------|-------|
-| `content_response` | Content, Campaign, Lead | Strukturerad content-output (title, body, summary, metadata) |
-| `brand_review_decision` | Brand | Strukturerat granskningsbeslut (approved/rejected, feedback, scores) |
+| Verktyg                 | Agent                   | Syfte                                                                |
+| ----------------------- | ----------------------- | -------------------------------------------------------------------- |
+| `content_response`      | Content, Campaign, Lead | Strukturerad content-output (title, body, summary, metadata)         |
+| `brand_review_decision` | Brand                   | Strukturerat granskningsbeslut (approved/rejected, feedback, scores) |
 
 ---
 
@@ -1116,33 +1117,33 @@ Modiga, Hängivna, Lustfyllda
 
 ### Löpande månadskostnad (full drift)
 
-| Post | Låg | Hög |
-|------|-----|-----|
-| Claude API (Opus + Sonnet) | 3 000 kr | 10 000 kr |
-| Nano Banana 2 | 200 kr | 500 kr |
-| Serper.dev | 200 kr | 500 kr |
-| GCP Compute Engine | 150 kr | 250 kr |
-| Supabase | 0 kr | 250 kr |
-| Lovable | 0 kr | 200 kr |
-| Slack Pro | 800 kr | 800 kr |
-| **Drift totalt** | **4 350 kr** | **12 500 kr** |
-| Marketing Orchestrator (25%) | 20 000 kr | 35 000 kr |
-| **Totalt med personal** | **24 350 kr** | **47 500 kr** |
+| Post                         | Låg           | Hög           |
+| ---------------------------- | ------------- | ------------- |
+| Claude API (Opus + Sonnet)   | 3 000 kr      | 10 000 kr     |
+| Nano Banana 2                | 200 kr        | 500 kr        |
+| Serper.dev                   | 200 kr        | 500 kr        |
+| GCP Compute Engine           | 150 kr        | 250 kr        |
+| Supabase                     | 0 kr          | 250 kr        |
+| Lovable                      | 0 kr          | 200 kr        |
+| Slack Pro                    | 800 kr        | 800 kr        |
+| **Drift totalt**             | **4 350 kr**  | **12 500 kr** |
+| Marketing Orchestrator (25%) | 20 000 kr     | 35 000 kr     |
+| **Totalt med personal**      | **24 350 kr** | **47 500 kr** |
 
 Jämförelse: traditionell marknadsavdelning 120 000–200 000 kr/mån. FIA ger 60–75% besparing.
 
 ### Engångsinvestering
 
-| Post | Kostnad |
-|------|---------|
-| Gateway-utveckling | 40 000–80 000 kr |
-| Dashboard (PWA) | 15 000–30 000 kr |
-| GCP-setup | 5 000–10 000 kr |
-| MCP-wrappers | 10 000–20 000 kr |
-| gws-integration | 5 000–10 000 kr |
-| Prompt engineering | 30 000–50 000 kr |
-| Test och QA | 10 000–20 000 kr |
-| **Totalt** | **115 000–220 000 kr** |
+| Post               | Kostnad                |
+| ------------------ | ---------------------- |
+| Gateway-utveckling | 40 000–80 000 kr       |
+| Dashboard (PWA)    | 15 000–30 000 kr       |
+| GCP-setup          | 5 000–10 000 kr        |
+| MCP-wrappers       | 10 000–20 000 kr       |
+| gws-integration    | 5 000–10 000 kr        |
+| Prompt engineering | 30 000–50 000 kr       |
+| Test och QA        | 10 000–20 000 kr       |
+| **Totalt**         | **115 000–220 000 kr** |
 
 ---
 
@@ -1182,13 +1183,13 @@ Orchestrators bedömning av agent-output styr agenternas beteende över tid. Fee
 
 ### Rating-dimensioner
 
-| Dimension | Vad den mäter |
-|-----------|--------------|
-| tonality | Följer tonalitetsregler och karaktärsdrag |
-| accuracy | Faktakorrekthet, inga hallucinationer |
-| clarity | Tydlighet, struktur, läsbarhet |
-| brand_fit | Varumärkeskonsistens, budskapshierarki |
-| channel_fit | Passar kanalen (längd, format, CTA) |
+| Dimension   | Vad den mäter                             |
+| ----------- | ----------------------------------------- |
+| tonality    | Följer tonalitetsregler och karaktärsdrag |
+| accuracy    | Faktakorrekthet, inga hallucinationer     |
+| clarity     | Tydlighet, struktur, läsbarhet            |
+| brand_fit   | Varumärkeskonsistens, budskapshierarki    |
+| channel_fit | Passar kanalen (längd, format, CTA)       |
 
 ### Gateway: Feedback-summary-generering
 
@@ -1206,22 +1207,19 @@ Gateway genererar periodiskt (veckovis eller vid 10+ nya feedback-rader) en `fee
     "brand_fit": 3.9,
     "channel_fit": 4.0
   },
-  "top_issues": [
-    "Texterna tenderar att bli för långa och akademiska",
-    "Saknar tydlig CTA i LinkedIn-poster"
-  ],
+  "top_issues": ["Texterna tenderar att bli för långa och akademiska", "Saknar tydlig CTA i LinkedIn-poster"],
   "exemplary_tasks": ["task-uuid-1", "task-uuid-2"]
 }
 ```
 
 ### Dynamisk sample_review_rate
 
-| Snittbetyg (20+ tasks) | Effekt |
-|------------------------|--------|
-| ≥ 4.0 | `sample_review_rate` sänks (min 0.1) |
-| 3.0–3.9 | Ingen ändring |
-| 2.5–2.9 | `sample_review_rate` höjs (max 1.0) |
-| < 2.5 | Flaggas för manuell intervention, agent pausas |
+| Snittbetyg (20+ tasks) | Effekt                                         |
+| ---------------------- | ---------------------------------------------- |
+| ≥ 4.0                  | `sample_review_rate` sänks (min 0.1)           |
+| 3.0–3.9                | Ingen ändring                                  |
+| 2.5–2.9                | `sample_review_rate` höjs (max 1.0)            |
+| < 2.5                  | Flaggas för manuell intervention, agent pausas |
 
 Tröskelvärdena konfigureras i `system_settings` (nyckel: `feedback_thresholds`).
 
@@ -1239,13 +1237,13 @@ Deploy 0.2 (2026-03-15). Gateway + Dashboard MVP live. 4 arbetsdagar, en person 
 
 ### Nästa steg – Fas 1 avslut
 
-| # | Uppgift | Beskrivning | Prioritet |
-|---|---------|-------------|-----------|
-| 1 | **gws MCP → agenter** | Koppla gws MCP-server till Content, Strategy, SEO och Analytics. Konfigurationen finns – agent-loader behöver anropa gws-tools vid task-execution. Filer: `src/agents/base-agent.ts`, `src/mcp/` | Hög |
-| 2 | **10 innehållsenheter** | Kör Content Agent med verkliga tasks (blog_post, linkedin, newsletter). Verifiera end-to-end: trigger → LLM → Brand review → godkänn → activity_log. Via `/fia run content blog_post` | Hög |
-| 3 | **Go/no-go checkpoint** | Granska de 10 enheterna mot tonalitetsregler och varumärkesplattform. Kriterium: 80% publiceringsredo | Hög |
-| 4 | Gemini context caching | Minskar kostnader vid upprepade system_context-anrop. Kan skjutas till Fas 2 | Valfritt |
-| 5 | GA4 Analytics API | Analytics Agent klarar sig utan i MVP. Kan skjutas till Fas 2 | Valfritt |
+| #   | Uppgift                 | Beskrivning                                                                                                                                                                                      | Prioritet |
+| --- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| 1   | **gws MCP → agenter**   | Koppla gws MCP-server till Content, Strategy, SEO och Analytics. Konfigurationen finns – agent-loader behöver anropa gws-tools vid task-execution. Filer: `src/agents/base-agent.ts`, `src/mcp/` | Hög       |
+| 2   | **10 innehållsenheter** | Kör Content Agent med verkliga tasks (blog_post, linkedin, newsletter). Verifiera end-to-end: trigger → LLM → Brand review → godkänn → activity_log. Via `/fia run content blog_post`            | Hög       |
+| 3   | **Go/no-go checkpoint** | Granska de 10 enheterna mot tonalitetsregler och varumärkesplattform. Kriterium: 80% publiceringsredo                                                                                            | Hög       |
+| 4   | Gemini context caching  | Minskar kostnader vid upprepade system_context-anrop. Kan skjutas till Fas 2                                                                                                                     | Valfritt  |
+| 5   | GA4 Analytics API       | Analytics Agent klarar sig utan i MVP. Kan skjutas till Fas 2                                                                                                                                    | Valfritt  |
 
 ### Fas 2: Expansion + Content Staging
 
@@ -1278,34 +1276,34 @@ Deploy 0.2 (2026-03-15). Gateway + Dashboard MVP live. 4 arbetsdagar, en person 
 
 ### Uppbyggnad (fas 0–2)
 
-| Roll | Omfattning |
-|------|-----------|
+| Roll                     | Omfattning          |
+| ------------------------ | ------------------- |
 | FIA-arkitekt / Tech Lead | 80–100% i ~3 veckor |
-| Marketing Orchestrator | 25% i ~3 veckor |
+| Marketing Orchestrator   | 25% i ~3 veckor     |
 
 ### Drift (fas 3+)
 
-| Roll | Tid/vecka |
-|------|-----------|
-| Marketing Orchestrator | 8–10 tim |
-| Tekniskt underhåll | 2–4 tim |
+| Roll                   | Tid/vecka |
+| ---------------------- | --------- |
+| Marketing Orchestrator | 8–10 tim  |
+| Tekniskt underhåll     | 2–4 tim   |
 
 ---
 
 ## Licenser
 
-| Tjänst | Kostnad/mån | Fas |
-|--------|-------------|-----|
-| Anthropic Claude API | ~300–1 000 kr | 1 |
-| Google AI Studio API (Nano Banana 2) | ~100–350 kr | 1 |
-| Serper.dev | ~100–200 kr | 1 |
-| GCP Compute Engine | ~150–250 kr | 1 |
-| Slack Pro | ~80 kr/användare | 1 |
-| Supabase | 0–250 kr | 1 |
-| Lovable | 0–200 kr | 1 |
-| gws CLI | 0 kr (Apache-2.0) | 1 |
-| HubSpot | 0–800 kr | 2 |
-| Buffer | ~600 kr | 2 |
+| Tjänst                               | Kostnad/mån       | Fas |
+| ------------------------------------ | ----------------- | --- |
+| Anthropic Claude API                 | ~300–1 000 kr     | 1   |
+| Google AI Studio API (Nano Banana 2) | ~100–350 kr       | 1   |
+| Serper.dev                           | ~100–200 kr       | 1   |
+| GCP Compute Engine                   | ~150–250 kr       | 1   |
+| Slack Pro                            | ~80 kr/användare  | 1   |
+| Supabase                             | 0–250 kr          | 1   |
+| Lovable                              | 0–200 kr          | 1   |
+| gws CLI                              | 0 kr (Apache-2.0) | 1   |
+| HubSpot                              | 0–800 kr          | 2   |
+| Buffer                               | ~600 kr           | 2   |
 
 ---
 
@@ -1313,27 +1311,27 @@ Deploy 0.2 (2026-03-15). Gateway + Dashboard MVP live. 4 arbetsdagar, en person 
 
 ### Produktion
 
-| Paket | Version | Syfte |
-|-------|---------|-------|
-| `@anthropic-ai/sdk` | ^0.39.0 | Claude API (Opus 4.6 + Sonnet 4.6) |
-| `@google/genai` | ^1.0.0 | Nano Banana 2 bildgenerering |
-| `@slack/bolt` | ^4.1.0 | Slack SDK (Socket Mode) |
-| `@supabase/supabase-js` | ^2.49.0 | Supabase-klient |
-| `express` | ^4.21.0 | REST API (internt) |
-| `node-cron` | ^3.0.3 | Schemaläggning |
-| `yaml` | ^2.7.0 | Parsning av agent.yaml |
-| `zod` | ^4.3.6 | Validering |
-| `uuid` | ^11.1.0 | Task-ID:n |
-| `dotenv` | ^16.4.7 | Miljövariabler |
+| Paket                   | Version | Syfte                              |
+| ----------------------- | ------- | ---------------------------------- |
+| `@anthropic-ai/sdk`     | ^0.39.0 | Claude API (Opus 4.6 + Sonnet 4.6) |
+| `@google/genai`         | ^1.0.0  | Nano Banana 2 bildgenerering       |
+| `@slack/bolt`           | ^4.1.0  | Slack SDK (Socket Mode)            |
+| `@supabase/supabase-js` | ^2.49.0 | Supabase-klient                    |
+| `express`               | ^4.21.0 | REST API (internt)                 |
+| `node-cron`             | ^3.0.3  | Schemaläggning                     |
+| `yaml`                  | ^2.7.0  | Parsning av agent.yaml             |
+| `zod`                   | ^4.3.6  | Validering                         |
+| `uuid`                  | ^11.1.0 | Task-ID:n                          |
+| `dotenv`                | ^16.4.7 | Miljövariabler                     |
 
 ### Utveckling
 
-| Paket | Version | Syfte |
-|-------|---------|-------|
-| `typescript` | ^5.9.3 | Kompilator (strict mode) |
-| `ts-node` | ^10.9.2 | Direkt TS-exekvering |
-| `jest` + `ts-jest` | ^29.7.0 / ^29.3.0 | Testramverk |
-| `nodemon` | ^3.1.0 | Dev watch mode |
+| Paket              | Version           | Syfte                    |
+| ------------------ | ----------------- | ------------------------ |
+| `typescript`       | ^5.9.3            | Kompilator (strict mode) |
+| `ts-node`          | ^10.9.2           | Direkt TS-exekvering     |
+| `jest` + `ts-jest` | ^29.7.0 / ^29.3.0 | Testramverk              |
+| `nodemon`          | ^3.1.0            | Dev watch mode           |
 
 ---
 
