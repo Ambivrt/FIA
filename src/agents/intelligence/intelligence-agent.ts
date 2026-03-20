@@ -291,12 +291,30 @@ export class IntelligenceAgent extends BaseAgent {
     return allFindings;
   }
 
+  private static readonly SCORING_BATCH_SIZE = 50;
+
   private async scoreFindings(
     findings: RawFinding[],
     watchConfig: WatchDomainsConfig,
   ): Promise<ScoredFinding[]> {
     if (findings.length === 0) return [];
 
+    const scored: ScoredFinding[] = [];
+
+    // Batch findings to avoid overwhelming the LLM with too many items
+    for (let i = 0; i < findings.length; i += IntelligenceAgent.SCORING_BATCH_SIZE) {
+      const batch = findings.slice(i, i + IntelligenceAgent.SCORING_BATCH_SIZE);
+      const batchScored = await this.scoreBatch(batch, watchConfig);
+      scored.push(...batchScored);
+    }
+
+    return scored.sort((a, b) => b.signal_score - a.signal_score);
+  }
+
+  private async scoreBatch(
+    findings: RawFinding[],
+    watchConfig: WatchDomainsConfig,
+  ): Promise<ScoredFinding[]> {
     const findingsText = findings
       .map(
         (f, i) =>
@@ -326,15 +344,22 @@ export class IntelligenceAgent extends BaseAgent {
     const scored: ScoredFinding[] = [];
 
     if (response.toolUse && response.toolUse.toolName === "signal_scoring") {
-      const { scores } = response.toolUse.input as {
-        scores: Array<{
-          url: string;
-          domain_relevance: number;
-          forefront_impact: number;
-          actionability: number;
-          recency_novelty: number;
-        }>;
-      };
+      const input = response.toolUse.input as Record<string, unknown>;
+      const scores = Array.isArray(input?.scores) ? input.scores as Array<{
+        url: string;
+        domain_relevance: number;
+        forefront_impact: number;
+        actionability: number;
+        recency_novelty: number;
+      }> : [];
+
+      if (scores.length === 0) {
+        this.logger.warn(`Scoring batch returned no valid scores (${findings.length} findings)`, {
+          agent: this.slug,
+          action: "scoring_empty",
+        });
+        return [];
+      }
 
       for (const score of scores) {
         const finding = findings.find((f) => f.url === score.url);
@@ -363,7 +388,7 @@ export class IntelligenceAgent extends BaseAgent {
       }
     }
 
-    return scored.sort((a, b) => b.signal_score - a.signal_score);
+    return scored;
   }
 
   private async deepAnalyze(findings: ScoredFinding[]): Promise<AnalyzedFinding[]> {
