@@ -2,18 +2,18 @@
 
 All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och principer. Gateway- och Dashboard-repon pekar hit.
 
-**Version:** 0.3.1
-**Senast uppdaterad:** 2026-03-19
+**Version:** 0.4.0
+**Senast uppdaterad:** 2026-03-20
 
 ---
 
-## Nuläge (2026-03-19)
+## Nuläge (2026-03-20)
 
 ### Övergripande status
 
 | Delsystem            | Status                                              | Deploy           |
 | -------------------- | --------------------------------------------------- | ---------------- |
-| Gateway (backend)    | Solid MVP, alla 7 agenter live, 15 testfiler, CI/CD | 0.2 (2026-03-15) |
+| Gateway (backend)    | Solid MVP, alla 8 agenter live, 15 testfiler, CI/CD | 0.2 (2026-03-15) |
 | Dashboard (frontend) | Robust MVP, strict TS, error boundaries, i18n, PWA  | Live på Lovable  |
 | Supabase (DB)        | 10 tabeller, RLS, Realtime                          | EU-region aktiv  |
 | GCP (hosting)        | Compute Engine konfigurerad                         | europe-north1-b  |
@@ -22,7 +22,7 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 ### Backend – Gateway (Ambivrt/FIA)
 
-**Kodbas:** ~47 TypeScript-filer, ~3 100 LOC, TypeScript strict mode, 15 testfiler, CI/CD via GitHub Actions, ESLint + Prettier.
+**Kodbas:** ~48 TypeScript-filer, ~6 100 LOC, TypeScript strict mode, 15 testfiler, CI/CD via GitHub Actions, ESLint + Prettier.
 
 **Kvarstår:**
 
@@ -126,6 +126,32 @@ const MODEL_MAP = {
 
 `google-search` implementeras via Serper.dev API (Google Custom Search är stängt för nya kunder sedan januari 2026).
 
+### Routing med fallback
+
+Routern stöder ett fallback-system. Varje routing-entry kan vara antingen en enkel sträng (legacy) eller ett objekt med `primary` och valfritt `fallback`:
+
+```yaml
+routing:
+  default: claude-opus                    # Legacy: enkel sträng
+  deep_analysis:                          # Objekt med fallback
+    primary: claude-opus
+    fallback: claude-sonnet
+```
+
+`resolveRouteWithFallback()` i `router.ts` försöker primary-modellen först. Vid retryable errors (timeout, rate limit, nätverksfel) faller den automatiskt tillbaka till fallback-modellen. Dashboard-routingeditorn (AgentDetailPage, flik "Routing") stöder redigering av både primary och fallback per uppgiftstyp.
+
+Zod-validering i API:t (`PATCH /api/agents/:slug/routing`) accepterar båda formaten:
+
+```typescript
+z.union([
+  modelAliasEnum,                        // Enkel sträng (legacy)
+  z.object({                             // Objekt med fallback
+    primary: modelAliasEnum,
+    fallback: modelAliasEnum.optional(),
+  }),
+])
+```
+
 ---
 
 ## Gateway-komponenttabell
@@ -134,7 +160,7 @@ const MODEL_MAP = {
 | ----------------- | ------------------------------------ | --------------------------------------------------------------- |
 | Runtime           | Node.js ≥20 LTS (PM2)                | Always-on daemon                                                |
 | Språk             | TypeScript (strict mode)             | Typsäkerhet                                                     |
-| Scheduler         | node-cron                            | Tidsbaserade triggers (7 cron-jobb)                             |
+| Scheduler         | node-cron                            | Tidsbaserade triggers (10 cron-jobb)                            |
 | Task Queue        | In-memory prioritetskö               | Max 3 concurrent, prioritetsordning (urgent → low)              |
 | Slack             | Bolt SDK (Socket Mode)               | Orchestrator-gränssnitt                                         |
 | Modell-router     | Manifest-driven (agent.yaml)         | Dirigerar uppgifter till rätt LLM                               |
@@ -209,12 +235,12 @@ Modulärt skill-system. Varje skill är en `SKILL.md`-fil som kan delas mellan a
 
 | Skill                 | Slug                    | Används av                               |
 | --------------------- | ----------------------- | ---------------------------------------- |
-| Forefront Identity    | `forefront-identity`    | Alla 7 agenter                           |
-| Brand Compliance      | `brand-compliance`      | Content, Brand, Campaign, Lead, Strategy |
-| Swedish Tone          | `swedish-tone`          | Content, Campaign                        |
-| Data-Driven Reasoning | `data-driven-reasoning` | Strategy, Campaign, SEO, Analytics       |
-| Escalation Protocol   | `escalation-protocol`   | Alla 7 agenter                           |
-| GDPR Compliance       | `gdpr-compliance`       | Lead, Analytics                          |
+| Forefront Identity    | `forefront-identity`    | Alla 8 agenter                                    |
+| Brand Compliance      | `brand-compliance`      | Content, Brand, Campaign, Lead, Strategy           |
+| Swedish Tone          | `swedish-tone`          | Content, Campaign                                  |
+| Data-Driven Reasoning | `data-driven-reasoning` | Strategy, Campaign, SEO, Analytics, Intelligence   |
+| Escalation Protocol   | `escalation-protocol`   | Alla 8 agenter                                     |
+| GDPR Compliance       | `gdpr-compliance`       | Lead, Analytics                                    |
 
 Skills refereras i `agent.yaml` med prefix: `shared:forefront-identity` för delade, `agent:content-production` för agentspecifika.
 
@@ -278,7 +304,7 @@ writable: # Filer agenten får skriva till
 
 ---
 
-## Agentkluster – alla sju
+## Agentkluster – alla åtta
 
 ### Agent 1: Strategy Agent
 
@@ -492,6 +518,59 @@ has_veto: true
 writable: [memory/rejection-patterns.json]
 ```
 
+### Agent 8: Intelligence Agent
+
+```yaml
+name: Intelligence Agent
+slug: intelligence
+version: 1.1.0
+skills:
+  - shared:forefront-identity
+  - shared:data-driven-reasoning
+  - shared:escalation-protocol
+  - agent:source-monitoring
+  - agent:relevance-scoring
+  - agent:briefing-generation
+routing:
+  default: claude-sonnet
+  deep_analysis: claude-opus
+  search: google-search
+system_context:
+  - context/watch-domains.yaml
+  - context/scoring-criteria.yaml
+task_context:
+  morning_scan: [context/templates/morning-scan.md]
+  midday_sweep: [context/templates/morning-scan.md]
+  weekly_intelligence: [context/templates/weekly-brief.md]
+  rapid_response: [context/templates/rapid-response.md]
+tools: [gws:drive, gws:docs, gws:sheets]
+autonomy: autonomous
+escalation_threshold: 3
+sample_review_rate: 0.2
+max_iterations: 5
+self_eval:
+  enabled: true
+  model: claude-sonnet
+  criteria:
+    - "Är alla fynd relevanta för Forefront och bevakningsdomänerna?"
+    - "Är scoring-motiveringar tydliga och konsekventa?"
+    - "Är briefen koncis och handlingsorienterad?"
+  threshold: 0.7
+writable: [memory/source-history.json, memory/scoring-calibration.json, memory/learnings.json]
+```
+
+**Multi-steg-pipeline:**
+
+1. **Gather** – Söker alla bevakningsdomäner och fasta källor via Serper (google-search). Dedup mot `source-history.json` (72-timmars fönster).
+2. **Signal scoring** – Sonnet bedömer varje fynd på fyra dimensioner (domain_relevance, forefront_impact, actionability, recency_novelty) via `signal_scoring` tool_use. Viktas mot domänvikt → composite score.
+3. **Deep analysis** – Opus djupanalyserar fynd med score ≥ 0.7 via `deep_analysis` tool_use. Ger summary, implications, suggested_action (brief/rapid_response/strategy_input/escalate), confidence.
+4. **Rapid response** – Fynd med `suggested_action: rapid_response` skapar automatiskt en high-priority task åt Content Agent. `escalate`-fynd skickar Slack-notis till Orchestrator.
+5. **Briefing** – Opus genererar en strukturerad rapport med toppfynd, bevakningsradar och statistik.
+
+**Bevakningsdomäner:** Konfigureras via `context/watch-domains.yaml` med vikter, primära/sekundära nyckelord, entiteter (konkurrenter) och exkluderingsregler per domän. Fasta källor (pinned_sources) söks separat med site:-prefix.
+
+**Veckobriefing:** Sammanställer alla scans från senaste 7 dagarna + source-history till en strukturerad veckobriefing (top 5, per domän, konkurrentöversikt, trender, rekommendationer).
+
 ### Autonominivåer per innehållstyp
 
 | Typ                      | Autonomi                             | Stickprov |
@@ -699,7 +778,7 @@ CREATE TABLE scheduled_jobs (
 );
 ```
 
-Notering: Hanterar dashboard-baserad schemaläggning. Gateway har egen node-cron med fasta 7 jobb (se "Schemalagda uppgifter"). Tabellen möjliggör framtida dynamisk schemaläggning via Dashboard.
+Notering: Hanterar dashboard-baserad schemaläggning. Gateway har egen node-cron med fasta 10 jobb (se "Schemalagda uppgifter"). Tabellen möjliggör framtida dynamisk schemaläggning via Dashboard.
 
 ### Migrationer
 
@@ -776,11 +855,13 @@ Statuskoder: 200, 201, 400, 401, 403, 404, 500.
 
 ### Agenter
 
-- `GET /api/agents` – Alla inloggade. Returnerar alla sju med status, heartbeat, routing, tools, uppgiftsräknare.
+- `GET /api/agents` – Alla inloggade. Returnerar alla åtta med status, heartbeat, routing, tools, uppgiftsräknare.
 - `GET /api/agents/:slug` – Alla inloggade. Utökad info inkl. `config_json`.
 - `POST /api/agents/:slug/pause` – Orchestrator, Admin. Skriver till `commands`.
 - `POST /api/agents/:slug/resume` – Orchestrator, Admin. Skriver till `commands`.
 - `PUT /api/agents/:slug/config` – Admin. Body: `{ "config_json": { ... } }`
+- `PATCH /api/agents/:slug/routing` – Admin. Body: `{ "routing": { "<task_type>": "<alias>" | { "primary": "<alias>", "fallback": "<alias>" } } }`. Zod-validerad. Uppdaterar routing i `config_json`.
+- `PATCH /api/agents/:slug/tools` – Admin. Body: `{ "tools": ["gws:drive", ...] }`. Uppdaterar tools i `config_json`.
 
 ### Uppgifter
 
@@ -972,15 +1053,18 @@ Funktioner:
 
 ## Schemalagda uppgifter
 
-| Tid                    | Agent     | Uppgift             | Cron                   |
-| ---------------------- | --------- | ------------------- | ---------------------- |
-| 07:00 mån–fre          | Analytics | Morgonpuls          | `0 7 * * 1-5`          |
-| 08:00 måndag           | Strategy  | Veckoplanering      | `0 8 * * 1`            |
-| 09:00 mån/ons/fre      | Content   | Schemalagt innehåll | `0 9 * * 1,3,5`        |
-| 10:00 dagligen         | Lead      | Lead scoring        | `0 10 * * *`           |
-| 14:00 fredag           | Analytics | Veckorapport        | `0 14 * * 5`           |
-| 09:00 första måndagen  | Strategy  | Månadsplanering     | `0 9 1-7 * 1`          |
-| 09:00 sista fredagen Q | Analytics | Kvartalsöversikt    | `0 9 25-31 3,6,9,12 5` |
+| Tid                    | Agent        | Uppgift             | Cron                   |
+| ---------------------- | ------------ | ------------------- | ---------------------- |
+| 06:30 mån–fre          | Intelligence | Morgonscan          | `30 6 * * 1-5`         |
+| 07:00 mån–fre          | Analytics    | Morgonpuls          | `0 7 * * 1-5`          |
+| 08:00 måndag           | Strategy     | Veckoplanering      | `0 8 * * 1`            |
+| 09:00 mån/ons/fre      | Content      | Schemalagt innehåll | `0 9 * * 1,3,5`        |
+| 09:00 måndag           | Intelligence | Veckobriefing       | `0 9 * * 1`            |
+| 10:00 dagligen         | Lead         | Lead scoring        | `0 10 * * *`           |
+| 13:00 mån–fre          | Intelligence | Middagssweep        | `0 13 * * 1-5`         |
+| 14:00 fredag           | Analytics    | Veckorapport        | `0 14 * * 5`           |
+| 09:00 första måndagen  | Strategy     | Månadsplanering     | `0 9 1-7 * 1`          |
+| 09:00 sista fredagen Q | Analytics    | Kvartalsöversikt    | `0 9 25-31 3,6,9,12 5` |
 
 Alla schemalagda tasks respekterar kill switch och agent-pausstatus.
 
@@ -1007,18 +1091,21 @@ Slack-kanaler:
 | `#fia-content`      | Content Agent progress                          |
 | `#fia-campaigns`    | Campaign Agent progress                         |
 | `#fia-analytics`    | Analytics Agent progress                        |
+| `#fia-intelligence` | Intelligence Agent progress                     |
 | `#fia-orchestrator` | Strategy/Lead/Brand/SEO progress + eskaleringar |
 
 ---
 
 ## Strukturerad output (tool_use)
 
-Claude API:s tool_use används för att få strukturerad output från agenter. Två verktyg definierade:
+Claude API:s tool_use används för att få strukturerad output från agenter. Fyra verktyg definierade:
 
-| Verktyg                 | Agent                   | Syfte                                                                |
-| ----------------------- | ----------------------- | -------------------------------------------------------------------- |
-| `content_response`      | Content, Campaign, Lead | Strukturerad content-output (title, body, summary, metadata)         |
-| `brand_review_decision` | Brand                   | Strukturerat granskningsbeslut (approved/rejected, feedback, scores) |
+| Verktyg                 | Agent                   | Syfte                                                                                           |
+| ----------------------- | ----------------------- | ----------------------------------------------------------------------------------------------- |
+| `content_response`      | Content, Campaign, Lead | Strukturerad content-output (title, body, summary, metadata)                                    |
+| `brand_review_decision` | Brand                   | Strukturerat granskningsbeslut (approved/rejected, feedback, scores)                             |
+| `signal_scoring`        | Intelligence            | Strukturerad signalscoring (domain_relevance, forefront_impact, actionability, recency_novelty) |
+| `deep_analysis`         | Intelligence            | Strukturerad djupanalys (summary, implications, suggested_action, confidence)                    |
 
 ---
 
