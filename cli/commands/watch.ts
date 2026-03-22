@@ -4,7 +4,7 @@ import { Command } from "commander";
 import chalk from "chalk";
 import { apiGet } from "../lib/api-client";
 import { subscribeToActivityLog, unsubscribe } from "../lib/realtime";
-import { statusBadge, relativeTime, progressBar } from "../lib/formatters";
+import { statusBadge, relativeTime, progressBar, EARTH, GRADIENT } from "../lib/formatters";
 import type { AgentResponse, KillSwitchStatus, ActivityLogEntry, PaginatedResponse, TaskResponse } from "../types";
 import type { DisplayStatusResult } from "../types";
 
@@ -69,15 +69,16 @@ async function render(): Promise<void> {
   // Rensa terminal
   process.stdout.write("\x1B[2J\x1B[H");
 
-  // Header
+  // Header med Forefront Earth-färger
   const killLine = killSwitch.active ? chalk.red("● ON") : chalk.green("● OFF");
-  const border = chalk.dim("\u256D\u2500 FIA Watch " + "\u2500".repeat(30) + " " + now + " \u2500\u256E");
-  const borderBottom = chalk.dim("\u2570" + "\u2500".repeat(40) + " Ctrl+C to exit " + "\u2500\u2570");
+  const titleText = GRADIENT.orange("FIA") + EARTH.stone(" Watch");
+  const border = EARTH.plum("\u256D\u2500 ") + titleText + EARTH.plum(" " + "\u2500".repeat(28) + " " + chalk.dim(now) + " \u2500\u256E");
+  const borderBottom = EARTH.plum("\u2570" + "\u2500".repeat(40) + " Ctrl+C to exit " + "\u2500\u2570");
 
   process.stdout.write(border + "\n");
-  process.stdout.write(chalk.dim("\u2502") + "\n");
-  process.stdout.write(chalk.dim("\u2502") + `  Kill Switch: ${killLine}        Queue: ${runningCount}/${runningCount + queuedCount} running\n`);
-  process.stdout.write(chalk.dim("\u2502") + "\n");
+  process.stdout.write(EARTH.plum("\u2502") + "\n");
+  process.stdout.write(EARTH.plum("\u2502") + `  ${EARTH.stone("Kill Switch:")} ${killLine}        ${EARTH.stone("Queue:")} ${runningCount}/${runningCount + queuedCount} running\n`);
+  process.stdout.write(EARTH.plum("\u2502") + "\n");
 
   // Agenter
   for (const agent of agents) {
@@ -98,14 +99,14 @@ async function render(): Promise<void> {
     }
 
     process.stdout.write(
-      chalk.dim("\u2502") + `  ${badge.padEnd(28)} ${chalk.dim("\u2665")} ${hb.padEnd(8)} ${taskInfo}\n`,
+      EARTH.plum("\u2502") + `  ${badge.padEnd(28)} ${chalk.dim("\u2665")} ${hb.padEnd(8)} ${taskInfo}\n`,
     );
   }
 
   // Senaste aktivitet
   if (recentActivity.length > 0) {
-    process.stdout.write(chalk.dim("\u2502") + "\n");
-    process.stdout.write(chalk.dim("\u2502") + chalk.bold("  Recent:") + "\n");
+    process.stdout.write(EARTH.plum("\u2502") + "\n");
+    process.stdout.write(EARTH.plum("\u2502") + chalk.bold("  Recent:") + "\n");
     for (const entry of recentActivity) {
       const time = new Date(entry.created_at).toLocaleTimeString("sv-SE", {
         hour: "2-digit",
@@ -116,12 +117,12 @@ async function render(): Promise<void> {
       const details = entry.details_json ?? {};
       const extra = details.type ? String(details.type) : "";
       process.stdout.write(
-        chalk.dim("\u2502") + `  ${chalk.dim(time)}  ${agent.padEnd(12)} ${entry.action.padEnd(18)} ${extra}\n`,
+        EARTH.plum("\u2502") + `  ${chalk.dim(time)}  ${agent.padEnd(12)} ${entry.action.padEnd(18)} ${extra}\n`,
       );
     }
   }
 
-  process.stdout.write(chalk.dim("\u2502") + "\n");
+  process.stdout.write(EARTH.plum("\u2502") + "\n");
   process.stdout.write(borderBottom + "\n");
 }
 

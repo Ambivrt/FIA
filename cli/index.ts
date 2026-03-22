@@ -5,6 +5,7 @@
 
 import { Command } from "commander";
 import { validateConfig } from "./lib/config";
+import { banner } from "./lib/formatters";
 import { registerStatusCommand } from "./commands/status";
 import { registerAgentsCommand } from "./commands/agents";
 import { registerRunCommand } from "./commands/run";
@@ -24,7 +25,11 @@ program
   .name("fia")
   .description("FIA CLI – Terminal interface for Forefront Intelligent Automation")
   .version("0.2.0")
-  .hook("preAction", () => {
+  .action(() => {
+    // Visa banner när fia körs utan kommando
+    process.stdout.write(banner());
+  })
+  .hook("preSubcommand", () => {
     validateConfig();
   });
 

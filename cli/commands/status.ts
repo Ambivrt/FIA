@@ -3,7 +3,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { apiGet } from "../lib/api-client";
-import { statusBadge, relativeTime, box } from "../lib/formatters";
+import { statusBadge, relativeTime, box, EARTH } from "../lib/formatters";
 import type { AgentResponse, KillSwitchStatus } from "../types";
 
 export function registerStatusCommand(program: Command): void {
@@ -34,10 +34,10 @@ export function registerStatusCommand(program: Command): void {
 
       // Bygg innehåll
       const lines: string[] = [];
-      lines.push(`  Kill Switch:  ${killLine}`);
-      lines.push(`  Queue:        ${queued} queued / ${running} running`);
+      lines.push(`  ${EARTH.stone("Kill Switch:")}  ${killLine}`);
+      lines.push(`  ${EARTH.stone("Queue:")}        ${queued} queued / ${running} running`);
       lines.push("");
-      lines.push("  Agents:");
+      lines.push(EARTH.slate("  Agents:"));
 
       for (const agent of agents) {
         const ds = agent.display_status;
