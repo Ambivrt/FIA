@@ -18,6 +18,13 @@ const revisionSchema = z.object({
   feedback: z.string().min(1, "Feedback is required for revision request."),
 });
 
+const createTaskSchema = z.object({
+  agent_slug: z.string().min(1, "agent_slug is required."),
+  type: z.string().min(1, "type is required."),
+  title: z.string().optional(),
+  priority: z.enum(["low", "normal", "high", "urgent"]).default("normal"),
+});
+
 const ALLOWED_SORT_FIELDS = ["created_at", "updated_at", "priority", "status", "type"] as const;
 
 export function taskRoutes(supabase: SupabaseClient): Router {
@@ -46,7 +53,14 @@ export function taskRoutes(supabase: SupabaseClient): Router {
 
       let query = supabase.from("tasks").select("*, agents!inner(slug, name)", { count: "exact" });
 
-      if (status) query = query.eq("status", status);
+      if (status) {
+        const statuses = status.split(",").map((s) => s.trim());
+        if (statuses.length === 1) {
+          query = query.eq("status", statuses[0]);
+        } else {
+          query = query.in("status", statuses);
+        }
+      }
       if (agent_slug) query = query.eq("agents.slug", agent_slug);
       if (type) query = query.eq("type", type);
       if (priority) query = query.eq("priority", priority);
@@ -61,6 +75,54 @@ export function taskRoutes(supabase: SupabaseClient): Router {
       res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
     }
   });
+
+  // POST /api/tasks – skapa en ny task (CLI / Dashboard)
+  router.post(
+    "/",
+    requireRole("orchestrator", "admin", "operator"),
+    validateBody(createTaskSchema),
+    async (req, res) => {
+      try {
+        const { agent_slug, type, title, priority } = req.body;
+
+        const { data: agent, error: agentErr } = await supabase
+          .from("agents")
+          .select("id, name")
+          .eq("slug", agent_slug)
+          .single();
+
+        if (agentErr || !agent) {
+          res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${agent_slug}' not found.` } });
+          return;
+        }
+
+        const { data: task, error } = await supabase
+          .from("tasks")
+          .insert({
+            agent_id: agent.id,
+            type,
+            title: title || `${type} (CLI)`,
+            priority,
+            status: "queued",
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        await logActivity(supabase, {
+          agent_id: agent.id,
+          user_id: req.user!.id,
+          action: "task_created",
+          details_json: { task_id: task.id, type, priority, source: "cli" },
+        });
+
+        res.status(201).json({ data: task });
+      } catch (err) {
+        res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+      }
+    },
+  );
 
   // GET /api/tasks/:id
   router.get("/:id", async (req, res) => {
