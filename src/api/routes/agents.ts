@@ -4,6 +4,8 @@ import { z } from "zod";
 import { requireRole } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { logActivity } from "../../supabase/activity-writer";
+import { KillSwitch } from "../../utils/kill-switch";
+import { resolveDisplayStatus } from "../../shared/display-status";
 
 const modelAliasEnum = z.enum([
   "claude-opus",
@@ -31,7 +33,7 @@ const toolsSchema = z.object({
   tools: z.array(z.string().min(1).max(100)),
 });
 
-export function agentRoutes(supabase: SupabaseClient): Router {
+export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch): Router {
   const router = Router();
 
   // GET /api/agents – all authenticated users
@@ -42,6 +44,8 @@ export function agentRoutes(supabase: SupabaseClient): Router {
       if (error) throw error;
 
       const today = new Date().toISOString().slice(0, 10);
+
+      const killSwitchActive = killSwitch.isActive();
 
       const enriched = await Promise.all(
         (agents ?? []).map(async (agent) => {
@@ -56,7 +60,10 @@ export function agentRoutes(supabase: SupabaseClient): Router {
             counts[t.status] = (counts[t.status] ?? 0) + 1;
           }
 
-          return { ...agent, tasks_today: counts };
+          const running_task_count = counts["in_progress"] ?? 0;
+          const display_status = resolveDisplayStatus(agent, killSwitchActive, running_task_count > 0);
+
+          return { ...agent, tasks_today: counts, running_task_count, display_status };
         }),
       );
 

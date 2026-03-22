@@ -48,7 +48,7 @@ export function createApiServer(
   // All other routes require auth
   app.use("/api", requireAuth(supabase));
 
-  app.use("/api/agents", agentRoutes(supabase));
+  app.use("/api/agents", agentRoutes(supabase, killSwitch));
   app.use("/api/tasks", taskRoutes(supabase));
   app.use("/api/metrics", metricRoutes(supabase));
   app.use("/api/activity", activityRoutes(supabase));

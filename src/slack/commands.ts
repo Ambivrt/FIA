@@ -6,6 +6,7 @@ import { KillSwitch } from "../utils/kill-switch";
 import { TaskQueue, QueueCompleteCallback } from "../gateway/task-queue";
 import { updateTaskStatus, createApproval, purgeOrphanedTasks } from "../supabase/task-writer";
 import { logActivity } from "../supabase/activity-writer";
+import { resolveDisplayStatus, type DisplayStatus } from "../shared/display-status";
 import { createAgent, getAllAgentSlugs } from "../agents/agent-factory";
 import { loadAgentManifest } from "../agents/agent-loader";
 import { ProgressCallback } from "../agents/base-agent";
@@ -42,18 +43,36 @@ export function registerCommands(
         }
 
         if (supabase) {
-          const { data: agents } = await supabase.from("agents").select("name, slug, status").order("name");
+          const { data: agents } = await supabase.from("agents").select("id, name, slug, status").order("name");
 
           if (agents?.length) {
+            const SLACK_EMOJI: Record<DisplayStatus, string> = {
+              online: ":large_green_circle:",
+              working: ":large_yellow_circle:",
+              paused: ":white_circle:",
+              killed: ":black_circle:",
+              error: ":red_circle:",
+            };
+
+            const ksActive = killSwitch?.isActive() ?? false;
+
+            // Fetch running task counts for all agents
+            const agentIds = agents.map((a) => a.id);
+            const { data: runningTasks } = await supabase
+              .from("tasks")
+              .select("agent_id")
+              .in("agent_id", agentIds)
+              .eq("status", "in_progress");
+
+            const runningCounts = new Map<string, number>();
+            for (const t of runningTasks ?? []) {
+              runningCounts.set(t.agent_id, (runningCounts.get(t.agent_id) ?? 0) + 1);
+            }
+
             statusText += "\n\n*Agents:*";
             for (const a of agents) {
-              const icon =
-                a.status === "active"
-                  ? ":large_green_circle:"
-                  : a.status === "paused"
-                    ? ":double_vertical_bar:"
-                    : ":red_circle:";
-              statusText += `\n${icon} ${a.name} (${a.status})`;
+              const ds = resolveDisplayStatus(a, ksActive, (runningCounts.get(a.id) ?? 0) > 0);
+              statusText += `\n${SLACK_EMOJI[ds.status]} ${a.name} (${ds.labelSv})`;
             }
           }
         }
