@@ -2,34 +2,44 @@
 
 All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och principer. Gateway- och Dashboard-repon pekar hit.
 
-**Version:** 0.4.0
-**Senast uppdaterad:** 2026-03-20
+**Version:** 0.5.0
+**Senast uppdaterad:** 2026-03-22
 
 ---
 
-## Nuläge (2026-03-20)
+## Nuläge (2026-03-22)
 
 ### Övergripande status
 
-| Delsystem            | Status                                              | Deploy           |
-| -------------------- | --------------------------------------------------- | ---------------- |
-| Gateway (backend)    | Solid MVP, alla 8 agenter live, 15 testfiler, CI/CD | 0.2 (2026-03-15) |
-| Dashboard (frontend) | Robust MVP, strict TS, error boundaries, i18n, PWA  | Live på Lovable  |
-| Supabase (DB)        | 10 tabeller, RLS, Realtime                          | EU-region aktiv  |
-| GCP (hosting)        | Compute Engine konfigurerad                         | europe-north1-b  |
-| Slack                | Bolt SDK + Socket Mode live                         | Aktiv            |
-| MCP-integrationer    | gws kopplad till agenter (Drive, Docs, Sheets)      | Live             |
+| Delsystem            | Status                                                    | Deploy           |
+| -------------------- | --------------------------------------------------------- | ---------------- |
+| Gateway (backend)    | Solid MVP, alla 8 agenter live, 22 testfiler, CI/CD       | 0.5 (2026-03-22) |
+| CLI                  | 11 kommandon, Forefront Earth-palett, Supabase Realtime   | 0.5 (2026-03-22) |
+| Dashboard (frontend) | Robust MVP, strict TS, error boundaries, i18n, PWA        | Live på Lovable  |
+| Supabase (DB)        | 10 tabeller, RLS, Realtime                                | EU-region aktiv  |
+| GCP (hosting)        | Compute Engine konfigurerad                               | europe-north1-b  |
+| Slack                | Bolt SDK + Socket Mode live                               | Aktiv            |
+| MCP-integrationer    | gws kopplad till agenter (Drive, Docs, Sheets)            | Live             |
 
 ### Backend – Gateway (Ambivrt/FIA)
 
-**Kodbas:** ~48 TypeScript-filer, ~6 100 LOC, TypeScript strict mode, 15 testfiler, CI/CD via GitHub Actions, ESLint + Prettier.
+**Kodbas:** ~70 TypeScript-filer, ~8 000 LOC, TypeScript strict mode, 22 testfiler (304 tester), CI/CD via GitHub Actions, ESLint + Prettier.
+
+**Nytt i 0.5:**
+
+| Komponent                                      | Status |
+| ---------------------------------------------- | ------ |
+| FIA CLI-klient (11 kommandon)                  | Klart  |
+| FIA Display Status (delad standard)            | Klart  |
+| CLI auth middleware (FIA_CLI_TOKEN)             | Klart  |
+| POST /api/tasks (skapa task från CLI/Dashboard)| Klart  |
+| Kommaseparerade status-filter i GET /api/tasks | Klart  |
 
 **Kvarstår:**
 
 | Komponent                                              | Status      |
 | ------------------------------------------------------ | ----------- |
 | MCP-wrappers (HubSpot, LinkedIn, Buffer)               | Ej påbörjat |
-| gws MCP kopplad till agenter                           | Klart       |
 | Content staging (Zod-validering av content_json)       | Fas 2       |
 | Feedback-loop (feedback-summary, dynamisk review rate) | Fas 3       |
 
@@ -92,9 +102,15 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
                     │  Tailwind · shadcn/ui          │
                     │  fia.forefront.se              │
                     └───────────────────────────────┘
+                    ┌───────────────────────────────┐
+                    │         FIA CLI                │
+                    │  Commander · chalk · boxen     │
+                    │  Supabase Realtime (tail/watch)│
+                    │  npx fia <command>             │
+                    └───────────────────────────────┘
 ```
 
-**Dual-interface:** Slack och Dashboard fungerar parallellt. Gateway är källan till sanning – skriver agentdata till Supabase, dashboarden läser via Supabase Realtime. Kommandon (pausa, godkänn, kill switch) kan ges via båda gränssnitten.
+**Triple-interface:** Slack, Dashboard och CLI fungerar parallellt. Gateway är källan till sanning – skriver agentdata till Supabase, dashboarden läser via Supabase Realtime, CLI:n pratar med gatewayens REST API. Kommandon (pausa, godkänn, kill switch) kan ges via alla tre gränssnitten.
 
 ---
 
@@ -178,7 +194,8 @@ z.union([
 | Loggning          | Strukturerad JSON → Supabase         | Audit trail                                                     |
 | Databas-klient    | `@supabase/supabase-js`              | Heartbeats, tasks, metrics, activity_log                        |
 | Realtime-lyssnare | Supabase Realtime                    | Kommandon + task-uppdateringar från Dashboard                   |
-| REST API          | Express (intern, port 3001)          | Dashboard-kommandon via Edge Functions                          |
+| REST API          | Express (intern, port 3001)          | Dashboard- och CLI-kommandon                                    |
+| CLI               | Commander + chalk + boxen            | Terminalverktyg (11 kommandon, Supabase Realtime)               |
 | Validering        | Zod                                  | Config-validering, API-inputvalidering                          |
 | Google Workspace  | gws CLI v0.4.4 via MCP               | Drive, Gmail, Calendar, Sheets, Docs                            |
 | Hosting           | GCP Compute Engine (europe-north1-b) | EU, GDPR                                                        |
@@ -849,7 +866,10 @@ ALTER PUBLICATION supabase_realtime ADD TABLE agents, tasks, activity_log, comma
 
 ### Autentisering
 
-Alla anrop kräver `Authorization: Bearer <supabase-jwt>`. API:t validerar token mot Supabase Auth och hämtar roll från `profiles`.
+Alla anrop kräver `Authorization: Bearer <token>`. Två auth-metoder:
+
+1. **Supabase JWT** – Dashboard och externa klienter. Valideras mot Supabase Auth, roll hämtas från `profiles`.
+2. **FIA_CLI_TOKEN** – CLI-klient. Enkel token i `.env` som ger admin-roll utan JWT-validering.
 
 ### Felformat
 
@@ -871,11 +891,12 @@ Statuskoder: 200, 201, 400, 401, 403, 404, 500.
 
 ### Uppgifter
 
-- `GET /api/tasks` – Alla inloggade. Query: `status`, `agent_slug`, `type`, `priority`, `page`, `per_page`, `sort`.
+- `GET /api/tasks` – Alla inloggade. Query: `status` (kommaseparerad, t.ex. `queued,in_progress`), `agent_slug`, `type`, `priority`, `page`, `per_page`, `sort`.
 - `GET /api/tasks/:id` – Alla inloggade. Med `content_json` och `approvals`.
-- `POST /api/tasks/:id/approve` – Orchestrator, Admin. Body: `{ "feedback": "..." }` (valfritt). Skapar approval + command.
-- `POST /api/tasks/:id/reject` – Orchestrator, Admin. Body: `{ "feedback": "..." }` (obligatoriskt).
-- `POST /api/tasks/:id/revision` – Orchestrator, Admin. Body: `{ "feedback": "..." }`.
+- `POST /api/tasks` – Orchestrator, Admin, Operator. Body: `{ "agent_slug": "content", "type": "blog_post", "title": "...", "priority": "normal" }`. Skapar task med status `queued`. Används av CLI (`fia run`).
+- `POST /api/tasks/:id/approve` – Orchestrator, Admin, Operator. Body: `{ "feedback": "..." }` (valfritt). Skapar approval + command.
+- `POST /api/tasks/:id/reject` – Orchestrator, Admin, Operator. Body: `{ "feedback": "..." }` (obligatoriskt).
+- `POST /api/tasks/:id/revision` – Orchestrator, Admin, Operator. Body: `{ "feedback": "..." }`.
 
 ### Metrics
 
@@ -1099,6 +1120,99 @@ Slack-kanaler:
 | `#fia-analytics`    | Analytics Agent progress                        |
 | `#fia-intelligence` | Intelligence Agent progress                     |
 | `#fia-orchestrator` | Strategy/Lead/Brand/SEO progress + eskaleringar |
+
+---
+
+## FIA CLI
+
+Terminalverktyg som pratar med gatewayens REST API (port 3001). Tredje gränssnittet efter Slack och Dashboard. Lever i `cli/` i samma repo, delar `.env` och TypeScript-konfiguration.
+
+**Auth:** `FIA_CLI_TOKEN` i `.env` – enkel bearer token som bypaschar Supabase JWT (admin-roll).
+
+**Beroenden:** Commander, chalk@4 (CJS), boxen@5 (CJS), ora@5 (CJS), cli-table3.
+
+### CLI-kommandon
+
+| Kommando                              | Beskrivning                                   |
+| ------------------------------------- | --------------------------------------------- |
+| `fia`                                 | Visa FIA-banner (Forefront gradient + Earth)   |
+| `fia status`                          | Systemöversikt (kill switch, kö, agenter)     |
+| `fia agents [slug]`                   | Agenttabell eller detaljvy per agent          |
+| `fia run <agent> <task> [--priority]` | Trigga task manuellt (spinner + polling)       |
+| `fia queue [--verbose]`               | Köade och pågående tasks                      |
+| `fia approve <task-id> [--feedback]`  | Godkänn task (accepterar korta ID:n)          |
+| `fia reject <task-id> --feedback`     | Avslå task (feedback obligatoriskt)           |
+| `fia kill [--force]`                  | Aktivera kill switch (bekräftelse krävs)      |
+| `fia resume`                          | Avaktivera kill switch                        |
+| `fia logs [--agent] [--action]`       | Aktivitetslogg (senaste 10 default)           |
+| `fia tail [--agent]`                  | Live-stream av aktivitet (Supabase Realtime)  |
+| `fia watch`                           | Mini-dashboard med 2s refresh (Ctrl+C avslut) |
+| `fia config [agent] [--routing]`      | Visa/redigera agentkonfiguration              |
+
+### Filstruktur
+
+```
+cli/
+├── index.ts              # Commander setup, banner vid tomt kommando
+├── commands/             # Ett kommando per fil (11 st + helpers)
+│   ├── status.ts         # fia status
+│   ├── agents.ts         # fia agents [slug]
+│   ├── run.ts            # fia run (POST + polling)
+│   ├── queue.ts          # fia queue
+│   ├── approve.ts        # fia approve
+│   ├── reject.ts         # fia reject
+│   ├── kill.ts           # fia kill (med readline-bekräftelse)
+│   ├── resume.ts         # fia resume
+│   ├── logs.ts           # fia logs
+│   ├── tail.ts           # fia tail (Supabase Realtime)
+│   ├── watch.ts          # fia watch (terminal-dashboard)
+│   ├── config.ts         # fia config
+│   └── helpers.ts        # resolveTaskId (kort → fullt UUID)
+├── lib/
+│   ├── api-client.ts     # HTTP-klient (native fetch, Bearer token)
+│   ├── formatters.ts     # Earth-palett, tabeller, boxen, relativeTime
+│   ├── realtime.ts       # Supabase Realtime (activity_log INSERT)
+│   └── config.ts         # .env-läsare (dotenv)
+└── types.ts              # CLI-typer + re-export av DisplayStatus
+```
+
+### Forefront-branding i CLI
+
+**Earth-palett:** `#7D5365` (plum), `#42504E` (forest), `#555977` (slate), `#756256` (walnut), `#7E7C83` (stone). Används för agent-färgning, tabellrubriker, boxramar.
+
+**Gradient:** `#FF6B0B` (orange) → `#FFB7F8` (pink) → `#79F2FB` (cyan). Används i ASCII-banner och watch-titel.
+
+---
+
+## FIA Display Status
+
+Gemensam standard för alla tre gränssnitt (CLI, Dashboard, Slack). Implementerad i `src/shared/display-status.ts`.
+
+### De fem statusarna
+
+| Displaystatus | Färg   | Symbol | Betydelse                        |
+| ------------- | ------ | ------ | -------------------------------- |
+| online        | Grön   | ●      | Uppe, lyssnar, redo att ta tasks |
+| working       | Gul    | ●      | Exekverar minst en task just nu  |
+| paused        | Grå    | ●      | Pausad av orchestrator           |
+| killed        | Svart  | ⬤      | Kill switch aktiv                |
+| error         | Röd    | ✗      | Agent i error-state              |
+
+### Resolve-logik (prioritetsordning)
+
+1. Kill switch aktiv → `killed`
+2. `agent.status === 'error'` → `error`
+3. `agent.status === 'paused'` → `paused`
+4. Agent har pågående task → `working`
+5. Annars → `online`
+
+### Mappning per gränssnitt
+
+| Gränssnitt | Färgformat           | Källa                           |
+| ---------- | -------------------- | ------------------------------- |
+| CLI        | chalk.hex() / chalk  | `cli/lib/formatters.ts`        |
+| Dashboard  | Tailwind-klasser     | Frontend-repo                   |
+| Slack      | Slack-emojis         | `src/slack/commands.ts`         |
 
 ---
 
@@ -1329,15 +1443,22 @@ Tasks med betyg 1-2 och kommentarer extraheras automatiskt som negativa few-shot
 
 Deploy 0.2 (2026-03-15). Gateway + Dashboard MVP live. 4 arbetsdagar, en person med Claude Code + Lovable.
 
+### Deploy 0.5 (2026-03-22): CLI + Display Status
+
+- FIA CLI-klient med 11 kommandon, Forefront Earth-palett, Supabase Realtime
+- FIA Display Status – gemensam standard (online/working/paused/killed/error)
+- CLI auth middleware (FIA_CLI_TOKEN-bypass)
+- POST /api/tasks endpoint, kommaseparerade status-filter
+- Teknisk skuld B1–B12 åtgärdad, gws MCP kopplad, CI/CD + ESLint + Prettier
+
 ### Nästa steg – Fas 1 avslut
 
 | #   | Uppgift                 | Beskrivning                                                                                                                                                                                      | Prioritet |
 | --- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
-| 1   | **gws MCP → agenter**   | Koppla gws MCP-server till Content, Strategy, SEO och Analytics. Konfigurationen finns – agent-loader behöver anropa gws-tools vid task-execution. Filer: `src/agents/base-agent.ts`, `src/mcp/` | Hög       |
-| 2   | **10 innehållsenheter** | Kör Content Agent med verkliga tasks (blog_post, linkedin, newsletter). Verifiera end-to-end: trigger → LLM → Brand review → godkänn → activity_log. Via `/fia run content blog_post`            | Hög       |
-| 3   | **Go/no-go checkpoint** | Granska de 10 enheterna mot tonalitetsregler och varumärkesplattform. Kriterium: 80% publiceringsredo                                                                                            | Hög       |
-| 4   | Gemini context caching  | Minskar kostnader vid upprepade system_context-anrop. Kan skjutas till Fas 2                                                                                                                     | Valfritt  |
-| 5   | GA4 Analytics API       | Analytics Agent klarar sig utan i MVP. Kan skjutas till Fas 2                                                                                                                                    | Valfritt  |
+| 1   | **10 innehållsenheter** | Kör Content Agent med verkliga tasks (blog_post, linkedin, newsletter). Verifiera end-to-end: trigger → LLM → Brand review → godkänn → activity_log. Via `fia run content blog_post`             | Hög       |
+| 2   | **Go/no-go checkpoint** | Granska de 10 enheterna mot tonalitetsregler och varumärkesplattform. Kriterium: 80% publiceringsredo                                                                                            | Hög       |
+| 3   | Gemini context caching  | Minskar kostnader vid upprepade system_context-anrop. Kan skjutas till Fas 2                                                                                                                     | Valfritt  |
+| 4   | GA4 Analytics API       | Analytics Agent klarar sig utan i MVP. Kan skjutas till Fas 2                                                                                                                                    | Valfritt  |
 
 ### Fas 2: Expansion + Content Staging
 
@@ -1417,6 +1538,11 @@ Deploy 0.2 (2026-03-15). Gateway + Dashboard MVP live. 4 arbetsdagar, en person 
 | `zod`                   | ^4.3.6  | Validering                                   |
 | `uuid`                  | ^11.1.0 | Task-ID:n                                    |
 | `dotenv`                | ^16.4.7 | Miljövariabler                               |
+| `commander`             | ^12.1.0 | CLI-ramverk (FIA CLI)                        |
+| `chalk`                 | ^4.1.2  | CLI-färger (CJS-kompatibel)                  |
+| `boxen`                 | ^5.1.2  | CLI-boxar (CJS-kompatibel)                   |
+| `ora`                   | ^5.4.1  | CLI-spinners (CJS-kompatibel)                |
+| `cli-table3`            | ^0.6.4  | CLI-tabeller                                 |
 
 ### Utveckling
 
