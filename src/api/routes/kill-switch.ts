@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { requireRole } from "../middleware/auth";
+import { requireRole, getDbUserId } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { KillSwitch } from "../../utils/kill-switch";
 
@@ -34,7 +34,7 @@ export function killSwitchRoutes(killSwitch: KillSwitch, supabase: SupabaseClien
       await supabase.from("commands").insert({
         command_type: "kill_switch",
         payload_json: { active: action === "activate", source: "api" },
-        issued_by: req.user!.id,
+        issued_by: getDbUserId(req) ?? null,
         status: "completed",
         processed_at: new Date().toISOString(),
       });

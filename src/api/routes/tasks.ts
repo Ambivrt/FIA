@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { requireRole } from "../middleware/auth";
+import { requireRole, getDbUserId } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { updateTaskStatus, createApproval } from "../../supabase/task-writer";
 import { logActivity } from "../../supabase/activity-writer";
@@ -112,7 +112,7 @@ export function taskRoutes(supabase: SupabaseClient): Router {
 
         await logActivity(supabase, {
           agent_id: agent.id,
-          user_id: req.user!.id,
+          user_id: getDbUserId(req),
           action: "task_created",
           details_json: { task_id: task.id, type, priority, source: "cli" },
         });
@@ -163,12 +163,12 @@ export function taskRoutes(supabase: SupabaseClient): Router {
         await createApproval(supabase, {
           task_id: taskId,
           reviewer_type: "orchestrator",
-          reviewer_id: req.user!.id,
+          reviewer_id: getDbUserId(req),
           decision: "approved",
           feedback,
         });
         await logActivity(supabase, {
-          user_id: req.user!.id,
+          user_id: getDbUserId(req),
           action: "task_approved",
           details_json: { task_id: taskId },
         });
@@ -176,7 +176,7 @@ export function taskRoutes(supabase: SupabaseClient): Router {
         await supabase.from("commands").insert({
           command_type: "approve_task",
           payload_json: { task_id: taskId, feedback, source: "api" },
-          issued_by: req.user!.id,
+          issued_by: getDbUserId(req) ?? null,
           status: "completed",
           processed_at: new Date().toISOString(),
         });
@@ -202,12 +202,12 @@ export function taskRoutes(supabase: SupabaseClient): Router {
         await createApproval(supabase, {
           task_id: taskId,
           reviewer_type: "orchestrator",
-          reviewer_id: req.user!.id,
+          reviewer_id: getDbUserId(req),
           decision: "rejected",
           feedback,
         });
         await logActivity(supabase, {
-          user_id: req.user!.id,
+          user_id: getDbUserId(req),
           action: "task_rejected",
           details_json: { task_id: taskId, feedback },
         });
@@ -215,7 +215,7 @@ export function taskRoutes(supabase: SupabaseClient): Router {
         await supabase.from("commands").insert({
           command_type: "reject_task",
           payload_json: { task_id: taskId, feedback, source: "api" },
-          issued_by: req.user!.id,
+          issued_by: getDbUserId(req) ?? null,
           status: "completed",
           processed_at: new Date().toISOString(),
         });
@@ -241,12 +241,12 @@ export function taskRoutes(supabase: SupabaseClient): Router {
         await createApproval(supabase, {
           task_id: taskId,
           reviewer_type: "orchestrator",
-          reviewer_id: req.user!.id,
+          reviewer_id: getDbUserId(req),
           decision: "revision_requested",
           feedback,
         });
         await logActivity(supabase, {
-          user_id: req.user!.id,
+          user_id: getDbUserId(req),
           action: "task_revision_requested",
           details_json: { task_id: taskId, feedback },
         });
@@ -254,7 +254,7 @@ export function taskRoutes(supabase: SupabaseClient): Router {
         await supabase.from("commands").insert({
           command_type: "revision_task",
           payload_json: { task_id: taskId, feedback, source: "api" },
-          issued_by: req.user!.id,
+          issued_by: getDbUserId(req) ?? null,
           status: "completed",
           processed_at: new Date().toISOString(),
         });
