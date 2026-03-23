@@ -158,7 +158,9 @@ export function triggerRoutes(supabase: SupabaseClient, config?: AppConfig): Rou
       const confirm = req.body?.confirm === true;
 
       if (!config) {
-        res.status(500).json({ error: { code: "CONFIG_MISSING", message: "Gateway config not available for YAML loading." } });
+        res
+          .status(500)
+          .json({ error: { code: "CONFIG_MISSING", message: "Gateway config not available for YAML loading." } });
         return;
       }
 
@@ -171,11 +173,7 @@ export function triggerRoutes(supabase: SupabaseClient, config?: AppConfig): Rou
       }> = [];
 
       for (const slug of slugs) {
-        const { data: agent } = await supabase
-          .from("agents")
-          .select("id, config_json")
-          .eq("slug", slug)
-          .single();
+        const { data: agent } = await supabase.from("agents").select("id, config_json").eq("slug", slug).single();
 
         if (!agent) continue;
 
@@ -198,7 +196,8 @@ export function triggerRoutes(supabase: SupabaseClient, config?: AppConfig): Rou
           } else if (JSON.stringify(ct) !== JSON.stringify(yt)) {
             const diffs: string[] = [];
             if (ct.enabled !== yt.enabled) diffs.push(`enabled: ${ct.enabled} → ${yt.enabled}`);
-            if (ct.requires_approval !== yt.requires_approval) diffs.push(`requires_approval: ${ct.requires_approval} → ${yt.requires_approval}`);
+            if (ct.requires_approval !== yt.requires_approval)
+              diffs.push(`requires_approval: ${ct.requires_approval} → ${yt.requires_approval}`);
             if (JSON.stringify(ct.condition) !== JSON.stringify(yt.condition)) diffs.push("condition changed");
             if (JSON.stringify(ct.action) !== JSON.stringify(yt.action)) diffs.push("action changed");
             changes.push({ trigger: yt.name, diff: diffs.join(", ") || "minor changes" });
@@ -228,11 +227,7 @@ export function triggerRoutes(supabase: SupabaseClient, config?: AppConfig): Rou
       const unchanged: string[] = [];
 
       for (const slug of slugs) {
-        const { data: agent } = await supabase
-          .from("agents")
-          .select("id, config_json")
-          .eq("slug", slug)
-          .single();
+        const { data: agent } = await supabase.from("agents").select("id, config_json").eq("slug", slug).single();
 
         if (!agent) continue;
 

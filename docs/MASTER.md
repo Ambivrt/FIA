@@ -11,15 +11,15 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 ### Övergripande status
 
-| Delsystem            | Status                                                              | Deploy             |
-| -------------------- | ------------------------------------------------------------------- | ------------------ |
-| Gateway (backend)    | Solid MVP, 8 agenter, trigger engine, trigger config, CI/CD         | 0.5.2 (2026-03-23) |
-| CLI                  | 11 kommandon, Forefront Earth-palett, Supabase Realtime             | 0.5.1 (2026-03-23) |
-| Dashboard (frontend) | Robust MVP, trigger-kö, trigger-konfig, task-relationer, i18n, PWA  | Live på Lovable    |
-| Supabase (DB)        | 11 tabeller, RLS, Realtime, pending_triggers                        | EU-region aktiv    |
-| GCP (hosting)        | Compute Engine konfigurerad                                         | europe-north1-b    |
-| Slack                | Bolt SDK + Socket Mode live                                         | Aktiv              |
-| MCP-integrationer    | gws kopplad till agenter (Drive, Docs, Sheets)                      | Live               |
+| Delsystem            | Status                                                             | Deploy             |
+| -------------------- | ------------------------------------------------------------------ | ------------------ |
+| Gateway (backend)    | Solid MVP, 8 agenter, trigger engine, trigger config, CI/CD        | 0.5.2 (2026-03-23) |
+| CLI                  | 11 kommandon, Forefront Earth-palett, Supabase Realtime            | 0.5.1 (2026-03-23) |
+| Dashboard (frontend) | Robust MVP, trigger-kö, trigger-konfig, task-relationer, i18n, PWA | Live på Lovable    |
+| Supabase (DB)        | 11 tabeller, RLS, Realtime, pending_triggers                       | EU-region aktiv    |
+| GCP (hosting)        | Compute Engine konfigurerad                                        | europe-north1-b    |
+| Slack                | Bolt SDK + Socket Mode live                                        | Aktiv              |
+| MCP-integrationer    | gws kopplad till agenter (Drive, Docs, Sheets)                     | Live               |
 
 ### Backend – Gateway (Ambivrt/FIA)
 
@@ -38,15 +38,15 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 **Nytt i 0.5.2:**
 
-| Komponent                                                          | Status |
-| ------------------------------------------------------------------ | ------ |
-| Trigger-konfiguration i config_json (runtime source of truth)      | Klart  |
-| GET/PATCH `/api/agents/:slug/triggers` endpoints                   | Klart  |
-| POST reseed endpoints (per agent + alla agenter, dry-run + confirm)| Klart  |
-| Trigger engine läser från config_json istället för YAML            | Klart  |
-| Zod-schema för trigger-patch-validering (`trigger-config.ts`)      | Klart  |
-| `reseed_triggers` command i command-listener                       | Klart  |
-| `_yaml_triggers` i config_json för dashboard-diff                  | Klart  |
+| Komponent                                                           | Status |
+| ------------------------------------------------------------------- | ------ |
+| Trigger-konfiguration i config_json (runtime source of truth)       | Klart  |
+| GET/PATCH `/api/agents/:slug/triggers` endpoints                    | Klart  |
+| POST reseed endpoints (per agent + alla agenter, dry-run + confirm) | Klart  |
+| Trigger engine läser från config_json istället för YAML             | Klart  |
+| Zod-schema för trigger-patch-validering (`trigger-config.ts`)       | Klart  |
+| `reseed_triggers` command i command-listener                        | Klart  |
+| `_yaml_triggers` i config_json för dashboard-diff                   | Klart  |
 
 **Kvarstår:**
 
@@ -70,14 +70,14 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 **Nytt i 0.5.2:**
 
-| Komponent                                                       | Status |
-| --------------------------------------------------------------- | ------ |
-| AgentTriggersTab (ny flik i AgentDetailPage)                    | Klart  |
-| TriggerCard med collapsed/expanded vy och inline-redigering     | Klart  |
-| TriggersConfigPage (`/triggers/config`) med grupperad översikt  | Klart  |
-| Reseed-stöd i SettingsPage (admin) och AgentTriggersTab         | Klart  |
-| Enable/disable toggle med optimistisk uppdatering               | Klart  |
-| 11 nya trigger-komponenter (`components/triggers/`)             | Klart  |
+| Komponent                                                      | Status |
+| -------------------------------------------------------------- | ------ |
+| AgentTriggersTab (ny flik i AgentDetailPage)                   | Klart  |
+| TriggerCard med collapsed/expanded vy och inline-redigering    | Klart  |
+| TriggersConfigPage (`/triggers/config`) med grupperad översikt | Klart  |
+| Reseed-stöd i SettingsPage (admin) och AgentTriggersTab        | Klart  |
+| Enable/disable toggle med optimistisk uppdatering              | Klart  |
+| 11 nya trigger-komponenter (`components/triggers/`)            | Klart  |
 | i18n-nycklar (sv + en, 40+ nycklar)                            | Klart  |
 
 **Kvarstår:**

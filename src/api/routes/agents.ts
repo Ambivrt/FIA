@@ -240,11 +240,7 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch, co
     try {
       const { slug } = req.params;
 
-      const { data: agent, error } = await supabase
-        .from("agents")
-        .select("config_json")
-        .eq("slug", slug)
-        .single();
+      const { data: agent, error } = await supabase.from("agents").select("config_json").eq("slug", slug).single();
 
       if (error || !agent) {
         res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
@@ -261,142 +257,147 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch, co
   });
 
   // PATCH /api/agents/:slug/triggers – orchestrator, admin
-  router.patch("/:slug/triggers", requireRole("orchestrator", "admin"), validateBody(triggersPatchSchema), async (req, res) => {
-    try {
-      const { slug } = req.params;
-      const { triggers: patches } = req.body as { triggers: TriggerPatchItem[] };
+  router.patch(
+    "/:slug/triggers",
+    requireRole("orchestrator", "admin"),
+    validateBody(triggersPatchSchema),
+    async (req, res) => {
+      try {
+        const { slug } = req.params;
+        const { triggers: patches } = req.body as { triggers: TriggerPatchItem[] };
 
-      const { data: agent, error: fetchErr } = await supabase
-        .from("agents")
-        .select("id, config_json")
-        .eq("slug", slug)
-        .single();
+        const { data: agent, error: fetchErr } = await supabase
+          .from("agents")
+          .select("id, config_json")
+          .eq("slug", slug)
+          .single();
 
-      if (fetchErr || !agent) {
-        res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
-        return;
-      }
-
-      const current = (agent.config_json as Record<string, unknown>) ?? {};
-      const existingTriggers = (current.triggers as TriggerConfig[]) ?? [];
-
-      // Validate all patch names exist
-      const existingNames = new Set(existingTriggers.map((t) => t.name));
-      const notFound = patches.filter((p) => !existingNames.has(p.name));
-      if (notFound.length > 0) {
-        res.status(404).json({
-          error: {
-            code: "NOT_FOUND",
-            message: `Trigger(s) not found: ${notFound.map((p) => p.name).join(", ")}`,
-          },
-        });
-        return;
-      }
-
-      // Validate target_agent references
-      const validationErrors: Array<{ trigger: string; field: string; issue: string }> = [];
-      for (const patch of patches) {
-        if (patch.action?.target_agent) {
-          const { data: targetAgent } = await supabase
-            .from("agents")
-            .select("id")
-            .eq("slug", patch.action.target_agent)
-            .single();
-
-          if (!targetAgent) {
-            validationErrors.push({
-              trigger: patch.name,
-              field: "action.target_agent",
-              issue: `Agenten '${patch.action.target_agent}' finns inte.`,
-            });
-          }
-        }
-      }
-
-      if (validationErrors.length > 0) {
-        res.status(400).json({
-          error: {
-            code: "VALIDATION_ERROR",
-            message: validationErrors.map((e) => `Trigger '${e.trigger}': ${e.issue}`).join(" "),
-            details: validationErrors,
-          },
-        });
-        return;
-      }
-
-      // Build change log and merge
-      const changes: Record<string, Record<string, { from: unknown; to: unknown }>> = {};
-      const updatedNames: string[] = [];
-
-      const updatedTriggers = existingTriggers.map((trigger) => {
-        const patch = patches.find((p) => p.name === trigger.name);
-        if (!patch) return trigger;
-
-        const triggerChanges: Record<string, { from: unknown; to: unknown }> = {};
-        const merged = { ...trigger };
-
-        // Merge top-level fields
-        if (patch.enabled !== undefined && patch.enabled !== trigger.enabled) {
-          triggerChanges.enabled = { from: trigger.enabled, to: patch.enabled };
-          merged.enabled = patch.enabled;
-        }
-        if (patch.requires_approval !== undefined && patch.requires_approval !== trigger.requires_approval) {
-          triggerChanges.requires_approval = { from: trigger.requires_approval, to: patch.requires_approval };
-          merged.requires_approval = patch.requires_approval;
+        if (fetchErr || !agent) {
+          res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
+          return;
         }
 
-        // Merge condition
-        if (patch.condition) {
-          merged.condition = { ...trigger.condition, ...patch.condition };
-          for (const [key, value] of Object.entries(patch.condition)) {
-            const oldVal = trigger.condition?.[key as keyof typeof trigger.condition];
-            if (JSON.stringify(oldVal) !== JSON.stringify(value)) {
-              triggerChanges[`condition.${key}`] = { from: oldVal, to: value };
+        const current = (agent.config_json as Record<string, unknown>) ?? {};
+        const existingTriggers = (current.triggers as TriggerConfig[]) ?? [];
+
+        // Validate all patch names exist
+        const existingNames = new Set(existingTriggers.map((t) => t.name));
+        const notFound = patches.filter((p) => !existingNames.has(p.name));
+        if (notFound.length > 0) {
+          res.status(404).json({
+            error: {
+              code: "NOT_FOUND",
+              message: `Trigger(s) not found: ${notFound.map((p) => p.name).join(", ")}`,
+            },
+          });
+          return;
+        }
+
+        // Validate target_agent references
+        const validationErrors: Array<{ trigger: string; field: string; issue: string }> = [];
+        for (const patch of patches) {
+          if (patch.action?.target_agent) {
+            const { data: targetAgent } = await supabase
+              .from("agents")
+              .select("id")
+              .eq("slug", patch.action.target_agent)
+              .single();
+
+            if (!targetAgent) {
+              validationErrors.push({
+                trigger: patch.name,
+                field: "action.target_agent",
+                issue: `Agenten '${patch.action.target_agent}' finns inte.`,
+              });
             }
           }
         }
 
-        // Merge action (preserve type — immutable)
-        if (patch.action) {
-          merged.action = { ...trigger.action, ...patch.action, type: trigger.action.type };
-          for (const [key, value] of Object.entries(patch.action)) {
-            if (key === "type") continue;
-            const oldVal = trigger.action?.[key as keyof typeof trigger.action];
-            if (JSON.stringify(oldVal) !== JSON.stringify(value)) {
-              triggerChanges[`action.${key}`] = { from: oldVal, to: value };
+        if (validationErrors.length > 0) {
+          res.status(400).json({
+            error: {
+              code: "VALIDATION_ERROR",
+              message: validationErrors.map((e) => `Trigger '${e.trigger}': ${e.issue}`).join(" "),
+              details: validationErrors,
+            },
+          });
+          return;
+        }
+
+        // Build change log and merge
+        const changes: Record<string, Record<string, { from: unknown; to: unknown }>> = {};
+        const updatedNames: string[] = [];
+
+        const updatedTriggers = existingTriggers.map((trigger) => {
+          const patch = patches.find((p) => p.name === trigger.name);
+          if (!patch) return trigger;
+
+          const triggerChanges: Record<string, { from: unknown; to: unknown }> = {};
+          const merged = { ...trigger };
+
+          // Merge top-level fields
+          if (patch.enabled !== undefined && patch.enabled !== trigger.enabled) {
+            triggerChanges.enabled = { from: trigger.enabled, to: patch.enabled };
+            merged.enabled = patch.enabled;
+          }
+          if (patch.requires_approval !== undefined && patch.requires_approval !== trigger.requires_approval) {
+            triggerChanges.requires_approval = { from: trigger.requires_approval, to: patch.requires_approval };
+            merged.requires_approval = patch.requires_approval;
+          }
+
+          // Merge condition
+          if (patch.condition) {
+            merged.condition = { ...trigger.condition, ...patch.condition };
+            for (const [key, value] of Object.entries(patch.condition)) {
+              const oldVal = trigger.condition?.[key as keyof typeof trigger.condition];
+              if (JSON.stringify(oldVal) !== JSON.stringify(value)) {
+                triggerChanges[`condition.${key}`] = { from: oldVal, to: value };
+              }
             }
           }
-        }
 
-        if (Object.keys(triggerChanges).length > 0) {
-          changes[trigger.name] = triggerChanges;
-          updatedNames.push(trigger.name);
-        }
+          // Merge action (preserve type — immutable)
+          if (patch.action) {
+            merged.action = { ...trigger.action, ...patch.action, type: trigger.action.type };
+            for (const [key, value] of Object.entries(patch.action)) {
+              if (key === "type") continue;
+              const oldVal = trigger.action?.[key as keyof typeof trigger.action];
+              if (JSON.stringify(oldVal) !== JSON.stringify(value)) {
+                triggerChanges[`action.${key}`] = { from: oldVal, to: value };
+              }
+            }
+          }
 
-        return merged;
-      });
+          if (Object.keys(triggerChanges).length > 0) {
+            changes[trigger.name] = triggerChanges;
+            updatedNames.push(trigger.name);
+          }
 
-      // Write to Supabase
-      const adminOverrides = new Set((current._admin_overrides as string[]) ?? []);
-      adminOverrides.add("triggers");
-      const merged = { ...current, triggers: updatedTriggers, _admin_overrides: [...adminOverrides] };
+          return merged;
+        });
 
-      const { error } = await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
-      if (error) throw error;
+        // Write to Supabase
+        const adminOverrides = new Set((current._admin_overrides as string[]) ?? []);
+        adminOverrides.add("triggers");
+        const merged = { ...current, triggers: updatedTriggers, _admin_overrides: [...adminOverrides] };
 
-      // Activity log
-      await logActivity(supabase, {
-        agent_id: agent.id,
-        user_id: getDbUserId(req),
-        action: "trigger_config_updated",
-        details_json: { updated_triggers: updatedNames, changes },
-      });
+        const { error } = await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
+        if (error) throw error;
 
-      res.json({ agent_slug: slug, updated: updatedNames, triggers: updatedTriggers });
-    } catch (err) {
-      res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
-    }
-  });
+        // Activity log
+        await logActivity(supabase, {
+          agent_id: agent.id,
+          user_id: getDbUserId(req),
+          action: "trigger_config_updated",
+          details_json: { updated_triggers: updatedNames, changes },
+        });
+
+        res.json({ agent_slug: slug, updated: updatedNames, triggers: updatedTriggers });
+      } catch (err) {
+        res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+      }
+    },
+  );
 
   // POST /api/agents/:slug/triggers/reseed – admin only
   router.post("/:slug/triggers/reseed", requireRole("admin"), validateBody(reseedSchema), async (req, res) => {
@@ -438,7 +439,8 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch, co
         } else if (JSON.stringify(ct) !== JSON.stringify(yt)) {
           const diffs: string[] = [];
           if (ct.enabled !== yt.enabled) diffs.push(`enabled: ${ct.enabled} → ${yt.enabled}`);
-          if (ct.requires_approval !== yt.requires_approval) diffs.push(`requires_approval: ${ct.requires_approval} → ${yt.requires_approval}`);
+          if (ct.requires_approval !== yt.requires_approval)
+            diffs.push(`requires_approval: ${ct.requires_approval} → ${yt.requires_approval}`);
           if (JSON.stringify(ct.condition) !== JSON.stringify(yt.condition)) diffs.push("condition changed");
           if (JSON.stringify(ct.action) !== JSON.stringify(yt.action)) diffs.push("action changed");
           changes.push({ trigger: yt.name, diff: diffs.join(", ") || "minor changes" });

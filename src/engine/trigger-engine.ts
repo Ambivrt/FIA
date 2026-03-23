@@ -36,11 +36,7 @@ export async function onTaskStatusChange(
   logger: Logger,
 ): Promise<void> {
   // Resolve agent slug + triggers from config_json (Supabase is source of truth)
-  const { data: agent } = await supabase
-    .from("agents")
-    .select("slug, config_json")
-    .eq("id", task.agent_id)
-    .single();
+  const { data: agent } = await supabase.from("agents").select("slug, config_json").eq("id", task.agent_id).single();
 
   if (!agent) {
     logger.warn("Trigger engine: agent not found", { task_id: task.id });
