@@ -2,7 +2,7 @@
 
 All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och principer. Gateway- och Dashboard-repon pekar hit.
 
-**Version:** 0.5.1
+**Version:** 0.5.2
 **Senast uppdaterad:** 2026-03-23
 
 ---
@@ -13,9 +13,9 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 | Delsystem            | Status                                                              | Deploy             |
 | -------------------- | ------------------------------------------------------------------- | ------------------ |
-| Gateway (backend)    | Solid MVP, 8 agenter, trigger engine, status machine, CI/CD         | 0.5.1 (2026-03-23) |
+| Gateway (backend)    | Solid MVP, 8 agenter, trigger engine, trigger config, CI/CD         | 0.5.2 (2026-03-23) |
 | CLI                  | 11 kommandon, Forefront Earth-palett, Supabase Realtime             | 0.5.1 (2026-03-23) |
-| Dashboard (frontend) | Robust MVP, trigger-kö, TaskStatusBadge, task-relationer, i18n, PWA | Live på Lovable    |
+| Dashboard (frontend) | Robust MVP, trigger-kö, trigger-konfig, task-relationer, i18n, PWA  | Live på Lovable    |
 | Supabase (DB)        | 11 tabeller, RLS, Realtime, pending_triggers                        | EU-region aktiv    |
 | GCP (hosting)        | Compute Engine konfigurerad                                         | europe-north1-b    |
 | Slack                | Bolt SDK + Socket Mode live                                         | Aktiv              |
@@ -36,6 +36,18 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 | Task-relationer (parent_task_id, children, lineage)       | Klart  |
 | Migration 013: status + triggers                          | Klart  |
 
+**Nytt i 0.5.2:**
+
+| Komponent                                                          | Status |
+| ------------------------------------------------------------------ | ------ |
+| Trigger-konfiguration i config_json (runtime source of truth)      | Klart  |
+| GET/PATCH `/api/agents/:slug/triggers` endpoints                   | Klart  |
+| POST reseed endpoints (per agent + alla agenter, dry-run + confirm)| Klart  |
+| Trigger engine läser från config_json istället för YAML            | Klart  |
+| Zod-schema för trigger-patch-validering (`trigger-config.ts`)      | Klart  |
+| `reseed_triggers` command i command-listener                       | Klart  |
+| `_yaml_triggers` i config_json för dashboard-diff                  | Klart  |
+
 **Kvarstår:**
 
 | Komponent                                              | Status      |
@@ -46,7 +58,7 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 ### Frontend – Dashboard PWA (Ambivrt/fia-frontend)
 
-**Kodbas:** React 18.3 + Vite 5.4 + TypeScript 5.8 (strict: true), Tailwind 3.4 + shadcn/ui, TanStack React Query 5.83, 14 sidor, 20+ komponenter, 70+ API-funktioner.
+**Kodbas:** React 18.3 + Vite 5.4 + TypeScript 5.8 (strict: true), Tailwind 3.4 + shadcn/ui, TanStack React Query 5.83, 15 sidor, 30+ komponenter, 80+ API-funktioner.
 
 **Nytt i 0.5.1:**
 
@@ -55,6 +67,18 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 | TaskStatusBadge (17 statusar, ikoner/färger) | Klart  |
 | TriggersPage (trigger-godkännandekö)         | Klart  |
 | Task-relationer i TaskDetailSheet            | Klart  |
+
+**Nytt i 0.5.2:**
+
+| Komponent                                                       | Status |
+| --------------------------------------------------------------- | ------ |
+| AgentTriggersTab (ny flik i AgentDetailPage)                    | Klart  |
+| TriggerCard med collapsed/expanded vy och inline-redigering     | Klart  |
+| TriggersConfigPage (`/triggers/config`) med grupperad översikt  | Klart  |
+| Reseed-stöd i SettingsPage (admin) och AgentTriggersTab         | Klart  |
+| Enable/disable toggle med optimistisk uppdatering               | Klart  |
+| 11 nya trigger-komponenter (`components/triggers/`)             | Klart  |
+| i18n-nycklar (sv + en, 40+ nycklar)                            | Klart  |
 
 **Kvarstår:**
 
@@ -784,7 +808,7 @@ error → queued (vid manuell retry)
 
 ### Trigger Engine
 
-Deklarativ + konfigurerbar autonomi. Triggers definieras i `agent.yaml` (`triggers`-fält). Varje trigger har en `requires_approval`-flagg.
+Deklarativ + konfigurerbar autonomi. Triggers seedas från `agent.yaml` till `config_json.triggers` i Supabase vid gateway-startup. Dashboarden äger konfigurationen efter seed. Varje trigger har en `requires_approval`-flagg.
 
 **Trigger-events:**
 
@@ -818,7 +842,7 @@ Deklarativ + konfigurerbar autonomi. Triggers definieras i `agent.yaml` (`trigge
 
 1. Task ändrar status (t.ex. → `completed`)
 2. `trigger-engine.ts` anropas efter statusändring
-3. Laddar triggers från källagentens `agent.yaml`
+3. Laddar triggers från källagentens `config_json.triggers` (Supabase)
 4. Matchar event + condition
 5. `requires_approval == false` → skapar downstream-task direkt → källtask → `triggered`
 6. `requires_approval == true` → skapar rad i `pending_triggers` → Orchestrator godkänner/avslår i Dashboard
@@ -1193,6 +1217,13 @@ Statuskoder: 200, 201, 400, 401, 403, 404, 500.
 - `POST /api/triggers/:id/approve` – Orchestrator, Admin. Godkänner och exekverar trigger (skapar downstream-task).
 - `POST /api/triggers/:id/reject` – Orchestrator, Admin. Avslår trigger. Body: `{ "reason": "..." }`.
 
+### Trigger Configuration (nytt i 0.5.2)
+
+- `GET /api/agents/:slug/triggers` – Alla inloggade. Returnerar triggers från config_json.
+- `PATCH /api/agents/:slug/triggers` – Orchestrator, Admin. Partiell uppdatering per trigger-namn. Validerar target_agent, loggar before/after-diff.
+- `POST /api/agents/:slug/triggers/reseed` – Admin. Återställer triggers från agent.yaml. Utan `confirm: true` returneras dry-run-diff.
+- `POST /api/triggers/reseed` – Admin. Återställer alla agenters triggers. Samma dry-run/confirm-mönster.
+
 ### Task-relationer och statusändring (nytt i 0.5.1)
 
 - `POST /api/tasks/:id/status` – Orchestrator, Admin. Body: `{ "status": "acknowledged" }`. Generellt endpoint för statusändringar. Validerar mot övergångstabellen.
@@ -1275,6 +1306,18 @@ src/
 │   ├── FeedbackDialog.tsx   # Feedback-modal
 │   ├── RunTaskDialog.tsx    # Manuell task-trigger
 │   ├── TaskDetailSheet.tsx  # Task-detaljvy (sheet, parent/children)
+│   ├── triggers/           # Trigger-konfig (nytt i 0.5.2)
+│   │   ├── AgentTriggersTab.tsx    # Flik i AgentDetailPage
+│   │   ├── TriggerCard.tsx         # Expanderbart trigger-kort
+│   │   ├── TriggerConditionEditor.tsx
+│   │   ├── TriggerActionEditor.tsx
+│   │   ├── TriggerEventBadge.tsx
+│   │   ├── TriggerApprovalBadge.tsx
+│   │   ├── AgentTriggerGroup.tsx
+│   │   ├── TriggerSummaryRow.tsx
+│   │   ├── TriggerReseedSection.tsx
+│   │   ├── ReseedDiffPanel.tsx
+│   │   └── ReseedConfirmDialog.tsx
 │   ├── TaskStatusBadge.tsx # Task-status med ikoner/färger (17 statusar)
 │   ├── SystemHealthCard.tsx # Systemhälsa-kort
 │   ├── AgentPerformance.tsx # Agent-prestandagraf
@@ -1288,6 +1331,7 @@ src/
 │   ├── AgentDetailPage.tsx  # Agentdetalj (/:slug)
 │   ├── ApprovalsPage.tsx    # Godkännandekö
 │   ├── TriggersPage.tsx     # Trigger-godkännandekö (nytt i 0.5.1)
+│   ├── TriggersConfigPage.tsx # Trigger-konfiguration (nytt i 0.5.2)
 │   ├── CalendarPage.tsx     # Kalender + schemalagda jobb
 │   ├── ActivityPage.tsx     # Aktivitetslogg
 │   ├── SettingsPage.tsx     # Inställningar
@@ -1319,6 +1363,7 @@ src/
   ├── /agents/:slug      → AgentDetailPage
   ├── /approvals         → ApprovalsPage
   ├── /triggers          → TriggersPage
+  ├── /triggers/config   → TriggersConfigPage (nytt i 0.5.2)
   ├── /calendar          → CalendarPage
   ├── /activity          → ActivityPage
   ├── /settings          → SettingsPage
@@ -1713,6 +1758,18 @@ Deploy 0.2 (2026-03-15). Gateway + Dashboard MVP live. 4 arbetsdagar, en person 
 - Dashboard: TaskStatusBadge, TriggersPage, task-relationer i TaskDetailSheet
 - API: trigger CRUD, task status/children/lineage endpoints
 - Migration 013
+
+### Deploy 0.5.2 (2026-03-23): Trigger Configuration
+
+- Trigger-konfiguration i dashboard: visa, enable/disable, redigera triggers per agent
+- Trigger engine läser från config_json (Supabase) istället för agent.yaml
+- config_json.triggers seedas vid gateway-startup, dashboarden äger efter det
+- TriggersConfigPage: systemövergripande trigger-översikt med filter
+- Reseed från YAML: dry-run diff + bekräftelsedialog (admin only)
+- 4 nya API-endpoints (GET/PATCH triggers, reseed per agent + alla)
+- 11 nya React-komponenter, 40+ i18n-nycklar (sv + en)
+- Zod-schema för trigger-patch-validering
+- reseed_triggers command i command-listener
 
 ### Nästa steg – Fas 1 avslut
 
