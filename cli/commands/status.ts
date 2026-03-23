@@ -29,7 +29,8 @@ export function registerStatusCommand(program: Command): void {
 
       // Kill switch-rad
       const killLine = killSwitch.active
-        ? chalk.red("● ON") + (killSwitch.activated_at ? chalk.gray(`  since ${relativeTime(killSwitch.activated_at)}`) : "")
+        ? chalk.red("● ON") +
+          (killSwitch.activated_at ? chalk.gray(`  since ${relativeTime(killSwitch.activated_at)}`) : "")
         : chalk.green("● OFF");
 
       // Bygg innehåll
@@ -41,11 +42,20 @@ export function registerStatusCommand(program: Command): void {
 
       for (const agent of agents) {
         const ds = agent.display_status;
-        const badge = statusBadge(ds as { status: "online" | "working" | "paused" | "killed" | "error"; label: string; labelSv: string; color: string; symbol: string });
+        const badge = statusBadge(
+          ds as {
+            status: "online" | "working" | "paused" | "killed" | "error";
+            label: string;
+            labelSv: string;
+            color: string;
+            symbol: string;
+          },
+        );
         const hb = relativeTime(agent.last_heartbeat);
-        const taskInfo = agent.running_task_count > 0
-          ? chalk.dim(Object.keys(agent.tasks_today).find((k) => k === "in_progress") ? "" : "")
-          : "";
+        const taskInfo =
+          agent.running_task_count > 0
+            ? chalk.dim(Object.keys(agent.tasks_today).find((k) => k === "in_progress") ? "" : "")
+            : "";
 
         // Hitta vilken task som körs via tasks_today
         const line = `  ${badge.padEnd(28)} ${chalk.dim("\u2665")} ${hb.padEnd(10)} ${taskInfo}`;

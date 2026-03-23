@@ -11,11 +11,11 @@ export function registerQueueCommand(program: Command): void {
     .description("Show queued and running tasks")
     .option("--verbose", "Show full task IDs")
     .action(async (opts: { verbose?: boolean }) => {
-      const { data: tasks } = await apiGet<TaskResponse[]>("/api/tasks", {
+      const { data: tasks } = (await apiGet<TaskResponse[]>("/api/tasks", {
         status: "queued,in_progress",
         sort: "-priority",
         per_page: "50",
-      }) as PaginatedResponse<TaskResponse>;
+      })) as PaginatedResponse<TaskResponse>;
 
       if (tasks.length === 0) {
         process.stdout.write("No queued or running tasks.\n");

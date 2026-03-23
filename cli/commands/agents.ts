@@ -49,11 +49,11 @@ export function registerAgentsCommand(program: Command): void {
         }
 
         // Senaste tasks
-        const { data: tasks } = await apiGet<TaskResponse[]>("/api/tasks", {
+        const { data: tasks } = (await apiGet<TaskResponse[]>("/api/tasks", {
           agent_slug: slug,
           per_page: "5",
           sort: "-created_at",
-        }) as PaginatedResponse<TaskResponse>;
+        })) as PaginatedResponse<TaskResponse>;
 
         if (tasks.length > 0) {
           process.stdout.write(chalk.bold("\nRecent tasks:\n"));

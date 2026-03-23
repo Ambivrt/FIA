@@ -22,7 +22,10 @@ export function registerLogsCommand(program: Command): void {
       if (opts.agent) params.agent_slug = opts.agent;
       if (opts.action) params.action = opts.action;
 
-      const { data: entries } = await apiGet<ActivityLogEntry[]>("/api/activity", params) as PaginatedResponse<ActivityLogEntry>;
+      const { data: entries } = (await apiGet<ActivityLogEntry[]>(
+        "/api/activity",
+        params,
+      )) as PaginatedResponse<ActivityLogEntry>;
 
       if (entries.length === 0) {
         process.stdout.write("No activity entries found.\n");
@@ -32,7 +35,11 @@ export function registerLogsCommand(program: Command): void {
       for (const entry of entries) {
         const time = opts.verbose
           ? new Date(entry.created_at).toISOString()
-          : new Date(entry.created_at).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+          : new Date(entry.created_at).toLocaleTimeString("sv-SE", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            });
 
         const agent = entry.agents?.slug ?? "system";
         const details = entry.details_json ? summarizeDetails(entry.details_json) : "";

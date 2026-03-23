@@ -116,14 +116,7 @@ export function banner(): string {
   ];
 
   // Gradient: orange → pink → cyan radvis
-  const gradientFns = [
-    GRADIENT.orange,
-    GRADIENT.orange,
-    GRADIENT.pink,
-    GRADIENT.pink,
-    GRADIENT.cyan,
-    GRADIENT.cyan,
-  ];
+  const gradientFns = [GRADIENT.orange, GRADIENT.orange, GRADIENT.pink, GRADIENT.pink, GRADIENT.cyan, GRADIENT.cyan];
 
   const colored = lines.map((line, i) => gradientFns[i](line));
 

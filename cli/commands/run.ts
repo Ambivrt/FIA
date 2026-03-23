@@ -65,7 +65,9 @@ export function registerRunCommand(program: Command): void {
         const title = content?.title || result.title;
 
         if (title) process.stdout.write(`  Title: ${chalk.bold(String(title))}\n`);
-        process.stdout.write(`  Tokens: ${formatTokens(result.tokens_used)} | Cost: ${formatCost(result.cost_sek)} | Time: ${elapsed}s\n`);
+        process.stdout.write(
+          `  Tokens: ${formatTokens(result.tokens_used)} | Cost: ${formatCost(result.cost_sek)} | Time: ${elapsed}s\n`,
+        );
 
         if (result.status === "error") {
           errorMsg("Task ended with error.");

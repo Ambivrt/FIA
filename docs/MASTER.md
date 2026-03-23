@@ -11,15 +11,15 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 ### Övergripande status
 
-| Delsystem            | Status                                                    | Deploy           |
-| -------------------- | --------------------------------------------------------- | ---------------- |
-| Gateway (backend)    | Solid MVP, alla 8 agenter live, 22 testfiler, CI/CD       | 0.5 (2026-03-22) |
-| CLI                  | 11 kommandon, Forefront Earth-palett, Supabase Realtime   | 0.5 (2026-03-22) |
-| Dashboard (frontend) | Robust MVP, strict TS, error boundaries, i18n, PWA        | Live på Lovable  |
-| Supabase (DB)        | 10 tabeller, RLS, Realtime                                | EU-region aktiv  |
-| GCP (hosting)        | Compute Engine konfigurerad                               | europe-north1-b  |
-| Slack                | Bolt SDK + Socket Mode live                               | Aktiv            |
-| MCP-integrationer    | gws kopplad till agenter (Drive, Docs, Sheets)            | Live             |
+| Delsystem            | Status                                                  | Deploy           |
+| -------------------- | ------------------------------------------------------- | ---------------- |
+| Gateway (backend)    | Solid MVP, alla 8 agenter live, 22 testfiler, CI/CD     | 0.5 (2026-03-22) |
+| CLI                  | 11 kommandon, Forefront Earth-palett, Supabase Realtime | 0.5 (2026-03-22) |
+| Dashboard (frontend) | Robust MVP, strict TS, error boundaries, i18n, PWA      | Live på Lovable  |
+| Supabase (DB)        | 10 tabeller, RLS, Realtime                              | EU-region aktiv  |
+| GCP (hosting)        | Compute Engine konfigurerad                             | europe-north1-b  |
+| Slack                | Bolt SDK + Socket Mode live                             | Aktiv            |
+| MCP-integrationer    | gws kopplad till agenter (Drive, Docs, Sheets)          | Live             |
 
 ### Backend – Gateway (Ambivrt/FIA)
 
@@ -27,13 +27,13 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 **Nytt i 0.5:**
 
-| Komponent                                      | Status |
-| ---------------------------------------------- | ------ |
-| FIA CLI-klient (11 kommandon)                  | Klart  |
-| FIA Display Status (delad standard)            | Klart  |
+| Komponent                                       | Status |
+| ----------------------------------------------- | ------ |
+| FIA CLI-klient (11 kommandon)                   | Klart  |
+| FIA Display Status (delad standard)             | Klart  |
 | CLI auth middleware (FIA_CLI_TOKEN)             | Klart  |
-| POST /api/tasks (skapa task från CLI/Dashboard)| Klart  |
-| Kommaseparerade status-filter i GET /api/tasks | Klart  |
+| POST /api/tasks (skapa task från CLI/Dashboard) | Klart  |
+| Kommaseparerade status-filter i GET /api/tasks  | Klart  |
 
 **Kvarstår:**
 
@@ -1135,10 +1135,10 @@ Terminalverktyg som pratar med gatewayens REST API (port 3001). Tredje gränssni
 
 | Kommando                              | Beskrivning                                   |
 | ------------------------------------- | --------------------------------------------- |
-| `fia`                                 | Visa FIA-banner (Forefront gradient + Earth)   |
+| `fia`                                 | Visa FIA-banner (Forefront gradient + Earth)  |
 | `fia status`                          | Systemöversikt (kill switch, kö, agenter)     |
 | `fia agents [slug]`                   | Agenttabell eller detaljvy per agent          |
-| `fia run <agent> <task> [--priority]` | Trigga task manuellt (spinner + polling)       |
+| `fia run <agent> <task> [--priority]` | Trigga task manuellt (spinner + polling)      |
 | `fia queue [--verbose]`               | Köade och pågående tasks                      |
 | `fia approve <task-id> [--feedback]`  | Godkänn task (accepterar korta ID:n)          |
 | `fia reject <task-id> --feedback`     | Avslå task (feedback obligatoriskt)           |
@@ -1190,13 +1190,13 @@ Gemensam standard för alla tre gränssnitt (CLI, Dashboard, Slack). Implementer
 
 ### De fem statusarna
 
-| Displaystatus | Färg   | Symbol | Betydelse                        |
-| ------------- | ------ | ------ | -------------------------------- |
-| online        | Grön   | ●      | Uppe, lyssnar, redo att ta tasks |
-| working       | Gul    | ●      | Exekverar minst en task just nu  |
-| paused        | Grå    | ●      | Pausad av orchestrator           |
-| killed        | Svart  | ⬤      | Kill switch aktiv                |
-| error         | Röd    | ✗      | Agent i error-state              |
+| Displaystatus | Färg  | Symbol | Betydelse                        |
+| ------------- | ----- | ------ | -------------------------------- |
+| online        | Grön  | ●      | Uppe, lyssnar, redo att ta tasks |
+| working       | Gul   | ●      | Exekverar minst en task just nu  |
+| paused        | Grå   | ●      | Pausad av orchestrator           |
+| killed        | Svart | ⬤      | Kill switch aktiv                |
+| error         | Röd   | ✗      | Agent i error-state              |
 
 ### Resolve-logik (prioritetsordning)
 
@@ -1208,11 +1208,11 @@ Gemensam standard för alla tre gränssnitt (CLI, Dashboard, Slack). Implementer
 
 ### Mappning per gränssnitt
 
-| Gränssnitt | Färgformat           | Källa                           |
-| ---------- | -------------------- | ------------------------------- |
-| CLI        | chalk.hex() / chalk  | `cli/lib/formatters.ts`        |
-| Dashboard  | Tailwind-klasser     | Frontend-repo                   |
-| Slack      | Slack-emojis         | `src/slack/commands.ts`         |
+| Gränssnitt | Färgformat          | Källa                   |
+| ---------- | ------------------- | ----------------------- |
+| CLI        | chalk.hex() / chalk | `cli/lib/formatters.ts` |
+| Dashboard  | Tailwind-klasser    | Frontend-repo           |
+| Slack      | Slack-emojis        | `src/slack/commands.ts` |
 
 ---
 
@@ -1453,12 +1453,12 @@ Deploy 0.2 (2026-03-15). Gateway + Dashboard MVP live. 4 arbetsdagar, en person 
 
 ### Nästa steg – Fas 1 avslut
 
-| #   | Uppgift                 | Beskrivning                                                                                                                                                                                      | Prioritet |
-| --- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
-| 1   | **10 innehållsenheter** | Kör Content Agent med verkliga tasks (blog_post, linkedin, newsletter). Verifiera end-to-end: trigger → LLM → Brand review → godkänn → activity_log. Via `fia run content blog_post`             | Hög       |
-| 2   | **Go/no-go checkpoint** | Granska de 10 enheterna mot tonalitetsregler och varumärkesplattform. Kriterium: 80% publiceringsredo                                                                                            | Hög       |
-| 3   | Gemini context caching  | Minskar kostnader vid upprepade system_context-anrop. Kan skjutas till Fas 2                                                                                                                     | Valfritt  |
-| 4   | GA4 Analytics API       | Analytics Agent klarar sig utan i MVP. Kan skjutas till Fas 2                                                                                                                                    | Valfritt  |
+| #   | Uppgift                 | Beskrivning                                                                                                                                                                          | Prioritet |
+| --- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| 1   | **10 innehållsenheter** | Kör Content Agent med verkliga tasks (blog_post, linkedin, newsletter). Verifiera end-to-end: trigger → LLM → Brand review → godkänn → activity_log. Via `fia run content blog_post` | Hög       |
+| 2   | **Go/no-go checkpoint** | Granska de 10 enheterna mot tonalitetsregler och varumärkesplattform. Kriterium: 80% publiceringsredo                                                                                | Hög       |
+| 3   | Gemini context caching  | Minskar kostnader vid upprepade system_context-anrop. Kan skjutas till Fas 2                                                                                                         | Valfritt  |
+| 4   | GA4 Analytics API       | Analytics Agent klarar sig utan i MVP. Kan skjutas till Fas 2                                                                                                                        | Valfritt  |
 
 ### Fas 2: Expansion + Content Staging
 

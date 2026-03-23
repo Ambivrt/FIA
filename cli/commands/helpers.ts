@@ -14,10 +14,10 @@ export async function resolveTaskId(input: string): Promise<string> {
   }
 
   // Kort ID – sök i alla tasks
-  const { data: tasks } = await apiGet<TaskResponse[]>("/api/tasks", {
+  const { data: tasks } = (await apiGet<TaskResponse[]>("/api/tasks", {
     per_page: "100",
     sort: "-created_at",
-  }) as PaginatedResponse<TaskResponse>;
+  })) as PaginatedResponse<TaskResponse>;
 
   const matches = tasks.filter((t) => t.id.startsWith(input));
 

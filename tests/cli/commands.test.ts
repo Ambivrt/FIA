@@ -68,9 +68,7 @@ describe("resolveTaskId", () => {
     mockFetch.mockResolvedValue({
       ok: true,
       json: async () => ({
-        data: [
-          { id: "xyz789-first", type: "blog_post", status: "queued" },
-        ],
+        data: [{ id: "xyz789-first", type: "blog_post", status: "queued" }],
         meta: { total: 1, page: 1, per_page: 100 },
       }),
     });

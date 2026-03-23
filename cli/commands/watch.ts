@@ -55,7 +55,9 @@ async function render(): Promise<void> {
   const [agentsRes, killRes, tasksRes] = await Promise.all([
     apiGet<AgentResponse[]>("/api/agents"),
     apiGet<KillSwitchStatus>("/api/kill-switch/status"),
-    apiGet<TaskResponse[]>("/api/tasks", { status: "queued,in_progress", per_page: "20" }) as Promise<PaginatedResponse<TaskResponse>>,
+    apiGet<TaskResponse[]>("/api/tasks", { status: "queued,in_progress", per_page: "20" }) as Promise<
+      PaginatedResponse<TaskResponse>
+    >,
   ]);
 
   const agents = agentsRes.data;
@@ -72,12 +74,18 @@ async function render(): Promise<void> {
   // Header med Forefront Earth-färger
   const killLine = killSwitch.active ? chalk.red("● ON") : chalk.green("● OFF");
   const titleText = GRADIENT.orange("FIA") + EARTH.stone(" Watch");
-  const border = EARTH.plum("\u256D\u2500 ") + titleText + EARTH.plum(" " + "\u2500".repeat(28) + " " + chalk.dim(now) + " \u2500\u256E");
+  const border =
+    EARTH.plum("\u256D\u2500 ") +
+    titleText +
+    EARTH.plum(" " + "\u2500".repeat(28) + " " + chalk.dim(now) + " \u2500\u256E");
   const borderBottom = EARTH.plum("\u2570" + "\u2500".repeat(40) + " Ctrl+C to exit " + "\u2500\u2570");
 
   process.stdout.write(border + "\n");
   process.stdout.write(EARTH.plum("\u2502") + "\n");
-  process.stdout.write(EARTH.plum("\u2502") + `  ${EARTH.stone("Kill Switch:")} ${killLine}        ${EARTH.stone("Queue:")} ${runningCount}/${runningCount + queuedCount} running\n`);
+  process.stdout.write(
+    EARTH.plum("\u2502") +
+      `  ${EARTH.stone("Kill Switch:")} ${killLine}        ${EARTH.stone("Queue:")} ${runningCount}/${runningCount + queuedCount} running\n`,
+  );
   process.stdout.write(EARTH.plum("\u2502") + "\n");
 
   // Agenter
@@ -87,9 +95,7 @@ async function render(): Promise<void> {
     const hb = relativeTime(agent.last_heartbeat);
 
     // Hitta pågående task för agenten
-    const agentTask = runningTasks.find(
-      (t) => t.agents?.slug === agent.slug && t.status === "in_progress",
-    );
+    const agentTask = runningTasks.find((t) => t.agents?.slug === agent.slug && t.status === "in_progress");
 
     let taskInfo = chalk.dim("idle");
     if (agentTask) {
