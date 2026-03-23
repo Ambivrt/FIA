@@ -34,15 +34,16 @@ export function registerTailCommand(program: Command): void {
       );
 
       // Vänta tills användaren trycker Ctrl+C
-      await new Promise<void>((resolve) => {
-        const cleanup = (): void => {
-          unsubscribe();
-          process.stdout.write(chalk.dim("\nDisconnected.\n"));
-          resolve();
-        };
+      const cleanup = (): void => {
+        unsubscribe();
+        process.stdout.write(chalk.dim("\nDisconnected.\n"));
+        process.exit(0);
+      };
 
-        process.on("SIGINT", cleanup);
-        process.on("SIGTERM", cleanup);
-      });
+      process.on("SIGINT", cleanup);
+      process.on("SIGTERM", cleanup);
+
+      // Håll event-loopen igång tills signal
+      await new Promise<void>(() => {});
     });
 }
