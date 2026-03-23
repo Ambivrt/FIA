@@ -37,11 +37,7 @@ export async function onTaskStatusChange(
   logger: Logger,
 ): Promise<void> {
   // Resolve agent slug from agent_id
-  const { data: agent } = await supabase
-    .from("agents")
-    .select("slug")
-    .eq("id", task.agent_id)
-    .single();
+  const { data: agent } = await supabase.from("agents").select("slug").eq("id", task.agent_id).single();
 
   if (!agent) {
     logger.warn("Trigger engine: agent not found", { task_id: task.id });
@@ -112,10 +108,7 @@ export function matchesEvent(triggerOn: string, newStatus: string): boolean {
 /**
  * Evaluate all conditions (AND logic) against a task.
  */
-export function matchesCondition(
-  condition: TriggerConfig["condition"],
-  task: TaskRecord,
-): boolean {
+export function matchesCondition(condition: TriggerConfig["condition"], task: TaskRecord): boolean {
   if (!condition) return true;
 
   // task_type match
@@ -162,11 +155,7 @@ export async function executeTrigger(
       }
 
       // Resolve target agent ID
-      const { data: targetAgent } = await supabase
-        .from("agents")
-        .select("id")
-        .eq("slug", action.target_agent)
-        .single();
+      const { data: targetAgent } = await supabase.from("agents").select("id").eq("slug", action.target_agent).single();
 
       if (!targetAgent) {
         logger.warn(`Trigger ${trigger.name}: target agent '${action.target_agent}' not found`);
@@ -281,11 +270,7 @@ export async function getTriggerDepth(supabase: SupabaseClient, taskId: string):
   let currentId: string | null = taskId;
 
   while (currentId && depth < MAX_TRIGGER_DEPTH + 1) {
-    const result = await supabase
-      .from("tasks")
-      .select("parent_task_id")
-      .eq("id", currentId)
-      .single();
+    const result = await supabase.from("tasks").select("parent_task_id").eq("id", currentId).single();
 
     const parentId = result.data?.parent_task_id as string | null;
     if (!parentId) break;
@@ -299,10 +284,7 @@ export async function getTriggerDepth(supabase: SupabaseClient, taskId: string):
 /**
  * Extract fields from task content_json using dot-notation paths.
  */
-export function extractContextFields(
-  task: TaskRecord,
-  fields?: string[],
-): Record<string, unknown> {
+export function extractContextFields(task: TaskRecord, fields?: string[]): Record<string, unknown> {
   if (!fields || fields.length === 0) return {};
 
   const result: Record<string, unknown> = {};

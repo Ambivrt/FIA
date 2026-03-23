@@ -282,11 +282,7 @@ export function taskRoutes(supabase: SupabaseClient): Router {
         const newStatus = req.body.status as string;
 
         // Fetch current task
-        const { data: task, error: fetchErr } = await supabase
-          .from("tasks")
-          .select("status")
-          .eq("id", taskId)
-          .single();
+        const { data: task, error: fetchErr } = await supabase.from("tasks").select("status").eq("id", taskId).single();
 
         if (fetchErr || !task) {
           res.status(404).json({ error: { code: "NOT_FOUND", message: "Task not found." } });

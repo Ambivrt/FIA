@@ -40,13 +40,7 @@ export const VALID_TRANSITIONS: Record<string, string[]> = {
   error: ["queued"], // manual retry
 };
 
-export const TERMINAL_STATUSES = new Set<string>([
-  "rejected",
-  "triggered",
-  "acknowledged",
-  "ended",
-  "published",
-]);
+export const TERMINAL_STATUSES = new Set<string>(["rejected", "triggered", "acknowledged", "ended", "published"]);
 
 export const COMPLETED_STATUSES = new Set<string>([
   "delivered",
