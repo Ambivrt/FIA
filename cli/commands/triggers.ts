@@ -10,7 +10,17 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { apiGet, apiPost, apiPatch } from "../lib/api-client";
-import { createTable, shortId, relativeTime, successMsg, errorMsg, warnMsg, EARTH, GRADIENT, box } from "../lib/formatters";
+import {
+  createTable,
+  shortId,
+  relativeTime,
+  successMsg,
+  errorMsg,
+  warnMsg,
+  EARTH,
+  GRADIENT,
+  box,
+} from "../lib/formatters";
 import type { PendingTrigger, TriggerConfig, AgentResponse } from "../types";
 
 // ─── Priority badge ───────────────────────────────────────────────────────────
@@ -170,9 +180,7 @@ async function showTriggerConfig(slug?: string): Promise<void> {
     // All agents
     const { data: agents } = await apiGet<AgentResponse[]>("/api/agents");
     for (const agent of agents) {
-      const res = await apiGet<{ agent_slug: string; triggers: TriggerConfig[] }>(
-        `/api/agents/${agent.slug}/triggers`,
-      );
+      const res = await apiGet<{ agent_slug: string; triggers: TriggerConfig[] }>(`/api/agents/${agent.slug}/triggers`);
       const { triggers } = res.data as unknown as { agent_slug: string; triggers: TriggerConfig[] };
       if (triggers.length > 0) {
         renderTriggerTable(agent.slug, triggers);
@@ -272,7 +280,7 @@ async function reseedAllTriggers(confirm: boolean): Promise<void> {
       return;
     }
 
-    warnMsg('Run with --confirm to apply changes, or use the Dashboard.');
+    warnMsg("Run with --confirm to apply changes, or use the Dashboard.");
     return;
   }
 
@@ -315,7 +323,7 @@ async function reseedAgentTriggers(slug: string, confirm: boolean): Promise<void
       return;
     }
 
-    warnMsg('Run with --confirm to apply changes.');
+    warnMsg("Run with --confirm to apply changes.");
     return;
   }
 

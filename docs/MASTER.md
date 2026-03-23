@@ -11,15 +11,15 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 ### Övergripande status
 
-| Delsystem            | Status                                                             | Deploy             |
-| -------------------- | ------------------------------------------------------------------ | ------------------ |
-| Gateway (backend)    | Solid MVP, 8 agenter, trigger engine, trigger config, CI/CD        | 0.5.2 (2026-03-23) |
-| CLI                  | 15 kommandon, triggers, lineage, trigger config/reseed             | 0.5.2 (2026-03-23) |
-| Dashboard (frontend) | Robust MVP, trigger-kö, trigger-konfig, task-relationer, i18n, PWA | Live på Lovable    |
-| Supabase (DB)        | 11 tabeller, RLS, Realtime, pending_triggers                       | EU-region aktiv    |
-| GCP (hosting)        | Compute Engine konfigurerad                                        | europe-north1-b    |
+| Delsystem            | Status                                                              | Deploy             |
+| -------------------- | ------------------------------------------------------------------- | ------------------ |
+| Gateway (backend)    | Solid MVP, 8 agenter, trigger engine, trigger config, CI/CD         | 0.5.2 (2026-03-23) |
+| CLI                  | 15 kommandon, triggers, lineage, trigger config/reseed              | 0.5.2 (2026-03-23) |
+| Dashboard (frontend) | Robust MVP, trigger-kö, trigger-konfig, task-relationer, i18n, PWA  | Live på Lovable    |
+| Supabase (DB)        | 11 tabeller, RLS, Realtime, pending_triggers                        | EU-region aktiv    |
+| GCP (hosting)        | Compute Engine konfigurerad                                         | europe-north1-b    |
 | Slack                | triggers, lineage, notify_slack live, pending trigger notifications | 0.5.2 (2026-03-23) |
-| MCP-integrationer    | gws kopplad till agenter (Drive, Docs, Sheets)                     | Live               |
+| MCP-integrationer    | gws kopplad till agenter (Drive, Docs, Sheets)                      | Live               |
 
 ### Backend – Gateway (Ambivrt/FIA)
 
@@ -50,21 +50,21 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 **Nytt i 0.5.2 (forts.) – CLI & Slack:**
 
-| Komponent                                                                    | Status |
-| ---------------------------------------------------------------------------- | ------ |
-| `fia triggers` – lista pending trigger-kö (brand-färgad tabell)              | Klart  |
-| `fia triggers approve/reject` – godkänn/avslå pending trigger                | Klart  |
-| `fia triggers config [agent] --enable/--disable` – visa/växla trigger-config | Klart  |
-| `fia triggers reseed [agent] --confirm` – dry-run diff + reseed från YAML    | Klart  |
-| `fia lineage <task-id>` – ASCII-träd: ancestor → current → children          | Klart  |
-| `fia watch` – visar pending trigger-räknare (gul när > 0)                    | Klart  |
-| CLI-version bumpad till 0.5.2 (13 → 15 kommandon)                           | Klart  |
-| `cli/types.ts` – PendingTrigger, TriggerConfig, LineageTask                  | Klart  |
-| Slack `/fia triggers` – Block Kit-lista med pending triggers                 | Klart  |
-| Slack `/fia triggers approve/reject` – godkänn/avslå i Slack                 | Klart  |
-| Slack `/fia lineage <task-id>` – ancestor + current + children               | Klart  |
+| Komponent                                                                     | Status |
+| ----------------------------------------------------------------------------- | ------ |
+| `fia triggers` – lista pending trigger-kö (brand-färgad tabell)               | Klart  |
+| `fia triggers approve/reject` – godkänn/avslå pending trigger                 | Klart  |
+| `fia triggers config [agent] --enable/--disable` – visa/växla trigger-config  | Klart  |
+| `fia triggers reseed [agent] --confirm` – dry-run diff + reseed från YAML     | Klart  |
+| `fia lineage <task-id>` – ASCII-träd: ancestor → current → children           | Klart  |
+| `fia watch` – visar pending trigger-räknare (gul när > 0)                     | Klart  |
+| CLI-version bumpad till 0.5.2 (13 → 15 kommandon)                             | Klart  |
+| `cli/types.ts` – PendingTrigger, TriggerConfig, LineageTask                   | Klart  |
+| Slack `/fia triggers` – Block Kit-lista med pending triggers                  | Klart  |
+| Slack `/fia triggers approve/reject` – godkänn/avslå i Slack                  | Klart  |
+| Slack `/fia lineage <task-id>` – ancestor + current + children                | Klart  |
 | `notify_slack`-action i trigger-engine – postar via Bolt (ej längre deferred) | Klart  |
-| Pending trigger → auto-notis till `#fia-orchestrator` med approve-kommando   | Klart  |
+| Pending trigger → auto-notis till `#fia-orchestrator` med approve-kommando    | Klart  |
 
 **Kvarstår:**
 
@@ -1452,23 +1452,24 @@ Alla schemalagda tasks respekterar kill switch och agent-pausstatus.
 
 ## Slack-kommandon
 
-| Kommando                               | Beskrivning                                                      |
-| -------------------------------------- | ---------------------------------------------------------------- |
-| `/fia status`                          | Systemstatus (agenter, kill switch, kö, scheduler)               |
-| `/fia kill`                            | Aktivera kill switch                                             |
-| `/fia resume`                          | Avaktivera kill switch                                           |
-| `/fia run <agent> <task>`              | Manuell trigger av agent                                         |
-| `/fia approve <task-id>`               | Godkänn uppgift                                                  |
-| `/fia reject <task-id>`               | Avslå uppgift                                                    |
-| `/fia queue`                           | Visa köade uppgifter                                             |
-| `/fia triggers`                        | Lista pending triggers som väntar på godkännande                 |
-| `/fia triggers approve <id>`           | Godkänn pending trigger → skapar downstream task                 |
-| `/fia triggers reject <id> <reason>`   | Avslå pending trigger                                            |
-| `/fia lineage <task-id>`               | Visa task-träd: ancestors, current, children                     |
-| `/fia purge`                           | Rensa föräldralösa tasks                                         |
-| `/fia help`                            | Visa alla kommandon, agenter, uppgiftstyper och schemalagda jobb |
+| Kommando                             | Beskrivning                                                      |
+| ------------------------------------ | ---------------------------------------------------------------- |
+| `/fia status`                        | Systemstatus (agenter, kill switch, kö, scheduler)               |
+| `/fia kill`                          | Aktivera kill switch                                             |
+| `/fia resume`                        | Avaktivera kill switch                                           |
+| `/fia run <agent> <task>`            | Manuell trigger av agent                                         |
+| `/fia approve <task-id>`             | Godkänn uppgift                                                  |
+| `/fia reject <task-id>`              | Avslå uppgift                                                    |
+| `/fia queue`                         | Visa köade uppgifter                                             |
+| `/fia triggers`                      | Lista pending triggers som väntar på godkännande                 |
+| `/fia triggers approve <id>`         | Godkänn pending trigger → skapar downstream task                 |
+| `/fia triggers reject <id> <reason>` | Avslå pending trigger                                            |
+| `/fia lineage <task-id>`             | Visa task-träd: ancestors, current, children                     |
+| `/fia purge`                         | Rensa föräldralösa tasks                                         |
+| `/fia help`                          | Visa alla kommandon, agenter, uppgiftstyper och schemalagda jobb |
 
 **Auto-notiser (gateway → Slack):**
+
 - `notify_slack`-triggers: postar till konfigurerad kanal via Bolt (t.ex. `#fia-orchestrator`, `#fia-logs`)
 - `requires_approval`-triggers: postar till `#fia-orchestrator` med kort ID och `/fia triggers approve`-kommando
 
@@ -1494,27 +1495,27 @@ Terminalverktyg som pratar med gatewayens REST API (port 3001). Tredje gränssni
 
 ### CLI-kommandon
 
-| Kommando                              | Beskrivning                                   |
-| ------------------------------------- | --------------------------------------------- |
-| `fia`                                 | Visa FIA-banner (Forefront gradient + Earth)  |
-| `fia status`                          | Systemöversikt (kill switch, kö, agenter)     |
-| `fia agents [slug]`                   | Agenttabell eller detaljvy per agent          |
-| `fia run <agent> <task> [--priority]` | Trigga task manuellt (spinner + polling)      |
-| `fia queue [--verbose]`               | Köade och pågående tasks                      |
-| `fia approve <task-id> [--feedback]`  | Godkänn task (accepterar korta ID:n)          |
-| `fia reject <task-id> --feedback`     | Avslå task (feedback obligatoriskt)           |
-| `fia kill [--force]`                  | Aktivera kill switch (bekräftelse krävs)      |
-| `fia resume`                          | Avaktivera kill switch                        |
-| `fia logs [--agent] [--action]`       | Aktivitetslogg (senaste 10 default)           |
-| `fia tail [--agent]`                  | Live-stream av aktivitet (Supabase Realtime)  |
-| `fia watch`                                         | Mini-dashboard (2s refresh) + pending trigger-räknare |
-| `fia config [agent] [--routing]`                    | Visa/redigera agentkonfiguration                      |
-| `fia triggers [--agent] [--status]`                 | Pending trigger-kö (approve/reject-lista)             |
-| `fia triggers approve <id> [--feedback]`            | Godkänn pending trigger → skapar downstream task      |
-| `fia triggers reject <id> --reason`                 | Avslå pending trigger                                 |
-| `fia triggers config [agent] [--enable/--disable]`  | Visa/växla trigger-konfiguration per agent            |
-| `fia triggers reseed [agent] [--confirm]`           | Dry-run diff + reseed triggers från agent.yaml        |
-| `fia lineage <task-id>`                             | ASCII-träd: ancestors → current → children            |
+| Kommando                                           | Beskrivning                                           |
+| -------------------------------------------------- | ----------------------------------------------------- |
+| `fia`                                              | Visa FIA-banner (Forefront gradient + Earth)          |
+| `fia status`                                       | Systemöversikt (kill switch, kö, agenter)             |
+| `fia agents [slug]`                                | Agenttabell eller detaljvy per agent                  |
+| `fia run <agent> <task> [--priority]`              | Trigga task manuellt (spinner + polling)              |
+| `fia queue [--verbose]`                            | Köade och pågående tasks                              |
+| `fia approve <task-id> [--feedback]`               | Godkänn task (accepterar korta ID:n)                  |
+| `fia reject <task-id> --feedback`                  | Avslå task (feedback obligatoriskt)                   |
+| `fia kill [--force]`                               | Aktivera kill switch (bekräftelse krävs)              |
+| `fia resume`                                       | Avaktivera kill switch                                |
+| `fia logs [--agent] [--action]`                    | Aktivitetslogg (senaste 10 default)                   |
+| `fia tail [--agent]`                               | Live-stream av aktivitet (Supabase Realtime)          |
+| `fia watch`                                        | Mini-dashboard (2s refresh) + pending trigger-räknare |
+| `fia config [agent] [--routing]`                   | Visa/redigera agentkonfiguration                      |
+| `fia triggers [--agent] [--status]`                | Pending trigger-kö (approve/reject-lista)             |
+| `fia triggers approve <id> [--feedback]`           | Godkänn pending trigger → skapar downstream task      |
+| `fia triggers reject <id> --reason`                | Avslå pending trigger                                 |
+| `fia triggers config [agent] [--enable/--disable]` | Visa/växla trigger-konfiguration per agent            |
+| `fia triggers reseed [agent] [--confirm]`          | Dry-run diff + reseed triggers från agent.yaml        |
+| `fia lineage <task-id>`                            | ASCII-träd: ancestors → current → children            |
 
 ### Filstruktur
 

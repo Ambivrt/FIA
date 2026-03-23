@@ -391,7 +391,12 @@ export function registerCommands(
 
             await logActivity(supabase, {
               action: "trigger_approved",
-              details_json: { trigger_id: triggerId, trigger_name: trigger.trigger_name, source: "slack", new_task_id: newTaskId },
+              details_json: {
+                trigger_id: triggerId,
+                trigger_name: trigger.trigger_name,
+                source: "slack",
+                new_task_id: newTaskId,
+              },
             });
 
             await respond({
@@ -544,7 +549,7 @@ export function registerCommands(
           }
 
           // Walk ancestors
-          const ancestors: typeof task[] = [];
+          const ancestors: (typeof task)[] = [];
           let currentId: string | null = (task as unknown as { parent_task_id: string | null }).parent_task_id;
           let depth = 0;
           while (currentId && depth < 5) {
@@ -584,7 +589,10 @@ export function registerCommands(
           if (ancestors.length > 0) {
             lines.push("", "*Ancestors:*");
             for (const a of ancestors as unknown as Array<{
-              id: string; type: string; status: string; trigger_source?: string | null;
+              id: string;
+              type: string;
+              status: string;
+              trigger_source?: string | null;
               agents?: { slug: string } | null;
             }>) {
               lines.push(
@@ -593,13 +601,25 @@ export function registerCommands(
             }
           }
 
-          const t = task as unknown as { id: string; type: string; status: string; trigger_source?: string | null; agents?: { slug: string } | null };
-          lines.push("", `*Current:* ${statusIcon(t.status)} \`${t.id.slice(0, 8)}\` *${t.agents?.slug ?? "?"}*/${t.type} (${t.status})`);
+          const t = task as unknown as {
+            id: string;
+            type: string;
+            status: string;
+            trigger_source?: string | null;
+            agents?: { slug: string } | null;
+          };
+          lines.push(
+            "",
+            `*Current:* ${statusIcon(t.status)} \`${t.id.slice(0, 8)}\` *${t.agents?.slug ?? "?"}*/${t.type} (${t.status})`,
+          );
 
           if (children && children.length > 0) {
             lines.push("", "*Children:*");
             for (const c of children as unknown as Array<{
-              id: string; type: string; status: string; trigger_source?: string | null;
+              id: string;
+              type: string;
+              status: string;
+              trigger_source?: string | null;
               agents?: { slug: string } | null;
             }>) {
               lines.push(

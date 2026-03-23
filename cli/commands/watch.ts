@@ -5,7 +5,14 @@ import chalk from "chalk";
 import { apiGet } from "../lib/api-client";
 import { subscribeToActivityLog, unsubscribe } from "../lib/realtime";
 import { statusBadge, relativeTime, progressBar, EARTH, GRADIENT } from "../lib/formatters";
-import type { AgentResponse, KillSwitchStatus, ActivityLogEntry, PaginatedResponse, TaskResponse, PendingTrigger } from "../types";
+import type {
+  AgentResponse,
+  KillSwitchStatus,
+  ActivityLogEntry,
+  PaginatedResponse,
+  TaskResponse,
+  PendingTrigger,
+} from "../types";
 import type { DisplayStatusResult } from "../types";
 
 // Buffra senaste aktivitetshändelserna
@@ -85,9 +92,7 @@ async function render(): Promise<void> {
   process.stdout.write(border + "\n");
   process.stdout.write(EARTH.plum("\u2502") + "\n");
   const triggerLine =
-    pendingTriggerCount > 0
-      ? chalk.yellow(`⏳ ${pendingTriggerCount} pending`)
-      : chalk.dim("0 pending");
+    pendingTriggerCount > 0 ? chalk.yellow(`⏳ ${pendingTriggerCount} pending`) : chalk.dim("0 pending");
 
   process.stdout.write(
     EARTH.plum("\u2502") +
