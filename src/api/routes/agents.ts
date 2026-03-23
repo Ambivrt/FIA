@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { requireRole } from "../middleware/auth";
+import { requireRole, getDbUserId } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { logActivity } from "../../supabase/activity-writer";
 import { KillSwitch } from "../../utils/kill-switch";
@@ -92,7 +92,7 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch): R
 
       await logActivity(supabase, {
         agent_id: data.id,
-        user_id: req.user!.id,
+        user_id: getDbUserId(req),
         action: "agent_paused",
         details_json: { slug },
       });
@@ -102,7 +102,7 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch): R
         command_type: "pause_agent",
         target_slug: slug,
         payload_json: { slug, source: "api" },
-        issued_by: req.user!.id,
+        issued_by: getDbUserId(req) ?? null,
         status: "completed",
         processed_at: new Date().toISOString(),
       });
@@ -132,7 +132,7 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch): R
 
       await logActivity(supabase, {
         agent_id: data.id,
-        user_id: req.user!.id,
+        user_id: getDbUserId(req),
         action: "agent_resumed",
         details_json: { slug },
       });
@@ -142,7 +142,7 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch): R
         command_type: "resume_agent",
         target_slug: slug,
         payload_json: { slug, source: "api" },
-        issued_by: req.user!.id,
+        issued_by: getDbUserId(req) ?? null,
         status: "completed",
         processed_at: new Date().toISOString(),
       });
@@ -181,7 +181,7 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch): R
 
       await logActivity(supabase, {
         agent_id: agent.id,
-        user_id: req.user!.id,
+        user_id: getDbUserId(req),
         action: "routing_updated",
         details_json: { slug, routing },
       });
@@ -220,7 +220,7 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch): R
 
       await logActivity(supabase, {
         agent_id: agent.id,
-        user_id: req.user!.id,
+        user_id: getDbUserId(req),
         action: "tools_updated",
         details_json: { slug, tools },
       });

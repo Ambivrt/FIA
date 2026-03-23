@@ -6,6 +6,14 @@ export interface AuthUser {
   role: string;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Returns the user's UUID for DB foreign keys, or undefined for non-UUID identifiers (e.g. CLI). */
+export function getDbUserId(req: Request): string | undefined {
+  const id = req.user?.id;
+  return id && UUID_RE.test(id) ? id : undefined;
+}
+
 declare module "express-serve-static-core" {
   interface Request {
     user?: AuthUser;
