@@ -5,7 +5,14 @@ import chalk from "chalk";
 import { apiGet } from "../lib/api-client";
 import { subscribeToActivityLog, unsubscribe } from "../lib/realtime";
 import { statusBadge, relativeTime, progressBar, EARTH, GRADIENT } from "../lib/formatters";
-import type { AgentResponse, KillSwitchStatus, ActivityLogEntry, PaginatedResponse, TaskResponse } from "../types";
+import type {
+  AgentResponse,
+  KillSwitchStatus,
+  ActivityLogEntry,
+  PaginatedResponse,
+  TaskResponse,
+  PendingTrigger,
+} from "../types";
 import type { DisplayStatusResult } from "../types";
 
 // Buffra senaste aktivitetshändelserna
@@ -52,17 +59,19 @@ export function registerWatchCommand(program: Command): void {
 }
 
 async function render(): Promise<void> {
-  const [agentsRes, killRes, tasksRes] = await Promise.all([
+  const [agentsRes, killRes, tasksRes, triggersRes] = await Promise.all([
     apiGet<AgentResponse[]>("/api/agents"),
     apiGet<KillSwitchStatus>("/api/kill-switch/status"),
     apiGet<TaskResponse[]>("/api/tasks", { status: "queued,in_progress", per_page: "20" }) as Promise<
       PaginatedResponse<TaskResponse>
     >,
+    apiGet<PendingTrigger[]>("/api/triggers/pending").catch(() => ({ data: [] as PendingTrigger[] })),
   ]);
 
   const agents = agentsRes.data;
   const killSwitch = killRes.data;
   const runningTasks = tasksRes.data;
+  const pendingTriggerCount = (triggersRes as { data: PendingTrigger[] }).data.length;
 
   const now = new Date().toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   const runningCount = runningTasks.filter((t) => t.status === "in_progress").length;
@@ -82,9 +91,18 @@ async function render(): Promise<void> {
 
   process.stdout.write(border + "\n");
   process.stdout.write(EARTH.plum("\u2502") + "\n");
+  const triggerLine =
+    pendingTriggerCount > 0 ? chalk.yellow(`⏳ ${pendingTriggerCount} pending`) : chalk.dim("0 pending");
+
   process.stdout.write(
     EARTH.plum("\u2502") +
       `  ${EARTH.stone("Kill Switch:")} ${killLine}        ${EARTH.stone("Queue:")} ${runningCount}/${runningCount + queuedCount} running\n`,
+  );
+  process.stdout.write(
+    EARTH.plum("\u2502") +
+      `  ${EARTH.stone("Triggers:")}    ${triggerLine}` +
+      (pendingTriggerCount > 0 ? chalk.dim("  → fia triggers approve") : "") +
+      "\n",
   );
   process.stdout.write(EARTH.plum("\u2502") + "\n");
 

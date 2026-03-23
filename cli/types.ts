@@ -90,3 +90,56 @@ export interface PaginatedResponse<T> {
     per_page: number;
   };
 }
+
+export interface PendingTrigger {
+  id: string;
+  source_task_id: string;
+  trigger_name: string;
+  target_agent_slug: string;
+  target_task_type: string;
+  priority: string;
+  context_json: Record<string, unknown> | null;
+  status: "pending" | "executed" | "rejected";
+  decided_by: string | null;
+  decided_at: string | null;
+  created_at: string;
+  tasks?: {
+    id: string;
+    title: string;
+    type: string;
+    status: string;
+    agents?: { slug: string; name: string } | null;
+  } | null;
+}
+
+export interface TriggerConfig {
+  name: string;
+  on: string;
+  enabled: boolean;
+  requires_approval: boolean;
+  condition?: {
+    task_type?: string | string[];
+    output_field?: string;
+    output_value?: string | string[];
+    score_field?: string;
+    score_above?: number;
+  };
+  action: {
+    type: "create_task" | "notify_slack" | "escalate" | "update_config";
+    target_agent?: string;
+    task_type?: string;
+    priority?: string;
+    context_fields?: string[];
+    channel?: string;
+  };
+}
+
+export interface LineageTask {
+  id: string;
+  title: string;
+  type: string;
+  status: string;
+  trigger_source: string | null;
+  parent_task_id?: string | null;
+  agents?: { slug: string; name: string } | null;
+}

@@ -10,6 +10,7 @@ import { createTask } from "../supabase/task-writer";
 import { logActivity } from "../supabase/activity-writer";
 import { Logger } from "../gateway/logger";
 import { TriggerConfig, EVENT_STATUS_MAP } from "./trigger-types";
+import { getSlackApp } from "../slack/app";
 
 const MAX_TRIGGER_DEPTH = 3;
 
@@ -190,19 +191,38 @@ export async function executeTrigger(
     }
 
     case "notify_slack": {
-      // Slack notification — log intent, actual Slack integration deferred
-      logger.info(`Trigger ${trigger.name}: Slack notification to ${action.channel}`, {
-        task_id: sourceTask.id,
-        action: "trigger_notify_slack",
-      });
+      const channel = action.channel ?? "fia-orchestrator";
 
       await logActivity(supabase, {
         action: "trigger_notify_slack",
         details_json: {
           trigger_name: trigger.name,
           source_task_id: sourceTask.id,
-          channel: action.channel,
+          channel,
         },
+      });
+
+      const slackApp = getSlackApp();
+      if (slackApp) {
+        try {
+          await slackApp.client.chat.postMessage({
+            channel: channel.startsWith("#") ? channel : `#${channel}`,
+            text:
+              `:zap: *Trigger fired: ${trigger.name}*\n` +
+              `Agent: *${action.target_agent ?? "—"}* | Task: \`${sourceTask.type}\` | ID: \`${sourceTask.id.slice(0, 8)}\`\n` +
+              `_${sourceTask.title}_`,
+          });
+        } catch (slackErr) {
+          logger.warn(`Trigger ${trigger.name}: Slack post failed`, {
+            task_id: sourceTask.id,
+            error: (slackErr as Error).message,
+          });
+        }
+      }
+
+      logger.info(`Trigger ${trigger.name}: Slack notification sent to #${channel}`, {
+        task_id: sourceTask.id,
+        action: "trigger_notify_slack",
       });
       break;
     }
@@ -251,6 +271,24 @@ async function createPendingTrigger(
     .single();
 
   if (error) throw new Error(`Failed to create pending trigger: ${error.message}`);
+
+  // Notify Orchestrator channel that approval is needed
+  const slackApp = getSlackApp();
+  if (slackApp) {
+    try {
+      await slackApp.client.chat.postMessage({
+        channel: "#fia-orchestrator",
+        text:
+          `:hourglass_flowing_sand: *Trigger requires approval: \`${trigger.name}\`*\n` +
+          `Source task: \`${sourceTask.id.slice(0, 8)}\` (${sourceTask.type})\n` +
+          `Target: *${trigger.action.target_agent ?? "orchestrator"}* → ${trigger.action.task_type ?? trigger.action.type}\n` +
+          `Approve: \`/fia triggers approve ${data.id.slice(0, 8)}\` or in the Dashboard.`,
+      });
+    } catch {
+      // Non-fatal — trigger is still created
+    }
+  }
+
   return data.id;
 }
 
