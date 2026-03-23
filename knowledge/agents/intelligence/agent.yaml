@@ -52,3 +52,49 @@ writable:
   - memory/source-history.json
   - memory/scoring-calibration.json
   - memory/learnings.json
+
+triggers:
+  - name: rapid_response_to_content
+    description: "Skapar rapid-response-artikel från högscorade fynd"
+    on: task_completed
+    condition:
+      task_type: [morning_scan, midday_sweep]
+      output_field: "suggested_action"
+      output_value: "rapid_response"
+    action:
+      type: create_task
+      target_agent: content
+      task_type: rapid_response_article
+      priority: high
+      context_fields: [title, content_json.summary, content_json.implications]
+    requires_approval: false
+    enabled: true
+
+  - name: strategy_input_to_strategy
+    description: "Skickar strategiskt relevant fynd till Strategy Agent"
+    on: task_completed
+    condition:
+      task_type: [morning_scan, midday_sweep]
+      output_field: "suggested_action"
+      output_value: "strategy_input"
+    action:
+      type: create_task
+      target_agent: strategy
+      task_type: strategic_input
+      priority: normal
+      context_fields: [title, content_json.summary, content_json.implications]
+    requires_approval: true
+    enabled: true
+
+  - name: escalate_critical
+    description: "Eskalerar kritiska fynd till Orchestrator via Slack"
+    on: task_completed
+    condition:
+      task_type: [morning_scan, midday_sweep]
+      output_field: "suggested_action"
+      output_value: "escalate"
+    action:
+      type: notify_slack
+      channel: "#fia-orchestrator"
+    requires_approval: false
+    enabled: true

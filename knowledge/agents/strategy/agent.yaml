@@ -32,3 +32,32 @@ sample_review_rate: 1.0
 max_iterations: 5
 writable:
   - memory/campaign-history.json
+
+triggers:
+  - name: brief_to_content
+    description: "Skapar content-tasks från godkänd kampanjbrief"
+    on: task_activated
+    condition:
+      task_type: [campaign_brief]
+    action:
+      type: create_task
+      target_agent: content
+      task_type: campaign_content
+      priority: normal
+      context_fields: [title, content_json]
+    requires_approval: false
+    enabled: true
+
+  - name: brief_to_campaign
+    description: "Skapar kampanj-setup från godkänd kampanjbrief"
+    on: task_activated
+    condition:
+      task_type: [campaign_brief]
+    action:
+      type: create_task
+      target_agent: campaign
+      task_type: campaign_setup
+      priority: normal
+      context_fields: [title, content_json]
+    requires_approval: true
+    enabled: true

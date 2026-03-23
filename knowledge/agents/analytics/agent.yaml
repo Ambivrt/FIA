@@ -31,3 +31,17 @@ sample_review_rate: 0.05
 max_iterations: 5
 writable:
   - memory/baseline-metrics.json
+
+triggers:
+  - name: anomaly_escalation
+    description: "Eskalerar anomalier till Orchestrator"
+    on: task_completed
+    condition:
+      task_type: [anomaly_detection]
+      score_field: "severity"
+      score_above: 0.8
+    action:
+      type: escalate
+      channel: "#fia-orchestrator"
+    requires_approval: false
+    enabled: true

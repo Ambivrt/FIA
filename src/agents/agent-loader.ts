@@ -3,6 +3,7 @@ import path from "path";
 import { parse as parseYaml } from "yaml";
 
 import { SelfEvalConfig, RoutingEntry } from "../llm/types";
+import { TriggerConfig } from "../engine/trigger-types";
 
 export interface AgentManifest {
   name: string;
@@ -22,6 +23,7 @@ export interface AgentManifest {
   budget_limit_sek?: number;
   score_threshold_mql?: number;
   self_eval?: SelfEvalConfig;
+  triggers?: TriggerConfig[];
 }
 
 export interface SkillMetadata {
@@ -54,6 +56,7 @@ export function loadAgentManifest(knowledgeDir: string, slug: string): AgentMani
   manifest.writable = manifest.writable ?? [];
   manifest.escalation_threshold = manifest.escalation_threshold ?? 3;
   manifest.sample_review_rate = manifest.sample_review_rate ?? 0;
+  manifest.triggers = manifest.triggers ?? [];
 
   return manifest;
 }

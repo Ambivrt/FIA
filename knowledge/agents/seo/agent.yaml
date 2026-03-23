@@ -26,3 +26,20 @@ max_iterations: 5
 writable:
   - memory/keyword-rankings.json
   - memory/opportunities.json
+
+triggers:
+  - name: seo_recommendations_to_content
+    description: "Skapar content-optimeringsuppgifter från SEO-audit"
+    on: task_approved
+    condition:
+      task_type: [seo_audit]
+      output_field: "has_content_recommendations"
+      output_value: "true"
+    action:
+      type: create_task
+      target_agent: content
+      task_type: seo_optimization
+      priority: normal
+      context_fields: [content_json.recommendations]
+    requires_approval: true
+    enabled: true
