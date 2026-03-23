@@ -11,11 +11,16 @@ import { CHANNELS } from "../slack/channels";
 import { ProgressCallback } from "../agents/base-agent";
 import { LLMError, AgentError } from "../utils/errors";
 
-interface ScheduleEntry {
-  expression: string;
-  agent: string;
-  task: string;
-  description: string;
+interface ScheduledJobRow {
+  id: string;
+  agent_slug: string;
+  agent_id: string;
+  cron_expression: string;
+  task_type: string;
+  title: string;
+  priority: string;
+  description: string | null;
+  enabled: boolean;
 }
 
 /** Map agent slug to the Slack channel for progress messages */
@@ -30,198 +35,262 @@ const AGENT_CHANNEL: Record<string, string> = {
   brand: CHANNELS.orchestrator,
 };
 
-export const SCHEDULE: ScheduleEntry[] = [
-  { expression: "30 6 * * 1-5", agent: "intelligence", task: "morning_scan", description: "Intelligence morgonscan" },
-  { expression: "0 7 * * 1-5", agent: "analytics", task: "morning_pulse", description: "Analytics morgonpuls" },
-  { expression: "0 8 * * 1", agent: "strategy", task: "weekly_planning", description: "Strategy veckoplanering" },
-  {
-    expression: "0 9 * * 1,3,5",
-    agent: "content",
-    task: "scheduled_content",
-    description: "Content schemalagt innehåll",
-  },
-  {
-    expression: "0 9 * * 1",
-    agent: "intelligence",
-    task: "weekly_intelligence",
-    description: "Intelligence veckobriefing",
-  },
-  { expression: "0 10 * * *", agent: "lead", task: "lead_scoring", description: "Lead scoring-uppdatering" },
-  { expression: "0 13 * * 1-5", agent: "intelligence", task: "midday_sweep", description: "Intelligence middagssweep" },
-  { expression: "0 14 * * 5", agent: "analytics", task: "weekly_report", description: "Analytics veckorapport" },
-  // First Monday of month (1st–7th, Monday)
-  { expression: "0 9 1-7 * 1", agent: "strategy", task: "monthly_planning", description: "Strategy månadsplanering" },
-  // Last Friday of quarter (March, June, September, December)
-  {
-    expression: "0 9 25-31 3,6,9,12 5",
-    agent: "analytics",
-    task: "quarterly_review",
-    description: "Analytics kvartalsöversikt",
-  },
-];
+/**
+ * Database-driven scheduler that reads from `scheduled_jobs` table.
+ * Replaces the old hardcoded SCHEDULE array.
+ */
+export class DynamicScheduler {
+  private jobs = new Map<string, cron.ScheduledTask>();
 
-export function startScheduler(
+  constructor(
+    private readonly config: AppConfig,
+    private readonly logger: Logger,
+    private readonly supabase: SupabaseClient | null,
+    private readonly killSwitch: KillSwitch,
+    private readonly taskQueue: TaskQueue | null = null,
+  ) {}
+
+  /** Load all enabled jobs from database and register cron tasks. */
+  async loadAll(): Promise<void> {
+    if (!this.supabase) {
+      this.logger.warn("Scheduler: no Supabase client – skipping database load", { action: "scheduler_load" });
+      return;
+    }
+
+    const { data, error } = await this.supabase
+      .from("scheduled_jobs")
+      .select("id, agent_id, cron_expression, task_type, title, priority, description, enabled, agents!inner(slug)")
+      .eq("enabled", true);
+
+    if (error) {
+      this.logger.error("Scheduler: failed to load scheduled jobs from database", {
+        action: "scheduler_load",
+        error: error.message,
+      });
+      return;
+    }
+
+    const rows = (data ?? []) as unknown as (Omit<ScheduledJobRow, "agent_slug"> & { agents: { slug: string } })[];
+
+    for (const row of rows) {
+      const job: ScheduledJobRow = {
+        ...row,
+        agent_slug: row.agents.slug,
+      };
+      this.scheduleJob(job);
+    }
+
+    this.logger.info(`Scheduler loaded ${this.jobs.size} jobs from database`, {
+      action: "scheduler_load",
+      details: { count: this.jobs.size, jobs: rows.map((r) => r.title) },
+    });
+  }
+
+  /** Stop all current cron tasks and reload from database. */
+  async reload(): Promise<void> {
+    this.stopAll();
+    await this.loadAll();
+    this.logger.info("Scheduler reloaded", { action: "scheduler_reload" });
+  }
+
+  /** Stop all cron tasks. */
+  stopAll(): void {
+    for (const task of this.jobs.values()) {
+      task.stop();
+    }
+    this.jobs.clear();
+  }
+
+  private scheduleJob(job: ScheduledJobRow): void {
+    if (!cron.validate(job.cron_expression)) {
+      this.logger.warn(`Scheduler: invalid cron expression for job "${job.title}": ${job.cron_expression}`, {
+        action: "scheduler_invalid_cron",
+        details: { job_id: job.id, expression: job.cron_expression },
+      });
+      return;
+    }
+
+    const task = cron.schedule(job.cron_expression, () => {
+      this.executeJob(job).catch((err) => {
+        this.logger.error(`Scheduler: unhandled error in job "${job.title}": ${(err as Error).message}`, {
+          action: "schedule_error",
+          details: { job_id: job.id },
+        });
+      });
+    });
+
+    this.jobs.set(job.id, task);
+  }
+
+  private async executeJob(job: ScheduledJobRow): Promise<void> {
+    if (this.killSwitch.isActive()) {
+      this.logger.info(`Scheduler: skipping ${job.title} – kill switch active`, {
+        action: "schedule_skipped",
+        agent: job.agent_slug,
+      });
+      return;
+    }
+
+    this.logger.info(`Scheduler: triggering ${job.title}`, {
+      action: "schedule_trigger",
+      agent: job.agent_slug,
+      task: job.task_type,
+    });
+
+    if (!this.supabase) return;
+
+    const { data: agentRow } = await this.supabase
+      .from("agents")
+      .select("id, status")
+      .eq("slug", job.agent_slug)
+      .single();
+
+    if (agentRow?.status === "paused") {
+      this.logger.info(`Scheduler: ${job.agent_slug} is paused, skipping`, {
+        action: "schedule_skipped",
+        agent: job.agent_slug,
+      });
+      return;
+    }
+
+    await logActivity(this.supabase, {
+      agent_id: agentRow?.id,
+      action: "schedule_triggered",
+      details_json: { task: job.task_type, description: job.title, job_id: job.id },
+    });
+
+    // Update last_triggered_at
+    await this.supabase
+      .from("scheduled_jobs")
+      .update({ last_triggered_at: new Date().toISOString() })
+      .eq("id", job.id);
+
+    // Build progress callback for Slack + activity_log
+    const slackApp = getSlackApp();
+    const channel = AGENT_CHANNEL[job.agent_slug] ?? CHANNELS.orchestrator;
+
+    const onProgress: ProgressCallback = async (action, message, details) => {
+      if (slackApp) {
+        try {
+          await slackApp.client.chat.postMessage({ channel, text: message });
+        } catch (slackErr) {
+          this.logger.warn(`Scheduler: failed to post progress to Slack: ${(slackErr as Error).message}`, {
+            action: "slack_progress_error",
+            agent: job.agent_slug,
+          });
+        }
+      }
+      await logActivity(this.supabase!, {
+        agent_id: agentRow?.id,
+        action,
+        details_json: { agent: job.agent_slug, scheduled: true, ...details },
+      });
+    };
+
+    if (this.taskQueue) {
+      // Enqueue via task queue
+      this.taskQueue.enqueue(
+        job.agent_slug,
+        {
+          type: job.task_type,
+          title: job.title,
+          input: `Schemalagd uppgift: ${job.title}`,
+          priority: job.priority,
+          onProgress,
+        },
+        job.priority,
+      );
+    } else {
+      // Fallback: direct execution
+      try {
+        const agentInstance = await createAgent(job.agent_slug, this.config, this.logger, this.supabase);
+
+        if (slackApp) {
+          try {
+            await slackApp.client.chat.postMessage({
+              channel,
+              text: `:rocket: Startar *${job.agent_slug}* agent (${job.task_type})... _[schemalagd]_`,
+            });
+          } catch {
+            /* non-critical */
+          }
+        }
+
+        const result = await agentInstance.execute({
+          type: job.task_type,
+          title: job.title,
+          input: `Schemalagd uppgift: ${job.title}`,
+          priority: job.priority,
+          onProgress,
+        });
+
+        if (slackApp) {
+          try {
+            await slackApp.client.chat.postMessage({
+              channel,
+              text: `:white_check_mark: *${job.agent_slug}* klar (${result.status}). Task: \`${result.taskId}\` _[schemalagd]_`,
+            });
+          } catch {
+            /* non-critical */
+          }
+        }
+      } catch (err) {
+        const error = err as Error;
+        let errorType = "unknown";
+        let logLevel: "warn" | "error" = "error";
+
+        if (error.name === "AbortError" || error.message?.includes("timeout")) {
+          errorType = "timeout";
+          logLevel = "warn";
+        } else if (err instanceof LLMError) {
+          errorType = "llm";
+        } else if (err instanceof AgentError) {
+          errorType = "agent";
+        } else if (
+          error.message?.includes("401") ||
+          error.message?.includes("403") ||
+          error.message?.includes("auth")
+        ) {
+          errorType = "auth";
+        } else if (
+          error.message?.includes("ECONNREFUSED") ||
+          error.message?.includes("ENOTFOUND") ||
+          error.message?.includes("network")
+        ) {
+          errorType = "network";
+          logLevel = "warn";
+        }
+
+        this.logger[logLevel](`Scheduler: agent execution failed (${errorType}): ${error.message}`, {
+          action: "schedule_error",
+          agent: job.agent_slug,
+          task: job.task_type,
+          error: error.message,
+          error_type: errorType,
+        });
+
+        if (slackApp) {
+          try {
+            await slackApp.client.chat.postMessage({
+              channel,
+              text: `:x: *${job.agent_slug}* misslyckades: ${(err as Error).message} _[schemalagd]_`,
+            });
+          } catch {
+            /* non-critical */
+          }
+        }
+      }
+    }
+  }
+}
+
+/** Create and return a DynamicScheduler instance. Call loadAll() after creation. */
+export function createScheduler(
   config: AppConfig,
   logger: Logger,
   supabase: SupabaseClient | null,
   killSwitch: KillSwitch,
   taskQueue: TaskQueue | null = null,
-): void {
-  for (const entry of SCHEDULE) {
-    cron.schedule(entry.expression, async () => {
-      if (killSwitch.isActive()) {
-        logger.info(`Scheduler: skipping ${entry.description} – kill switch active`, {
-          action: "schedule_skipped",
-          agent: entry.agent,
-        });
-        return;
-      }
-
-      logger.info(`Scheduler: triggering ${entry.description}`, {
-        action: "schedule_trigger",
-        agent: entry.agent,
-        task: entry.task,
-      });
-
-      if (!supabase) return;
-
-      const { data: agentRow } = await supabase.from("agents").select("id, status").eq("slug", entry.agent).single();
-
-      if (agentRow?.status === "paused") {
-        logger.info(`Scheduler: ${entry.agent} is paused, skipping`, {
-          action: "schedule_skipped",
-          agent: entry.agent,
-        });
-        return;
-      }
-
-      await logActivity(supabase, {
-        agent_id: agentRow?.id,
-        action: "schedule_triggered",
-        details_json: { task: entry.task, description: entry.description },
-      });
-
-      // Build progress callback for Slack + activity_log
-      const slackApp = getSlackApp();
-      const channel = AGENT_CHANNEL[entry.agent] ?? CHANNELS.orchestrator;
-
-      const onProgress: ProgressCallback = async (action, message, details) => {
-        if (slackApp) {
-          try {
-            await slackApp.client.chat.postMessage({ channel, text: message });
-          } catch (slackErr) {
-            logger.warn(`Scheduler: failed to post progress to Slack: ${(slackErr as Error).message}`, {
-              action: "slack_progress_error",
-              agent: entry.agent,
-            });
-          }
-        }
-        await logActivity(supabase, {
-          agent_id: agentRow?.id,
-          action,
-          details_json: { agent: entry.agent, scheduled: true, ...details },
-        });
-      };
-
-      if (taskQueue) {
-        // Enqueue via task queue
-        taskQueue.enqueue(
-          entry.agent,
-          {
-            type: entry.task,
-            title: entry.description,
-            input: `Schemalagd uppgift: ${entry.description}`,
-            priority: "normal",
-            onProgress,
-          },
-          "normal",
-        );
-      } else {
-        // Fallback: direct execution
-        try {
-          const agentInstance = await createAgent(entry.agent, config, logger, supabase);
-
-          if (slackApp) {
-            try {
-              await slackApp.client.chat.postMessage({
-                channel,
-                text: `:rocket: Startar *${entry.agent}* agent (${entry.task})... _[schemalagd]_`,
-              });
-            } catch {
-              /* non-critical */
-            }
-          }
-
-          const result = await agentInstance.execute({
-            type: entry.task,
-            title: entry.description,
-            input: `Schemalagd uppgift: ${entry.description}`,
-            priority: "normal",
-            onProgress,
-          });
-
-          if (slackApp) {
-            try {
-              await slackApp.client.chat.postMessage({
-                channel,
-                text: `:white_check_mark: *${entry.agent}* klar (${result.status}). Task: \`${result.taskId}\` _[schemalagd]_`,
-              });
-            } catch {
-              /* non-critical */
-            }
-          }
-        } catch (err) {
-          const error = err as Error;
-          let errorType = "unknown";
-          let logLevel: "warn" | "error" = "error";
-
-          if (error.name === "AbortError" || error.message?.includes("timeout")) {
-            errorType = "timeout";
-            logLevel = "warn";
-          } else if (err instanceof LLMError) {
-            errorType = "llm";
-          } else if (err instanceof AgentError) {
-            errorType = "agent";
-          } else if (
-            error.message?.includes("401") ||
-            error.message?.includes("403") ||
-            error.message?.includes("auth")
-          ) {
-            errorType = "auth";
-          } else if (
-            error.message?.includes("ECONNREFUSED") ||
-            error.message?.includes("ENOTFOUND") ||
-            error.message?.includes("network")
-          ) {
-            errorType = "network";
-            logLevel = "warn";
-          }
-
-          logger[logLevel](`Scheduler: agent execution failed (${errorType}): ${error.message}`, {
-            action: "schedule_error",
-            agent: entry.agent,
-            task: entry.task,
-            error: error.message,
-            error_type: errorType,
-          });
-
-          if (slackApp) {
-            try {
-              await slackApp.client.chat.postMessage({
-                channel,
-                text: `:x: *${entry.agent}* misslyckades: ${(err as Error).message} _[schemalagd]_`,
-              });
-            } catch {
-              /* non-critical */
-            }
-          }
-        }
-      }
-    });
-  }
-
-  logger.info(`Scheduler started with ${SCHEDULE.length} cron jobs`, {
-    action: "scheduler_start",
-    details: { jobs: SCHEDULE.map((s) => s.description) },
-  });
+): DynamicScheduler {
+  return new DynamicScheduler(config, logger, supabase, killSwitch, taskQueue);
 }

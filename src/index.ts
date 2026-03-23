@@ -7,7 +7,7 @@ import { startCommandListener } from "./supabase/command-listener";
 import { startTaskListener } from "./supabase/task-listener";
 import { createSlackApp } from "./slack/app";
 import { createApiServer, startApiServer } from "./api/server";
-import { startScheduler } from "./gateway/scheduler";
+import { createScheduler } from "./gateway/scheduler";
 import { KillSwitch } from "./utils/kill-switch";
 import { TaskQueue } from "./gateway/task-queue";
 
@@ -106,14 +106,17 @@ async function main(): Promise<void> {
     logger.warn("REST API not started – Supabase required", { action: "api_init" });
   }
 
-  // --- Realtime Listeners (Supabase) ---
+  // --- Scheduler (database-driven) ---
+  const scheduler = createScheduler(config, logger, supabase, killSwitch, taskQueue);
   if (supabase) {
-    startCommandListener(supabase, logger, killSwitch);
-    startTaskListener(supabase, config, logger, killSwitch, taskQueue);
+    await scheduler.loadAll();
   }
 
-  // --- Scheduler ---
-  startScheduler(config, logger, supabase, killSwitch, taskQueue);
+  // --- Realtime Listeners (Supabase) ---
+  if (supabase) {
+    startCommandListener(supabase, logger, killSwitch, scheduler);
+    startTaskListener(supabase, config, logger, killSwitch, taskQueue);
+  }
 
   logger.info("FIA Gateway ready", {
     action: "gateway_ready",
@@ -124,6 +127,7 @@ async function main(): Promise<void> {
   setInterval(() => {}, 60_000);
 
   const shutdown = (): void => {
+    scheduler.stopAll();
     logger.info("FIA Gateway shutting down", {
       action: "gateway_stop",
       status: "success",
