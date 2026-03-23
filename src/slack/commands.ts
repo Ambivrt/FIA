@@ -10,7 +10,6 @@ import { resolveDisplayStatus, type DisplayStatus } from "../shared/display-stat
 import { createAgent, getAllAgentSlugs } from "../agents/agent-factory";
 import { loadAgentManifest } from "../agents/agent-loader";
 import { ProgressCallback } from "../agents/base-agent";
-import { SCHEDULE } from "../gateway/scheduler";
 
 export function registerCommands(
   app: App,
@@ -95,7 +94,11 @@ export function registerCommands(
         }
 
         statusText += `\n\n*Subsystem:*`;
-        statusText += `\n:calendar_spiral: Scheduler: *${SCHEDULE.length}* cron-jobb aktiva`;
+        const jobCount = supabase
+          ? ((await supabase.from("scheduled_jobs").select("id", { count: "exact", head: true }).eq("enabled", true))
+              .count ?? 0)
+          : 0;
+        statusText += `\n:calendar_spiral: Scheduler: *${jobCount}* cron-jobb aktiva`;
         statusText += supabase
           ? "\n:satellite_antenna: Command Listener: *aktiv* (Supabase Realtime)"
           : "\n:satellite_antenna: Command Listener: _ej aktiv_ (Supabase saknas)";
@@ -385,8 +388,21 @@ export function registerCommands(
         }
 
         helpLines.push("", "*Schemalagda jobb:*");
-        for (const entry of SCHEDULE) {
-          helpLines.push(`  \`${entry.expression}\` – *${entry.agent}*: ${entry.description}`);
+        if (supabase) {
+          const { data: dbJobs } = await supabase
+            .from("scheduled_jobs")
+            .select("cron_expression, title, enabled, agents!inner(slug)")
+            .eq("enabled", true)
+            .order("created_at");
+          for (const j of (dbJobs ?? []) as unknown as {
+            cron_expression: string;
+            title: string;
+            agents: { slug: string };
+          }[]) {
+            helpLines.push(`  \`${j.cron_expression}\` – *${j.agents.slug}*: ${j.title}`);
+          }
+        } else {
+          helpLines.push("  _Supabase saknas – inga jobb laddade_");
         }
 
         helpLines.push(

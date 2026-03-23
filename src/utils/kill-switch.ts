@@ -30,6 +30,36 @@ export class KillSwitch {
   }
 
   async activate(source: "slack" | "api" | "realtime", userId?: string): Promise<void> {
+    // Write to database FIRST so dashboard (which reads system_settings) stays consistent
+    if (this.supabase) {
+      const { error: settingsError } = await this.supabase
+        .from("system_settings")
+        .update({
+          value: { active: true },
+          updated_at: new Date().toISOString(),
+          updated_by: userId ?? null,
+        })
+        .eq("key", "kill_switch");
+
+      if (settingsError) {
+        this.logger.error("Failed to update system_settings for kill switch – aborting activation", {
+          action: "kill_switch_activate",
+          error: settingsError.message,
+        });
+        throw new Error(`Kill switch DB update failed: ${settingsError.message}`);
+      }
+
+      const { error } = await this.supabase.from("agents").update({ status: "paused" }).neq("slug", "brand");
+
+      if (error) {
+        this.logger.error("Failed to pause agents in Supabase", {
+          action: "kill_switch_activate",
+          error: error.message,
+        });
+      }
+    }
+
+    // Update in-memory state only after DB success
     this.state = {
       active: true,
       activatedAt: new Date().toISOString(),
@@ -67,32 +97,6 @@ export class KillSwitch {
     });
 
     if (this.supabase) {
-      const { error } = await this.supabase.from("agents").update({ status: "paused" }).neq("slug", "brand");
-
-      if (error) {
-        this.logger.error("Failed to pause agents in Supabase", {
-          action: "kill_switch_activate",
-          error: error.message,
-        });
-      }
-
-      // Sync system_settings so dashboard sees the change via Realtime
-      const { error: settingsError } = await this.supabase
-        .from("system_settings")
-        .update({
-          value: { active: true },
-          updated_at: new Date().toISOString(),
-          updated_by: userId ?? null,
-        })
-        .eq("key", "kill_switch");
-
-      if (settingsError) {
-        this.logger.error("Failed to update system_settings for kill switch", {
-          action: "kill_switch_activate",
-          error: settingsError.message,
-        });
-      }
-
       await logActivity(this.supabase, {
         user_id: userId,
         action: "kill_switch_activated",
@@ -102,6 +106,40 @@ export class KillSwitch {
   }
 
   async deactivate(source: "slack" | "api" | "realtime", userId?: string): Promise<void> {
+    // Write to database FIRST so dashboard (which reads system_settings) stays consistent
+    if (this.supabase) {
+      const { error: settingsError } = await this.supabase
+        .from("system_settings")
+        .update({
+          value: { active: false },
+          updated_at: new Date().toISOString(),
+          updated_by: userId ?? null,
+        })
+        .eq("key", "kill_switch");
+
+      if (settingsError) {
+        this.logger.error("Failed to update system_settings for kill switch – aborting deactivation", {
+          action: "kill_switch_deactivate",
+          error: settingsError.message,
+        });
+        throw new Error(`Kill switch DB update failed: ${settingsError.message}`);
+      }
+
+      const { error } = await this.supabase
+        .from("agents")
+        .update({ status: "active" })
+        .eq("status", "paused")
+        .neq("slug", "brand");
+
+      if (error) {
+        this.logger.error("Failed to resume agents in Supabase", {
+          action: "kill_switch_deactivate",
+          error: error.message,
+        });
+      }
+    }
+
+    // Update in-memory state only after DB success
     this.state = {
       active: false,
       activatedAt: null,
@@ -121,36 +159,6 @@ export class KillSwitch {
     });
 
     if (this.supabase) {
-      const { error } = await this.supabase
-        .from("agents")
-        .update({ status: "active" })
-        .eq("status", "paused")
-        .neq("slug", "brand");
-
-      if (error) {
-        this.logger.error("Failed to resume agents in Supabase", {
-          action: "kill_switch_deactivate",
-          error: error.message,
-        });
-      }
-
-      // Sync system_settings so dashboard sees the change via Realtime
-      const { error: settingsError } = await this.supabase
-        .from("system_settings")
-        .update({
-          value: { active: false },
-          updated_at: new Date().toISOString(),
-          updated_by: userId ?? null,
-        })
-        .eq("key", "kill_switch");
-
-      if (settingsError) {
-        this.logger.error("Failed to update system_settings for kill switch", {
-          action: "kill_switch_deactivate",
-          error: settingsError.message,
-        });
-      }
-
       await logActivity(this.supabase, {
         user_id: userId,
         action: "kill_switch_deactivated",

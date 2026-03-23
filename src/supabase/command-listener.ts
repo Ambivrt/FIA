@@ -1,6 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Logger } from "../gateway/logger";
 import { KillSwitch } from "../utils/kill-switch";
+import type { DynamicScheduler } from "../gateway/scheduler";
 import { updateTaskStatus, createApproval, createTask } from "./task-writer";
 import { logActivity } from "./activity-writer";
 
@@ -18,11 +19,22 @@ async function markCommand(supabase: SupabaseClient, commandId: string, status: 
   await supabase.from("commands").update({ status, processed_at: new Date().toISOString() }).eq("id", commandId);
 }
 
-export function startCommandListener(supabase: SupabaseClient, logger: Logger, killSwitch: KillSwitch): void {
+export function startCommandListener(
+  supabase: SupabaseClient,
+  logger: Logger,
+  killSwitch: KillSwitch,
+  scheduler?: DynamicScheduler,
+): void {
   supabase
     .channel("commands")
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "commands" }, async (payload) => {
       const cmd = payload.new as Command;
+
+      // Skip already-processed commands (e.g. audit-trail inserts from API routes)
+      if (cmd.status === "completed" || cmd.status === "failed") {
+        return;
+      }
+
       const p = cmd.payload_json ?? {};
 
       logger.info(`Command received: ${cmd.command_type}`, {
@@ -141,6 +153,18 @@ export function startCommandListener(supabase: SupabaseClient, logger: Logger, k
                   revision_feedback: feedback ?? null,
                   original_task_id: taskId,
                 },
+              });
+            }
+            break;
+          }
+
+          case "update_schedule": {
+            if (scheduler) {
+              await scheduler.reload();
+              await logActivity(supabase, {
+                user_id: cmd.issued_by,
+                action: "schedule_reloaded",
+                details_json: { source: "dashboard", ...p },
               });
             }
             break;
