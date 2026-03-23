@@ -181,6 +181,23 @@ Se `.env.example` för alla nyckelnamn. Aldrig i kod. Kritiska:
 - [x] ESLint + Prettier — `eslint.config.mjs`, `.prettierrc`
 - [x] Teknisk skuld B1–B12: alla 12 backend-fixar åtgärdade (2026-03-19)
 
+### Klart (Deploy 0.5.1, 2026-03-23)
+
+- [x] Utökad statusmodell: 17 statusar med statusmaskin och övergångsvalidering
+- [x] Deklarativ trigger engine: 7 triggers i 4 agenter (Intelligence, Strategy, Analytics, SEO)
+- [x] pending_triggers-tabell med godkännandekö i Dashboard
+- [x] Task-relationer: parent_task_id, children, lineage
+- [x] Dashboard: TaskStatusBadge, TriggersPage, task-relationer i TaskDetailSheet
+
+### Klart (Deploy 0.5.2, 2026-03-23)
+
+- [x] Trigger-konfiguration i dashboard: visa, enable/disable, redigera triggers per agent
+- [x] Trigger engine läser från config_json (Supabase) istället för agent.yaml
+- [x] config_json.triggers seedas vid gateway-startup, dashboarden äger efter det
+- [x] TriggersConfigPage: systemövergripande trigger-översikt med filter
+- [x] Reseed från YAML: dry-run diff + bekräftelsedialog (admin only)
+- [x] 4 nya API-endpoints, 11 nya React-komponenter, 40+ i18n-nycklar
+
 ### Pågår
 
 - [ ] Gemini context caching

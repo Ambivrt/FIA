@@ -29,7 +29,7 @@ async function main(): Promise<void> {
 
   const logger = createLogger(config);
 
-  logger.info("FIA Gateway v0.5.1 starting", {
+  logger.info("FIA Gateway v0.5.2 starting", {
     action: "gateway_start",
     status: "success",
   });
@@ -114,7 +114,7 @@ async function main(): Promise<void> {
 
   // --- Realtime Listeners (Supabase) ---
   if (supabase) {
-    startCommandListener(supabase, logger, killSwitch, scheduler);
+    startCommandListener(supabase, logger, killSwitch, scheduler, config);
     startTaskListener(supabase, config, logger, killSwitch, taskQueue);
   }
 

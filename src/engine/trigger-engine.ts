@@ -6,7 +6,6 @@
  */
 
 import { SupabaseClient } from "@supabase/supabase-js";
-import { loadAgentManifest } from "../agents/agent-loader";
 import { createTask } from "../supabase/task-writer";
 import { logActivity } from "../supabase/activity-writer";
 import { Logger } from "../gateway/logger";
@@ -36,23 +35,16 @@ export async function onTaskStatusChange(
   knowledgeDir: string,
   logger: Logger,
 ): Promise<void> {
-  // Resolve agent slug from agent_id
-  const { data: agent } = await supabase.from("agents").select("slug").eq("id", task.agent_id).single();
+  // Resolve agent slug + triggers from config_json (Supabase is source of truth)
+  const { data: agent } = await supabase.from("agents").select("slug, config_json").eq("id", task.agent_id).single();
 
   if (!agent) {
     logger.warn("Trigger engine: agent not found", { task_id: task.id });
     return;
   }
 
-  let manifest;
-  try {
-    manifest = loadAgentManifest(knowledgeDir, agent.slug);
-  } catch {
-    // Agent has no manifest or it's malformed — skip triggers
-    return;
-  }
-
-  const triggers = manifest.triggers ?? [];
+  const configJson = agent.config_json as Record<string, unknown> | null;
+  const triggers = (configJson?.triggers as TriggerConfig[] | undefined) ?? [];
   if (triggers.length === 0) return;
 
   // Check trigger depth to prevent loops
