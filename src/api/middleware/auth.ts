@@ -23,6 +23,13 @@ export function requireAuth(supabase: SupabaseClient) {
 
     const token = header.slice(7);
 
+    // CLI token bypass – om FIA_CLI_TOKEN finns i .env och matchar, skippa JWT-validering
+    const cliToken = process.env.FIA_CLI_TOKEN;
+    if (cliToken && token === cliToken) {
+      req.user = { id: "cli", role: "admin" };
+      return next();
+    }
+
     const {
       data: { user },
       error,

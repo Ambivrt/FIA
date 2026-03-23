@@ -4,7 +4,7 @@ AI-agentgateway som ersätter Forefronts marknadsavdelning. Sju agentkluster utf
 
 **Princip:** Human on the loop – agenter beslutar och exekverar inom definierade ramar.
 
-**Dual-interface:** Slack (kommandon) + FIA Dashboard PWA (grafisk vy, godkännandekö, KPI, kill switch).
+**Triple-interface:** Slack (kommandon) + FIA Dashboard PWA (grafisk vy, godkännandekö, KPI, kill switch) + FIA CLI (terminalverktyg för SSH/lokal access).
 
 ## Teknikstack
 
@@ -21,6 +21,7 @@ AI-agentgateway som ersätter Forefronts marknadsavdelning. Sju agentkluster utf
 | Google Workspace  | gws CLI som MCP-server                       |
 | MCP-integrationer | HubSpot, LinkedIn, Buffer                    |
 | REST API          | Express (internt, ej exponerat)              |
+| CLI               | Commander, chalk, boxen, ora, cli-table3     |
 | Deploy            | GCP Compute Engine (europe-north1), PM2      |
 
 ## Kodkonventioner
@@ -47,12 +48,19 @@ fia/
 │   ├── api/                     # REST API (Express, routes, auth middleware)
 │   ├── mcp/                     # MCP-wrappers (GWS, HubSpot, LinkedIn, Buffer)
 │   ├── context/                 # Kontexthantering, prompt-builder
+│   ├── shared/                  # Delad kod (display-status)
 │   └── utils/                   # Config, errors, kill-switch
+├── cli/                         # FIA CLI-klient
+│   ├── index.ts                 # Entry point, Commander setup
+│   ├── commands/                # Ett kommando per fil (11 st)
+│   ├── lib/                     # api-client, formatters, realtime, config
+│   └── types.ts                 # CLI-specifika typer
 ├── knowledge/                   # Kunskapsbas (se knowledge/CLAUDE.md)
 │   ├── brand/                   # Delad varumärkeskontext
 │   └── agents/                  # Per-agent: agent.yaml, SKILL.md, context/, memory/
 ├── supabase/                    # Migreringar och seed (se supabase/CLAUDE.md)
 ├── tests/                       # Testsvit (se tests/CLAUDE.md)
+│   └── cli/                     # CLI-tester (formatters, api-client, commands)
 ├── scripts/                     # Hjälpskript
 └── logs/                        # JSON-loggar (gitignored)
 ```
@@ -61,11 +69,27 @@ fia/
 
 ```bash
 npm run dev          # ts-node med watch
-npm run build        # TypeScript → JavaScript
+npm run build        # TypeScript → JavaScript (gateway + CLI)
+npm run build:cli    # Enbart CLI
 npm run start        # Kör byggd version
 npm test             # Alla tester (Jest)
 npm run test:router  # Enbart routing-tester
 npm run test:brand   # Enbart Brand Agent-tester
+npm run test:cli     # Enbart CLI-tester
+
+# CLI (kräver FIA_CLI_TOKEN i .env)
+npx fia status       # Systemöversikt
+npx fia agents       # Agenttabell
+npx fia run content blog_post --priority high
+npx fia queue        # Köade/pågående tasks
+npx fia approve <id> # Godkänn task
+npx fia reject <id> --feedback "..."
+npx fia kill         # Aktivera kill switch
+npx fia resume       # Avaktivera kill switch
+npx fia logs         # Aktivitetslogg
+npx fia tail         # Live-stream (Supabase Realtime)
+npx fia watch        # Mini-dashboard (live)
+npx fia config content --routing
 
 # PM2 (produktion, på VPS: ~/fia-server)
 pm2 start ecosystem.config.js
@@ -127,6 +151,7 @@ Se `.env.example` för alla nyckelnamn. Aldrig i kod. Kritiska:
 - `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN` – Slack
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` – Supabase
 - `SERPER_API_KEY` – Google Search
+- `FIA_CLI_TOKEN` – Lokal auth-token för CLI (bypass JWT)
 
 ## Pågående arbete
 
@@ -142,9 +167,22 @@ Se `.env.example` för alla nyckelnamn. Aldrig i kod. Kritiska:
 - [x] FIA Dashboard MVP (Lovable): auth, agentpuls, godkännandekö, kill switch, Realtime
 - [x] Self-eval scoring, parallel pre-screening, exponential backoff retry
 
+### Klart (Deploy 0.5, 2026-03-22)
+
+- [x] FIA Display Status – gemensam standard (`src/shared/display-status.ts`): online/working/paused/killed/error med resolve-logik, färger och symboler för CLI/Dashboard/Slack
+- [x] FIA CLI-klient (`cli/`) – 11 kommandon: status, agents, run, queue, approve, reject, kill, resume, logs, tail, watch, config
+- [x] CLI auth middleware – FIA_CLI_TOKEN-bypass i gateway (admin-roll, skippar JWT)
+- [x] POST /api/tasks – nytt endpoint för task-skapande från CLI/Dashboard
+- [x] Kommaseparerade status-filter i GET /api/tasks
+- [x] Forefront Earth-palett och gradient i CLI (varumärkesfärger)
+- [x] CLI-tester (3 testfiler, 25 tester: formatters, api-client, commands)
+- [x] gws MCP kopplad till agenter (via @alanse/mcp-server-google-workspace + CLI fallback)
+- [x] CI/CD (GitHub Actions) — `.github/workflows/ci.yml`
+- [x] ESLint + Prettier — `eslint.config.mjs`, `.prettierrc`
+- [x] Teknisk skuld B1–B12: alla 12 backend-fixar åtgärdade (2026-03-19)
+
 ### Pågår
 
-- [x] gws MCP kopplad till agenter (via @alanse/mcp-server-google-workspace + CLI fallback)
 - [ ] Gemini context caching
 - [ ] GA4 Analytics API
 - [ ] 10 innehållsenheter producerade
@@ -153,6 +191,3 @@ Se `.env.example` för alla nyckelnamn. Aldrig i kod. Kritiska:
 
 - [ ] MCP-wrappers: HubSpot, LinkedIn, Buffer (`src/mcp/` – ej påbörjat)
 - [ ] Content staging med Zod-validering av content_json
-- [x] CI/CD (GitHub Actions) — `.github/workflows/ci.yml`
-- [x] ESLint + Prettier — `eslint.config.mjs`, `.prettierrc`
-- [x] Teknisk skuld B1–B12: alla 12 backend-fixar åtgärdade (2026-03-19)

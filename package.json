@@ -1,17 +1,23 @@
 {
   "name": "fia-gateway",
-  "version": "0.2.0",
+  "version": "0.5.0",
   "description": "FIA – Forefront Intelligent Automation: AI-agent gateway for marketing operations",
   "main": "dist/index.js",
+  "bin": {
+    "fia": "./dist/cli/index.js"
+  },
   "scripts": {
     "dev": "nodemon --exec ts-node src/index.ts --ext ts",
-    "build": "tsc",
+    "build": "tsc && tsc -p tsconfig.cli.json",
+    "build:cli": "tsc -p tsconfig.cli.json",
     "start": "node dist/index.js",
+    "cli:dev": "ts-node -P tsconfig.cli.json cli/index.ts",
     "test": "jest --passWithNoTests",
     "test:router": "jest tests/router.test.ts",
     "test:brand": "jest tests/brand-agent.test.ts",
     "test:integration": "jest --testPathPattern=tests/integration",
-    "lint": "eslint src/ tests/",
+    "test:cli": "jest tests/cli/",
+    "lint": "eslint src/ tests/ cli/",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -21,10 +27,15 @@
     "@google/genai": "^1.0.0",
     "@slack/bolt": "^4.1.0",
     "@supabase/supabase-js": "^2.49.0",
+    "boxen": "^5.1.2",
+    "chalk": "^4.1.2",
+    "cli-table3": "^0.6.4",
+    "commander": "^12.1.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.0",
     "express-rate-limit": "^8.3.1",
     "node-cron": "^3.0.3",
+    "ora": "^5.4.1",
     "uuid": "^11.1.0",
     "yaml": "^2.7.0",
     "zod": "^4.3.6"
