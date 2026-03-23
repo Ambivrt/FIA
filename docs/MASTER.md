@@ -2,38 +2,39 @@
 
 All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och principer. Gateway- och Dashboard-repon pekar hit.
 
-**Version:** 0.5.0
-**Senast uppdaterad:** 2026-03-22
+**Version:** 0.5.1
+**Senast uppdaterad:** 2026-03-23
 
 ---
 
-## Nuläge (2026-03-22)
+## Nuläge (2026-03-23)
 
 ### Övergripande status
 
-| Delsystem            | Status                                                  | Deploy           |
-| -------------------- | ------------------------------------------------------- | ---------------- |
-| Gateway (backend)    | Solid MVP, alla 8 agenter live, 22 testfiler, CI/CD     | 0.5 (2026-03-22) |
-| CLI                  | 11 kommandon, Forefront Earth-palett, Supabase Realtime | 0.5 (2026-03-22) |
-| Dashboard (frontend) | Robust MVP, strict TS, error boundaries, i18n, PWA      | Live på Lovable  |
-| Supabase (DB)        | 10 tabeller, RLS, Realtime                              | EU-region aktiv  |
-| GCP (hosting)        | Compute Engine konfigurerad                             | europe-north1-b  |
-| Slack                | Bolt SDK + Socket Mode live                             | Aktiv            |
-| MCP-integrationer    | gws kopplad till agenter (Drive, Docs, Sheets)          | Live             |
+| Delsystem            | Status                                                              | Deploy             |
+| -------------------- | ------------------------------------------------------------------- | ------------------ |
+| Gateway (backend)    | Solid MVP, 8 agenter, trigger engine, status machine, CI/CD         | 0.5.1 (2026-03-23) |
+| CLI                  | 11 kommandon, Forefront Earth-palett, Supabase Realtime             | 0.5.1 (2026-03-23) |
+| Dashboard (frontend) | Robust MVP, trigger-kö, TaskStatusBadge, task-relationer, i18n, PWA | Live på Lovable    |
+| Supabase (DB)        | 11 tabeller, RLS, Realtime, pending_triggers                        | EU-region aktiv    |
+| GCP (hosting)        | Compute Engine konfigurerad                                         | europe-north1-b    |
+| Slack                | Bolt SDK + Socket Mode live                                         | Aktiv              |
+| MCP-integrationer    | gws kopplad till agenter (Drive, Docs, Sheets)                      | Live               |
 
 ### Backend – Gateway (Ambivrt/FIA)
 
-**Kodbas:** ~70 TypeScript-filer, ~8 000 LOC, TypeScript strict mode, 22 testfiler (304 tester), CI/CD via GitHub Actions, ESLint + Prettier.
+**Kodbas:** ~80 TypeScript-filer, ~9 000 LOC, TypeScript strict mode, 22 testfiler (304 tester), CI/CD via GitHub Actions, ESLint + Prettier.
 
-**Nytt i 0.5:**
+**Nytt i 0.5.1:**
 
-| Komponent                                       | Status |
-| ----------------------------------------------- | ------ |
-| FIA CLI-klient (11 kommandon)                   | Klart  |
-| FIA Display Status (delad standard)             | Klart  |
-| CLI auth middleware (FIA_CLI_TOKEN)             | Klart  |
-| POST /api/tasks (skapa task från CLI/Dashboard) | Klart  |
-| Kommaseparerade status-filter i GET /api/tasks  | Klart  |
+| Komponent                                                 | Status |
+| --------------------------------------------------------- | ------ |
+| Task Status & Trigger Engine (`src/engine/`)              | Klart  |
+| Utökad statusmodell (17 statusar, statusmaskin)           | Klart  |
+| Deklarativa triggers i agent.yaml (7 triggers, 4 agenter) | Klart  |
+| pending_triggers-tabell + API endpoints                   | Klart  |
+| Task-relationer (parent_task_id, children, lineage)       | Klart  |
+| Migration 013: status + triggers                          | Klart  |
 
 **Kvarstår:**
 
@@ -45,7 +46,15 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 ### Frontend – Dashboard PWA (Ambivrt/fia-frontend)
 
-**Kodbas:** React 18.3 + Vite 5.4 + TypeScript 5.8 (strict: true), Tailwind 3.4 + shadcn/ui, TanStack React Query 5.83, 13 sidor, 19+ komponenter, 60+ API-funktioner.
+**Kodbas:** React 18.3 + Vite 5.4 + TypeScript 5.8 (strict: true), Tailwind 3.4 + shadcn/ui, TanStack React Query 5.83, 14 sidor, 20+ komponenter, 70+ API-funktioner.
+
+**Nytt i 0.5.1:**
+
+| Komponent                                    | Status |
+| -------------------------------------------- | ------ |
+| TaskStatusBadge (17 statusar, ikoner/färger) | Klart  |
+| TriggersPage (trigger-godkännandekö)         | Klart  |
+| Task-relationer i TaskDetailSheet            | Klart  |
 
 **Kvarstår:**
 
@@ -92,7 +101,8 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 │ plattform      │  │  Tabeller: agents, tasks,        │
 │ Skills         │  │  approvals, metrics, commands,   │
 │ Historik       │  │  activity_log, profiles,         │
-│                │  │  feedback, system_settings       │
+│                │  │  feedback, system_settings,      │
+│                │  │  scheduled_jobs, pending_triggers│
 └────────────────┘  └───────────────┬──────────────────┘
                                     │
                                     ▼
@@ -197,6 +207,8 @@ z.union([
 | REST API          | Express (intern, port 3001)          | Dashboard- och CLI-kommandon                                    |
 | CLI               | Commander + chalk + boxen            | Terminalverktyg (11 kommandon, Supabase Realtime)               |
 | Validering        | Zod                                  | Config-validering, API-inputvalidering                          |
+| Status Machine    | `src/engine/status-machine.ts`       | Tillåtna statusövergångar, validering                           |
+| Trigger Engine    | `src/engine/trigger-engine.ts`       | Deklarativ trigger-matching och exekvering                      |
 | Google Workspace  | gws CLI v0.4.4 via MCP               | Drive, Gmail, Calendar, Sheets, Docs                            |
 | Hosting           | GCP Compute Engine (europe-north1-b) | EU, GDPR                                                        |
 
@@ -323,6 +335,22 @@ sample_review_rate: 0.2
 
 writable: # Filer agenten får skriva till
   - memory/learnings.json
+
+triggers: # Deklarativa triggers (nytt i v0.5.1)
+  - name: example_trigger
+    on: task_completed # Event: task_completed | task_approved | task_activated | task_delivered
+    condition:
+      task_type: [blog_post]
+      output_field: "suggested_action"
+      output_value: "rapid_response"
+    action:
+      type: create_task # create_task | notify_slack | escalate
+      target_agent: content
+      task_type: rapid_response_article
+      priority: high
+      context_fields: [title, content_json.summary]
+    requires_approval: false
+    enabled: true
 ```
 
 ---
@@ -357,6 +385,32 @@ autonomy: semi-autonomous
 escalation_threshold: 1
 sample_review_rate: 1.0
 writable: [memory/campaign-history.json]
+
+triggers:
+  - name: brief_to_content
+    on: task_activated
+    condition: { task_type: [campaign_brief] }
+    action:
+      {
+        type: create_task,
+        target_agent: content,
+        task_type: campaign_content,
+        priority: normal,
+        context_fields: [title, content_json],
+      }
+    requires_approval: false
+  - name: brief_to_campaign
+    on: task_activated
+    condition: { task_type: [campaign_brief] }
+    action:
+      {
+        type: create_task,
+        target_agent: campaign,
+        task_type: campaign_setup,
+        priority: normal,
+        context_fields: [title, content_json],
+      }
+    requires_approval: true
 ```
 
 ### Agent 2: Content Agent
@@ -456,6 +510,20 @@ autonomy: autonomous
 escalation_threshold: 3
 sample_review_rate: 0.0
 writable: [memory/keyword-rankings.json, memory/opportunities.json]
+
+triggers:
+  - name: seo_recommendations_to_content
+    on: task_approved
+    condition: { task_type: [seo_audit], output_field: "has_content_recommendations", output_value: "true" }
+    action:
+      {
+        type: create_task,
+        target_agent: content,
+        task_type: seo_optimization,
+        priority: normal,
+        context_fields: [content_json.recommendations],
+      }
+    requires_approval: true
 ```
 
 ### Agent 5: Lead Agent
@@ -512,6 +580,13 @@ autonomy: autonomous
 escalation_threshold: 3
 sample_review_rate: 0.0
 writable: [memory/baseline-metrics.json]
+
+triggers:
+  - name: anomaly_escalation
+    on: task_completed
+    condition: { task_type: [anomaly_detection], score_field: "severity", score_above: 0.8 }
+    action: { type: escalate, channel: "#fia-orchestrator" }
+    requires_approval: false
 ```
 
 ### Agent 7: Brand Agent
@@ -580,6 +655,39 @@ self_eval:
     - "Är briefen koncis och handlingsorienterad?"
   threshold: 0.7
 writable: [memory/source-history.json, memory/scoring-calibration.json, memory/learnings.json]
+
+triggers:
+  - name: rapid_response_to_content
+    on: task_completed
+    condition:
+      { task_type: [morning_scan, midday_sweep], output_field: "suggested_action", output_value: "rapid_response" }
+    action:
+      {
+        type: create_task,
+        target_agent: content,
+        task_type: rapid_response_article,
+        priority: high,
+        context_fields: [title, content_json.summary, content_json.implications],
+      }
+    requires_approval: false
+  - name: strategy_input_to_strategy
+    on: task_completed
+    condition:
+      { task_type: [morning_scan, midday_sweep], output_field: "suggested_action", output_value: "strategy_input" }
+    action:
+      {
+        type: create_task,
+        target_agent: strategy,
+        task_type: strategic_input,
+        priority: normal,
+        context_fields: [title, content_json.summary, content_json.implications],
+      }
+    requires_approval: true
+  - name: escalate_critical
+    on: task_completed
+    condition: { task_type: [morning_scan, midday_sweep], output_field: "suggested_action", output_value: "escalate" }
+    action: { type: notify_slack, channel: "#fia-orchestrator" }
+    requires_approval: false
 ```
 
 **Multi-steg-pipeline:**
@@ -602,6 +710,132 @@ writable: [memory/source-history.json, memory/scoring-calibration.json, memory/l
 | Blogginlägg              | Autonom + Brand Agent                | 1 av 3    |
 | Nyhetsbrev               | Autonom + Brand Agent + Orchestrator | Alla      |
 | Kundcase / pressrelease  | Semi-autonom, Orchestrator godkänner | Alla      |
+
+---
+
+## Task Status & Trigger Engine
+
+### Designprinciper
+
+- **En enum, alla agenter.** Ingen agentspecifik status-kolumn. Alla statusar lever i `tasks.status`. Varje agent använder en delmängd.
+- **Bakåtkompatibel.** Alla befintliga statusar behålls. `published` fasas ut till förmån för `delivered` men behålls under en övergångsperiod.
+- **Statusar beskriver task-tillstånd, inte affärslogik.** `delivered` = "gateway har levererat output", inte "publicerad på LinkedIn".
+
+### Komplett status-enum
+
+| Status             | Beskrivning                                             | Ny?                      |
+| ------------------ | ------------------------------------------------------- | ------------------------ |
+| queued             | Väntar i task queue                                     | Befintlig                |
+| in_progress        | Agent arbetar                                           | Befintlig                |
+| completed          | Agent klar med exekvering, inväntar nästa steg          | Befintlig (omdefinierad) |
+| awaiting_review    | Väntar på granskning (Brand Agent / Orchestrator)       | Befintlig                |
+| approved           | Godkänd av granskare                                    | Befintlig                |
+| rejected           | Underkänd av granskare                                  | Befintlig                |
+| revision_requested | Tillbakaskickad för omarbetning                         | Ny                       |
+| delivered          | Slutlevererad — redo att ageras på av människa          | Ny (ersätter published)  |
+| activated          | Plan/brief aktiverad — styr downstream-beteende         | Ny                       |
+| triggered          | Har skapat downstream-task(s)                           | Ny                       |
+| acknowledged       | Människa har kvitterat (sett/noterat)                   | Ny                       |
+| live               | Kampanj eller sekvens körs aktivt                       | Ny                       |
+| paused_task        | Kampanj eller sekvens pausad (ej agent-pause)           | Ny                       |
+| ended              | Kampanj eller sekvens avslutad                          | Ny                       |
+| published          | Deprecated. Behålls i constraint, nya tasks → delivered | Befintlig                |
+| error              | Fel vid exekvering                                      | Befintlig                |
+
+### Tillåtna statusövergångar
+
+Gateway enforcear dessa övergångar i `status-machine.ts`. Ogiltiga övergångar loggas som varning.
+
+```
+queued → in_progress
+in_progress → completed | error
+completed → awaiting_review | delivered | triggered | acknowledged
+awaiting_review → approved | rejected | revision_requested
+approved → delivered | activated | live
+rejected → (terminal)
+revision_requested → in_progress
+delivered → acknowledged | triggered
+activated → triggered
+triggered → (terminal)
+acknowledged → (terminal)
+live → paused_task | ended | error
+paused_task → live | ended
+ended → (terminal)
+error → queued (vid manuell retry)
+```
+
+### Statusflöden per agent
+
+**Content Agent:** `queued → in_progress → completed → awaiting_review → approved → delivered`
+
+**Strategy Agent:** `queued → in_progress → completed → awaiting_review → approved → activated → triggered`
+
+**Campaign Agent:** `queued → in_progress → completed → awaiting_review → approved → live → paused_task → live → ended`
+
+**Intelligence Agent (briefing):** `queued → in_progress → completed → delivered → acknowledged`
+
+**Intelligence Agent (action):** `queued → in_progress → completed → triggered`
+
+**Analytics Agent (rapport):** `queued → in_progress → completed → delivered`
+
+**SEO Agent (audit):** `queued → in_progress → completed → delivered → acknowledged`
+
+**SEO Agent (rekommendation):** `queued → in_progress → completed → awaiting_review → approved → triggered`
+
+### Trigger Engine
+
+Deklarativ + konfigurerbar autonomi. Triggers definieras i `agent.yaml` (`triggers`-fält). Varje trigger har en `requires_approval`-flagg.
+
+**Trigger-events:**
+
+| Event            | Matchar status | Typisk användning                   |
+| ---------------- | -------------- | ----------------------------------- |
+| task_completed   | completed      | Intelligence → Content              |
+| task_approved    | approved       | SEO audit → Content                 |
+| task_activated   | activated      | Strategy brief → Campaign + Content |
+| task_delivered   | delivered      | Rapport → notifiering               |
+| anomaly_detected | completed      | Analytics anomali → eskalering      |
+
+**Condition-matching (AND-logik):**
+
+| Fält         | Typ            | Beskrivning                              |
+| ------------ | -------------- | ---------------------------------------- |
+| task_type    | string / array | Matchar task-typ (OR om array)           |
+| output_field | string         | Dot-notation-sökväg i content_json       |
+| output_value | string / array | Värde(n) att matcha (OR om array)        |
+| score_above  | number         | Numeriskt villkor (t.ex. severity > 0.8) |
+| score_field  | string         | Dot-notation till score-fält             |
+
+**Trigger-actions:**
+
+| type         | Beskrivning                                 |
+| ------------ | ------------------------------------------- |
+| create_task  | Skapar ny task i target_agent-kön           |
+| notify_slack | Skickar Slack-meddelande till angiven kanal |
+| escalate     | Skapar eskaleringspost i pending_triggers   |
+
+**Exekveringsflöde:**
+
+1. Task ändrar status (t.ex. → `completed`)
+2. `trigger-engine.ts` anropas efter statusändring
+3. Laddar triggers från källagentens `agent.yaml`
+4. Matchar event + condition
+5. `requires_approval == false` → skapar downstream-task direkt → källtask → `triggered`
+6. `requires_approval == true` → skapar rad i `pending_triggers` → Orchestrator godkänner/avslår i Dashboard
+
+**Loopskydd:** `MAX_TRIGGER_DEPTH = 3`. Depth spåras via `parent_task_id`-kedjan. Tasks med depth ≥ 3 triggar aldrig nya tasks.
+
+### Aktiva triggers (v0.5.1)
+
+| Agent        | Trigger                        | Event          | Auto? |
+| ------------ | ------------------------------ | -------------- | ----- |
+| Intelligence | rapid_response_to_content      | task_completed | Ja    |
+| Intelligence | strategy_input_to_strategy     | task_completed | Nej   |
+| Intelligence | escalate_critical              | task_completed | Ja    |
+| Strategy     | brief_to_content               | task_activated | Ja    |
+| Strategy     | brief_to_campaign              | task_activated | Nej   |
+| Analytics    | anomaly_escalation             | task_completed | Ja    |
+| SEO          | seo_recommendations_to_content | task_approved  | Nej   |
 
 ---
 
@@ -644,18 +878,24 @@ CREATE TABLE tasks (
   agent_id uuid NOT NULL REFERENCES agents(id),
   type text NOT NULL,
   title text NOT NULL,
-  status text NOT NULL DEFAULT 'queued',           -- queued | in_progress | awaiting_review | approved | rejected | published | error
+  status text NOT NULL DEFAULT 'queued',
+  -- queued | in_progress | completed | awaiting_review | approved | rejected | revision_requested
+  -- | delivered | activated | triggered | acknowledged | live | paused_task | ended
+  -- | published (deprecated) | error
   priority text NOT NULL DEFAULT 'normal',
   content_json jsonb,
   model_used text,
   tokens_used integer,
   cost_sek numeric,
+  source text,                                      -- gateway | dashboard | scheduler | trigger | cli
+  parent_task_id uuid REFERENCES tasks(id),         -- trigger engine: downstream-relation
+  trigger_source text,                               -- trigger-namn som skapade denna task
   created_at timestamptz NOT NULL DEFAULT now(),
   completed_at timestamptz
 );
 ```
 
-Notering: `error`-status tillagd i migration 003. Tasks med status `error` skapas vid LLM-fel eller vid startup-recovery av föräldralösa tasks.
+Notering: `parent_task_id` och `trigger_source` tillagda i migration 013 för trigger engine. Status-constraint utökad med 10 nya statusar.
 
 ### content_json – standardiserat schema (fas 2)
 
@@ -783,6 +1023,26 @@ CREATE TABLE system_settings (
 
 Används av Dashboard för kill switch-status (`key = 'kill_switch'`). RLS: alla autentiserade kan SELECT, orchestrator/admin kan UPDATE.
 
+### pending_triggers
+
+```sql
+CREATE TABLE pending_triggers (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  source_task_id uuid NOT NULL REFERENCES tasks(id),
+  trigger_name text NOT NULL,
+  target_agent_slug text NOT NULL,
+  target_task_type text NOT NULL,
+  priority text NOT NULL DEFAULT 'normal',
+  context_json jsonb DEFAULT '{}',
+  status text NOT NULL DEFAULT 'pending',  -- pending | approved | rejected | executed
+  decided_by uuid REFERENCES profiles(id),
+  decided_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+```
+
+Triggers med `requires_approval: true` skapar rader här. Orchestrator godkänner/avslår via Dashboard eller API. Vid godkännande skapas downstream-task och status → `executed`.
+
 ### scheduled_jobs
 
 ```sql
@@ -805,15 +1065,21 @@ Notering: Hanterar dashboard-baserad schemaläggning. Gateway har egen node-cron
 
 ### Migrationer
 
-| #   | Fil                                         | Beskrivning                                      |
-| --- | ------------------------------------------- | ------------------------------------------------ |
-| 001 | `001_initial_schema.sql`                    | Komplett schema med 6 tabeller + RLS             |
-| 002 | `002_remove_task_type_check.sql`            | Tog bort rigid type-enum (`agent.yaml` är källa) |
-| 003 | `003_add_error_status.sql`                  | Lade till `error` i task status-constraint       |
-| 004 | `004_add_source_and_metrics_constraint.sql` | `source`-fält på tasks, metrics-constraint       |
-| 005 | `005_fix_metrics_constraint.sql`            | Fixade metrics-constraint                        |
-| 006 | `006_add_update_task_status_fn.sql`         | RPC-funktion `update_task_status()`              |
-| 007 | `007_drop_cost_ledger_trigger.sql`          | Droppade `cost_ledger`-tabell och trigger        |
+| #   | Fil                                         | Beskrivning                                                                             |
+| --- | ------------------------------------------- | --------------------------------------------------------------------------------------- |
+| 001 | `001_initial_schema.sql`                    | Komplett schema med 6 tabeller + RLS                                                    |
+| 002 | `002_remove_task_type_check.sql`            | Tog bort rigid type-enum (`agent.yaml` är källa)                                        |
+| 003 | `003_add_error_status.sql`                  | Lade till `error` i task status-constraint                                              |
+| 004 | `004_add_source_and_metrics_constraint.sql` | `source`-fält på tasks, metrics-constraint                                              |
+| 005 | `005_fix_metrics_constraint.sql`            | Fixade metrics-constraint                                                               |
+| 006 | `006_add_update_task_status_fn.sql`         | RPC-funktion `update_task_status()`                                                     |
+| 007 | `007_drop_cost_ledger_trigger.sql`          | Droppade `cost_ledger`-tabell och trigger                                               |
+| 008 | `008_add_commands_table.sql`                | Dashboard → Gateway command queue + RLS                                                 |
+| 009 | `009_add_intelligence_agent.sql`            | Intelligence agent konfiguration                                                        |
+| 010 | `010_add_operator_role.sql`                 | `operator`-roll i profiles                                                              |
+| 011 | `011_backfill_agent_config_json.sql`        | Populerar `config_json` från manifestfiler                                              |
+| 012 | `012_nullable_commands_issued_by.sql`       | `commands.issued_by` nullable                                                           |
+| 013 | `013_extended_task_status_and_triggers.sql` | Utökad status-constraint, `parent_task_id`, `trigger_source`, `pending_triggers`-tabell |
 
 ### Row Level Security
 
@@ -851,13 +1117,22 @@ CREATE POLICY "insert_feedback" ON feedback FOR INSERT WITH CHECK (
   (SELECT role FROM profiles WHERE id = auth.uid()) IN ('orchestrator', 'admin')
 );
 
+-- pending_triggers
+CREATE POLICY "select_triggers" ON pending_triggers FOR SELECT USING (auth.uid() IS NOT NULL);
+CREATE POLICY "insert_triggers" ON pending_triggers FOR INSERT WITH CHECK (
+  (SELECT role FROM profiles WHERE id = auth.uid()) IN ('orchestrator', 'admin')
+);
+CREATE POLICY "update_triggers" ON pending_triggers FOR UPDATE USING (
+  (SELECT role FROM profiles WHERE id = auth.uid()) IN ('orchestrator', 'admin')
+);
+
 -- Commands UPDATE: Gateway via service role key
 ```
 
 ### Realtid-prenumerationer
 
 ```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE agents, tasks, activity_log, commands, system_settings, feedback;
+ALTER PUBLICATION supabase_realtime ADD TABLE agents, tasks, activity_log, commands, system_settings, feedback, pending_triggers;
 ```
 
 ---
@@ -911,6 +1186,18 @@ Statuskoder: 200, 201, 400, 401, 403, 404, 500.
 
 - `POST /api/kill-switch` – Orchestrator, Admin. Body: `{ "action": "activate" | "deactivate" }`. Skriver till `commands`.
 - `GET /api/kill-switch/status` – Alla inloggade.
+
+### Triggers (nytt i 0.5.1)
+
+- `GET /api/triggers/pending` – Orchestrator, Admin. Listar väntande triggers med källtask-info.
+- `POST /api/triggers/:id/approve` – Orchestrator, Admin. Godkänner och exekverar trigger (skapar downstream-task).
+- `POST /api/triggers/:id/reject` – Orchestrator, Admin. Avslår trigger. Body: `{ "reason": "..." }`.
+
+### Task-relationer och statusändring (nytt i 0.5.1)
+
+- `POST /api/tasks/:id/status` – Orchestrator, Admin. Body: `{ "status": "acknowledged" }`. Generellt endpoint för statusändringar. Validerar mot övergångstabellen.
+- `GET /api/tasks/:id/children` – Alla inloggade. Returnerar tasks med `parent_task_id = :id`.
+- `GET /api/tasks/:id/lineage` – Alla inloggade. Returnerar ancestors + children (max 5 nivåer).
 
 ### Feedback (fas 3)
 
@@ -987,7 +1274,8 @@ src/
 │   ├── TaskContent.tsx  # Task-rendering
 │   ├── FeedbackDialog.tsx   # Feedback-modal
 │   ├── RunTaskDialog.tsx    # Manuell task-trigger
-│   ├── TaskDetailSheet.tsx  # Task-detaljvy (sheet)
+│   ├── TaskDetailSheet.tsx  # Task-detaljvy (sheet, parent/children)
+│   ├── TaskStatusBadge.tsx # Task-status med ikoner/färger (17 statusar)
 │   ├── SystemHealthCard.tsx # Systemhälsa-kort
 │   ├── AgentPerformance.tsx # Agent-prestandagraf
 │   ├── ThemePicker.tsx      # Temväljare
@@ -999,6 +1287,7 @@ src/
 │   ├── AgentsListPage.tsx   # Alla agenter
 │   ├── AgentDetailPage.tsx  # Agentdetalj (/:slug)
 │   ├── ApprovalsPage.tsx    # Godkännandekö
+│   ├── TriggersPage.tsx     # Trigger-godkännandekö (nytt i 0.5.1)
 │   ├── CalendarPage.tsx     # Kalender + schemalagda jobb
 │   ├── ActivityPage.tsx     # Aktivitetslogg
 │   ├── SettingsPage.tsx     # Inställningar
@@ -1029,6 +1318,7 @@ src/
   ├── /agents            → AgentsListPage
   ├── /agents/:slug      → AgentDetailPage
   ├── /approvals         → ApprovalsPage
+  ├── /triggers          → TriggersPage
   ├── /calendar          → CalendarPage
   ├── /activity          → ActivityPage
   ├── /settings          → SettingsPage
@@ -1318,43 +1608,6 @@ Modiga, Hängivna, Lustfyllda
 
 ---
 
----
-
-## Kostnadsanalys
-
-### Löpande månadskostnad (full drift)
-
-| Post                         | Låg           | Hög           |
-| ---------------------------- | ------------- | ------------- |
-| Claude API (Opus + Sonnet)   | 3 000 kr      | 10 000 kr     |
-| Gemini API (Pro + Flash)     | 100 kr        | 500 kr        |
-| Nano Banana 2                | 200 kr        | 500 kr        |
-| Serper.dev                   | 200 kr        | 500 kr        |
-| GCP Compute Engine           | 150 kr        | 250 kr        |
-| Supabase                     | 0 kr          | 250 kr        |
-| Lovable                      | 0 kr          | 200 kr        |
-| Slack Pro                    | 800 kr        | 800 kr        |
-| **Drift totalt**             | **4 350 kr**  | **12 500 kr** |
-| Marketing Orchestrator (25%) | 20 000 kr     | 35 000 kr     |
-| **Totalt med personal**      | **24 350 kr** | **47 500 kr** |
-
-Jämförelse: traditionell marknadsavdelning 120 000–200 000 kr/mån. FIA ger 60–75% besparing.
-
-### Engångsinvestering
-
-| Post               | Kostnad                |
-| ------------------ | ---------------------- |
-| Gateway-utveckling | 40 000–80 000 kr       |
-| Dashboard (PWA)    | 15 000–30 000 kr       |
-| GCP-setup          | 5 000–10 000 kr        |
-| MCP-wrappers       | 10 000–20 000 kr       |
-| gws-integration    | 5 000–10 000 kr        |
-| Prompt engineering | 30 000–50 000 kr       |
-| Test och QA        | 10 000–20 000 kr       |
-| **Totalt**         | **115 000–220 000 kr** |
-
----
-
 ## Content Staging (fas 2)
 
 ### Princip
@@ -1451,6 +1704,16 @@ Deploy 0.2 (2026-03-15). Gateway + Dashboard MVP live. 4 arbetsdagar, en person 
 - POST /api/tasks endpoint, kommaseparerade status-filter
 - Teknisk skuld B1–B12 åtgärdad, gws MCP kopplad, CI/CD + ESLint + Prettier
 
+### Deploy 0.5.1 (2026-03-23): Task Status & Trigger Engine
+
+- Utökad statusmodell: 17 statusar (10 nya) med statusmaskin och övergångsvalidering
+- Deklarativ trigger engine: 7 triggers i 4 agenter (Intelligence, Strategy, Analytics, SEO)
+- pending_triggers-tabell med godkännandekö i Dashboard
+- Task-relationer: parent_task_id, children, lineage
+- Dashboard: TaskStatusBadge, TriggersPage, task-relationer i TaskDetailSheet
+- API: trigger CRUD, task status/children/lineage endpoints
+- Migration 013
+
 ### Nästa steg – Fas 1 avslut
 
 | #   | Uppgift                 | Beskrivning                                                                                                                                                                          | Prioritet |
@@ -1486,39 +1749,6 @@ Deploy 0.2 (2026-03-15). Gateway + Dashboard MVP live. 4 arbetsdagar, en person 
 - Dokumentation, SLA:er, backup-Orchestrator, kundcase
 
 ---
-
-## Team
-
-### Uppbyggnad (fas 0–2)
-
-| Roll                     | Omfattning          |
-| ------------------------ | ------------------- |
-| FIA-arkitekt / Tech Lead | 80–100% i ~3 veckor |
-| Marketing Orchestrator   | 25% i ~3 veckor     |
-
-### Drift (fas 3+)
-
-| Roll                   | Tid/vecka |
-| ---------------------- | --------- |
-| Marketing Orchestrator | 8–10 tim  |
-| Tekniskt underhåll     | 2–4 tim   |
-
----
-
-## Licenser
-
-| Tjänst                        | Kostnad/mån       | Fas |
-| ----------------------------- | ----------------- | --- |
-| Anthropic Claude API          | ~300–1 000 kr     | 1   |
-| Google AI Studio API (Gemini) | ~100–500 kr       | 1   |
-| Serper.dev                    | ~100–200 kr       | 1   |
-| GCP Compute Engine            | ~150–250 kr       | 1   |
-| Slack Pro                     | ~80 kr/användare  | 1   |
-| Supabase                      | 0–250 kr          | 1   |
-| Lovable                       | 0–200 kr          | 1   |
-| gws CLI                       | 0 kr (Apache-2.0) | 1   |
-| HubSpot                       | 0–800 kr          | 2   |
-| Buffer                        | ~600 kr           | 2   |
 
 ---
 
