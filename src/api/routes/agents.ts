@@ -6,6 +6,10 @@ import { validateBody } from "../middleware/validate";
 import { logActivity } from "../../supabase/activity-writer";
 import { KillSwitch } from "../../utils/kill-switch";
 import { resolveDisplayStatus } from "../../shared/display-status";
+import { triggersPatchSchema, reseedSchema, TriggerPatchItem } from "../schemas/trigger-config";
+import { TriggerConfig } from "../../engine/trigger-types";
+import { loadAgentManifest } from "../../agents/agent-loader";
+import { AppConfig } from "../../utils/config";
 
 const modelAliasEnum = z.enum([
   "claude-opus",
@@ -33,7 +37,7 @@ const toolsSchema = z.object({
   tools: z.array(z.string().min(1).max(100)),
 });
 
-export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch): Router {
+export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch, config?: AppConfig): Router {
   const router = Router();
 
   // GET /api/agents – all authenticated users
@@ -226,6 +230,272 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch): R
       });
 
       res.json({ data: { slug, tools } });
+    } catch (err) {
+      res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+    }
+  });
+
+  // GET /api/agents/:slug/triggers – all authenticated users
+  router.get("/:slug/triggers", async (req, res) => {
+    try {
+      const { slug } = req.params;
+
+      const { data: agent, error } = await supabase
+        .from("agents")
+        .select("config_json")
+        .eq("slug", slug)
+        .single();
+
+      if (error || !agent) {
+        res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
+        return;
+      }
+
+      const configJson = agent.config_json as Record<string, unknown> | null;
+      const triggers = (configJson?.triggers as TriggerConfig[]) ?? [];
+
+      res.json({ agent_slug: slug, triggers });
+    } catch (err) {
+      res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+    }
+  });
+
+  // PATCH /api/agents/:slug/triggers – orchestrator, admin
+  router.patch("/:slug/triggers", requireRole("orchestrator", "admin"), validateBody(triggersPatchSchema), async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const { triggers: patches } = req.body as { triggers: TriggerPatchItem[] };
+
+      const { data: agent, error: fetchErr } = await supabase
+        .from("agents")
+        .select("id, config_json")
+        .eq("slug", slug)
+        .single();
+
+      if (fetchErr || !agent) {
+        res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
+        return;
+      }
+
+      const current = (agent.config_json as Record<string, unknown>) ?? {};
+      const existingTriggers = (current.triggers as TriggerConfig[]) ?? [];
+
+      // Validate all patch names exist
+      const existingNames = new Set(existingTriggers.map((t) => t.name));
+      const notFound = patches.filter((p) => !existingNames.has(p.name));
+      if (notFound.length > 0) {
+        res.status(404).json({
+          error: {
+            code: "NOT_FOUND",
+            message: `Trigger(s) not found: ${notFound.map((p) => p.name).join(", ")}`,
+          },
+        });
+        return;
+      }
+
+      // Validate target_agent references
+      const validationErrors: Array<{ trigger: string; field: string; issue: string }> = [];
+      for (const patch of patches) {
+        if (patch.action?.target_agent) {
+          const { data: targetAgent } = await supabase
+            .from("agents")
+            .select("id")
+            .eq("slug", patch.action.target_agent)
+            .single();
+
+          if (!targetAgent) {
+            validationErrors.push({
+              trigger: patch.name,
+              field: "action.target_agent",
+              issue: `Agenten '${patch.action.target_agent}' finns inte.`,
+            });
+          }
+        }
+      }
+
+      if (validationErrors.length > 0) {
+        res.status(400).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: validationErrors.map((e) => `Trigger '${e.trigger}': ${e.issue}`).join(" "),
+            details: validationErrors,
+          },
+        });
+        return;
+      }
+
+      // Build change log and merge
+      const changes: Record<string, Record<string, { from: unknown; to: unknown }>> = {};
+      const updatedNames: string[] = [];
+
+      const updatedTriggers = existingTriggers.map((trigger) => {
+        const patch = patches.find((p) => p.name === trigger.name);
+        if (!patch) return trigger;
+
+        const triggerChanges: Record<string, { from: unknown; to: unknown }> = {};
+        const merged = { ...trigger };
+
+        // Merge top-level fields
+        if (patch.enabled !== undefined && patch.enabled !== trigger.enabled) {
+          triggerChanges.enabled = { from: trigger.enabled, to: patch.enabled };
+          merged.enabled = patch.enabled;
+        }
+        if (patch.requires_approval !== undefined && patch.requires_approval !== trigger.requires_approval) {
+          triggerChanges.requires_approval = { from: trigger.requires_approval, to: patch.requires_approval };
+          merged.requires_approval = patch.requires_approval;
+        }
+
+        // Merge condition
+        if (patch.condition) {
+          merged.condition = { ...trigger.condition, ...patch.condition };
+          for (const [key, value] of Object.entries(patch.condition)) {
+            const oldVal = trigger.condition?.[key as keyof typeof trigger.condition];
+            if (JSON.stringify(oldVal) !== JSON.stringify(value)) {
+              triggerChanges[`condition.${key}`] = { from: oldVal, to: value };
+            }
+          }
+        }
+
+        // Merge action (preserve type — immutable)
+        if (patch.action) {
+          merged.action = { ...trigger.action, ...patch.action, type: trigger.action.type };
+          for (const [key, value] of Object.entries(patch.action)) {
+            if (key === "type") continue;
+            const oldVal = trigger.action?.[key as keyof typeof trigger.action];
+            if (JSON.stringify(oldVal) !== JSON.stringify(value)) {
+              triggerChanges[`action.${key}`] = { from: oldVal, to: value };
+            }
+          }
+        }
+
+        if (Object.keys(triggerChanges).length > 0) {
+          changes[trigger.name] = triggerChanges;
+          updatedNames.push(trigger.name);
+        }
+
+        return merged;
+      });
+
+      // Write to Supabase
+      const adminOverrides = new Set((current._admin_overrides as string[]) ?? []);
+      adminOverrides.add("triggers");
+      const merged = { ...current, triggers: updatedTriggers, _admin_overrides: [...adminOverrides] };
+
+      const { error } = await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
+      if (error) throw error;
+
+      // Activity log
+      await logActivity(supabase, {
+        agent_id: agent.id,
+        user_id: getDbUserId(req),
+        action: "trigger_config_updated",
+        details_json: { updated_triggers: updatedNames, changes },
+      });
+
+      res.json({ agent_slug: slug, updated: updatedNames, triggers: updatedTriggers });
+    } catch (err) {
+      res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+    }
+  });
+
+  // POST /api/agents/:slug/triggers/reseed – admin only
+  router.post("/:slug/triggers/reseed", requireRole("admin"), validateBody(reseedSchema), async (req, res) => {
+    try {
+      const slug = req.params.slug as string;
+      const confirm = req.body?.confirm === true;
+
+      const { data: agent, error: fetchErr } = await supabase
+        .from("agents")
+        .select("id, config_json")
+        .eq("slug", slug)
+        .single();
+
+      if (fetchErr || !agent) {
+        res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
+        return;
+      }
+
+      const current = (agent.config_json as Record<string, unknown>) ?? {};
+      const currentTriggers = (current.triggers as TriggerConfig[]) ?? [];
+
+      // Load YAML triggers
+      let yamlTriggers: TriggerConfig[] = [];
+      if (config) {
+        try {
+          const manifest = loadAgentManifest(config.knowledgeDir, slug);
+          yamlTriggers = manifest.triggers ?? [];
+        } catch {
+          // No manifest or invalid
+        }
+      }
+
+      // Compute diff
+      const changes: Array<{ trigger: string; diff: string }> = [];
+      for (const yt of yamlTriggers) {
+        const ct = currentTriggers.find((t) => t.name === yt.name);
+        if (!ct) {
+          changes.push({ trigger: yt.name, diff: "Ny i YAML (läggs till)" });
+        } else if (JSON.stringify(ct) !== JSON.stringify(yt)) {
+          const diffs: string[] = [];
+          if (ct.enabled !== yt.enabled) diffs.push(`enabled: ${ct.enabled} → ${yt.enabled}`);
+          if (ct.requires_approval !== yt.requires_approval) diffs.push(`requires_approval: ${ct.requires_approval} → ${yt.requires_approval}`);
+          if (JSON.stringify(ct.condition) !== JSON.stringify(yt.condition)) diffs.push("condition changed");
+          if (JSON.stringify(ct.action) !== JSON.stringify(yt.action)) diffs.push("action changed");
+          changes.push({ trigger: yt.name, diff: diffs.join(", ") || "minor changes" });
+        }
+      }
+      for (const ct of currentTriggers) {
+        if (!yamlTriggers.find((yt) => yt.name === ct.name)) {
+          changes.push({ trigger: ct.name, diff: "Finns bara i dashboard (tas bort)" });
+        }
+      }
+
+      if (!confirm) {
+        res.json({
+          dry_run: true,
+          agents: [
+            {
+              slug,
+              current_trigger_count: currentTriggers.length,
+              yaml_trigger_count: yamlTriggers.length,
+              changes,
+            },
+          ],
+        });
+        return;
+      }
+
+      // Perform reseed
+      const previousTriggers = currentTriggers;
+      const adminOverrides = new Set((current._admin_overrides as string[]) ?? []);
+      adminOverrides.delete("triggers");
+      const merged = {
+        ...current,
+        triggers: yamlTriggers,
+        _yaml_triggers: yamlTriggers,
+        _admin_overrides: [...adminOverrides],
+      };
+
+      const { error } = await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
+      if (error) throw error;
+
+      await logActivity(supabase, {
+        agent_id: agent.id,
+        user_id: getDbUserId(req),
+        action: "trigger_config_reseeded",
+        details_json: {
+          scope: "single",
+          agents_reseeded: [slug],
+          previous_triggers: previousTriggers,
+        },
+      });
+
+      res.json({
+        dry_run: false,
+        reseeded: [slug],
+        unchanged: [],
+        message: `Agent '${slug}' reseedad från agent.yaml.`,
+      });
     } catch (err) {
       res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
     }

@@ -4,6 +4,10 @@ import { KillSwitch } from "../utils/kill-switch";
 import type { DynamicScheduler } from "../gateway/scheduler";
 import { updateTaskStatus, createApproval, createTask } from "./task-writer";
 import { logActivity } from "./activity-writer";
+import { loadAgentManifest } from "../agents/agent-loader";
+import { getAllAgentSlugs } from "../agents/agent-factory";
+import { TriggerConfig } from "../engine/trigger-types";
+import { AppConfig } from "../utils/config";
 
 interface Command {
   id: string;
@@ -24,6 +28,7 @@ export function startCommandListener(
   logger: Logger,
   killSwitch: KillSwitch,
   scheduler?: DynamicScheduler,
+  appConfig?: AppConfig,
 ): void {
   supabase
     .channel("commands")
@@ -167,6 +172,67 @@ export function startCommandListener(
                 details_json: { source: "dashboard", ...p },
               });
             }
+            break;
+          }
+
+          case "reseed_triggers": {
+            if (!appConfig) {
+              logger.warn("reseed_triggers: appConfig not available", { action: "reseed_triggers_error" });
+              break;
+            }
+
+            const targetSlug = cmd.target_slug ?? (p.slug as string | undefined);
+            const slugsToReseed = targetSlug ? [targetSlug] : getAllAgentSlugs();
+            const reseeded: string[] = [];
+
+            for (const slug of slugsToReseed) {
+              const { data: agentRow } = await supabase
+                .from("agents")
+                .select("id, config_json")
+                .eq("slug", slug)
+                .single();
+
+              if (!agentRow) continue;
+
+              let yamlTriggers: TriggerConfig[] = [];
+              try {
+                const manifest = loadAgentManifest(appConfig.knowledgeDir, slug);
+                yamlTriggers = manifest.triggers ?? [];
+              } catch {
+                continue;
+              }
+
+              const currentCfg = (agentRow.config_json as Record<string, unknown>) ?? {};
+              const currentTriggers = (currentCfg.triggers as TriggerConfig[]) ?? [];
+
+              if (JSON.stringify(currentTriggers) === JSON.stringify(yamlTriggers)) continue;
+
+              const adminOverrides = new Set((currentCfg._admin_overrides as string[]) ?? []);
+              adminOverrides.delete("triggers");
+              const merged = {
+                ...currentCfg,
+                triggers: yamlTriggers,
+                _yaml_triggers: yamlTriggers,
+                _admin_overrides: [...adminOverrides],
+              };
+
+              await supabase.from("agents").update({ config_json: merged }).eq("id", agentRow.id);
+              reseeded.push(slug);
+            }
+
+            await logActivity(supabase, {
+              user_id: cmd.issued_by,
+              action: "trigger_config_reseeded",
+              details_json: {
+                scope: targetSlug ? "single" : "all",
+                agents_reseeded: reseeded,
+                source: "dashboard",
+              },
+            });
+
+            logger.info(`Triggers reseeded: ${reseeded.join(", ") || "none"}`, {
+              action: "reseed_triggers_complete",
+            });
             break;
           }
 

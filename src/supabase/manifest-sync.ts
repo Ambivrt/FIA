@@ -3,6 +3,7 @@ import { AppConfig } from "../utils/config";
 import { Logger } from "../gateway/logger";
 import { getAllAgentSlugs } from "../agents/agent-factory";
 import { loadAgentManifest, AgentManifest } from "../agents/agent-loader";
+import { TriggerConfig } from "../engine/trigger-types";
 
 export interface AgentConfigJson {
   routing: Record<string, string | { primary: string; fallback?: string }>;
@@ -16,6 +17,8 @@ export interface AgentConfigJson {
   has_veto?: boolean;
   budget_limit_sek?: number;
   score_threshold_mql?: number;
+  triggers?: TriggerConfig[];
+  _yaml_triggers?: TriggerConfig[];
   _manifest_version: string;
   _admin_overrides?: string[];
 }
@@ -41,6 +44,10 @@ export function extractConfigJson(manifest: AgentManifest): AgentConfigJson {
   if (manifest.budget_limit_sek != null) config.budget_limit_sek = manifest.budget_limit_sek;
   if (manifest.score_threshold_mql != null) config.score_threshold_mql = manifest.score_threshold_mql;
 
+  const yamlTriggers = manifest.triggers ?? [];
+  config.triggers = yamlTriggers;
+  config._yaml_triggers = yamlTriggers;
+
   return config;
 }
 
@@ -60,6 +67,9 @@ export function mergeConfigJson(
       merged[key] = existing[key];
     }
   }
+
+  // Always overwrite _yaml_triggers with latest YAML (for dashboard diff)
+  merged._yaml_triggers = manifestConfig._yaml_triggers;
 
   // Preserve the admin overrides list
   if (adminOverrides.length > 0) {

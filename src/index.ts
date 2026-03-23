@@ -114,7 +114,7 @@ async function main(): Promise<void> {
 
   // --- Realtime Listeners (Supabase) ---
   if (supabase) {
-    startCommandListener(supabase, logger, killSwitch, scheduler);
+    startCommandListener(supabase, logger, killSwitch, scheduler, config);
     startTaskListener(supabase, config, logger, killSwitch, taskQueue);
   }
 

@@ -5,12 +5,17 @@ import { requireRole, getDbUserId } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { logActivity } from "../../supabase/activity-writer";
 import { createTask } from "../../supabase/task-writer";
+import { reseedSchema } from "../schemas/trigger-config";
+import { TriggerConfig } from "../../engine/trigger-types";
+import { loadAgentManifest } from "../../agents/agent-loader";
+import { getAllAgentSlugs } from "../../agents/agent-factory";
+import { AppConfig } from "../../utils/config";
 
 const rejectSchema = z.object({
   reason: z.string().min(1, "Reason is required."),
 });
 
-export function triggerRoutes(supabase: SupabaseClient): Router {
+export function triggerRoutes(supabase: SupabaseClient, config?: AppConfig): Router {
   const router = Router();
 
   // GET /api/triggers/pending
@@ -142,6 +147,139 @@ export function triggerRoutes(supabase: SupabaseClient): Router {
       });
 
       res.json({ data: { id: triggerId, status: "rejected" } });
+    } catch (err) {
+      res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+    }
+  });
+
+  // POST /api/triggers/reseed – admin only (all agents)
+  router.post("/reseed", requireRole("admin"), validateBody(reseedSchema), async (req, res) => {
+    try {
+      const confirm = req.body?.confirm === true;
+
+      if (!config) {
+        res.status(500).json({ error: { code: "CONFIG_MISSING", message: "Gateway config not available for YAML loading." } });
+        return;
+      }
+
+      const slugs = getAllAgentSlugs();
+      const agentDiffs: Array<{
+        slug: string;
+        current_trigger_count: number;
+        yaml_trigger_count: number;
+        changes: Array<{ trigger: string; diff: string }>;
+      }> = [];
+
+      for (const slug of slugs) {
+        const { data: agent } = await supabase
+          .from("agents")
+          .select("id, config_json")
+          .eq("slug", slug)
+          .single();
+
+        if (!agent) continue;
+
+        const current = (agent.config_json as Record<string, unknown>) ?? {};
+        const currentTriggers = (current.triggers as TriggerConfig[]) ?? [];
+
+        let yamlTriggers: TriggerConfig[] = [];
+        try {
+          const manifest = loadAgentManifest(config.knowledgeDir, slug);
+          yamlTriggers = manifest.triggers ?? [];
+        } catch {
+          // No manifest
+        }
+
+        const changes: Array<{ trigger: string; diff: string }> = [];
+        for (const yt of yamlTriggers) {
+          const ct = currentTriggers.find((t) => t.name === yt.name);
+          if (!ct) {
+            changes.push({ trigger: yt.name, diff: "Ny i YAML" });
+          } else if (JSON.stringify(ct) !== JSON.stringify(yt)) {
+            const diffs: string[] = [];
+            if (ct.enabled !== yt.enabled) diffs.push(`enabled: ${ct.enabled} → ${yt.enabled}`);
+            if (ct.requires_approval !== yt.requires_approval) diffs.push(`requires_approval: ${ct.requires_approval} → ${yt.requires_approval}`);
+            if (JSON.stringify(ct.condition) !== JSON.stringify(yt.condition)) diffs.push("condition changed");
+            if (JSON.stringify(ct.action) !== JSON.stringify(yt.action)) diffs.push("action changed");
+            changes.push({ trigger: yt.name, diff: diffs.join(", ") || "minor changes" });
+          }
+        }
+        for (const ct of currentTriggers) {
+          if (!yamlTriggers.find((yt) => yt.name === ct.name)) {
+            changes.push({ trigger: ct.name, diff: "Finns bara i dashboard" });
+          }
+        }
+
+        agentDiffs.push({
+          slug,
+          current_trigger_count: currentTriggers.length,
+          yaml_trigger_count: yamlTriggers.length,
+          changes,
+        });
+      }
+
+      if (!confirm) {
+        res.json({ dry_run: true, agents: agentDiffs });
+        return;
+      }
+
+      // Perform reseed for all agents
+      const reseeded: string[] = [];
+      const unchanged: string[] = [];
+
+      for (const slug of slugs) {
+        const { data: agent } = await supabase
+          .from("agents")
+          .select("id, config_json")
+          .eq("slug", slug)
+          .single();
+
+        if (!agent) continue;
+
+        let yamlTriggers: TriggerConfig[] = [];
+        try {
+          const manifest = loadAgentManifest(config.knowledgeDir, slug);
+          yamlTriggers = manifest.triggers ?? [];
+        } catch {
+          continue;
+        }
+
+        const current = (agent.config_json as Record<string, unknown>) ?? {};
+        const currentTriggers = (current.triggers as TriggerConfig[]) ?? [];
+
+        if (JSON.stringify(currentTriggers) === JSON.stringify(yamlTriggers)) {
+          unchanged.push(slug);
+          continue;
+        }
+
+        const adminOverrides = new Set((current._admin_overrides as string[]) ?? []);
+        adminOverrides.delete("triggers");
+        const merged = {
+          ...current,
+          triggers: yamlTriggers,
+          _yaml_triggers: yamlTriggers,
+          _admin_overrides: [...adminOverrides],
+        };
+
+        await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
+        reseeded.push(slug);
+      }
+
+      await logActivity(supabase, {
+        user_id: getDbUserId(req),
+        action: "trigger_config_reseeded",
+        details_json: {
+          scope: "all",
+          agents_reseeded: reseeded,
+        },
+      });
+
+      res.json({
+        dry_run: false,
+        reseeded,
+        unchanged,
+        message: `${reseeded.length} agenter reseedade från agent.yaml.`,
+      });
     } catch (err) {
       res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
     }

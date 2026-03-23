@@ -49,12 +49,12 @@ export function createApiServer(
   // All other routes require auth
   app.use("/api", requireAuth(supabase));
 
-  app.use("/api/agents", agentRoutes(supabase, killSwitch));
+  app.use("/api/agents", agentRoutes(supabase, killSwitch, config));
   app.use("/api/tasks", taskRoutes(supabase));
   app.use("/api/metrics", metricRoutes(supabase));
   app.use("/api/activity", activityRoutes(supabase));
   app.use("/api/kill-switch", killSwitchRoutes(killSwitch, supabase));
-  app.use("/api/triggers", triggerRoutes(supabase));
+  app.use("/api/triggers", triggerRoutes(supabase, config));
 
   // Global error handler
   app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
