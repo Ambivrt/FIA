@@ -160,10 +160,7 @@ export class DynamicScheduler {
     });
 
     // Update last_triggered_at
-    await this.supabase
-      .from("scheduled_jobs")
-      .update({ last_triggered_at: new Date().toISOString() })
-      .eq("id", job.id);
+    await this.supabase.from("scheduled_jobs").update({ last_triggered_at: new Date().toISOString() }).eq("id", job.id);
 
     // Build progress callback for Slack + activity_log
     const slackApp = getSlackApp();

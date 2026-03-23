@@ -95,7 +95,8 @@ export function registerCommands(
 
         statusText += `\n\n*Subsystem:*`;
         const jobCount = supabase
-          ? ((await supabase.from("scheduled_jobs").select("id", { count: "exact", head: true }).eq("enabled", true)).count ?? 0)
+          ? ((await supabase.from("scheduled_jobs").select("id", { count: "exact", head: true }).eq("enabled", true))
+              .count ?? 0)
           : 0;
         statusText += `\n:calendar_spiral: Scheduler: *${jobCount}* cron-jobb aktiva`;
         statusText += supabase
@@ -393,7 +394,11 @@ export function registerCommands(
             .select("cron_expression, title, enabled, agents!inner(slug)")
             .eq("enabled", true)
             .order("created_at");
-          for (const j of (dbJobs ?? []) as unknown as { cron_expression: string; title: string; agents: { slug: string } }[]) {
+          for (const j of (dbJobs ?? []) as unknown as {
+            cron_expression: string;
+            title: string;
+            agents: { slug: string };
+          }[]) {
             helpLines.push(`  \`${j.cron_expression}\` – *${j.agents.slug}*: ${j.title}`);
           }
         } else {
