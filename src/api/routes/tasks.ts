@@ -5,6 +5,7 @@ import { requireRole, getDbUserId } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { updateTaskStatus, createApproval } from "../../supabase/task-writer";
 import { logActivity } from "../../supabase/activity-writer";
+import { isValidTransition } from "../../engine/status-machine";
 
 const approveSchema = z.object({
   feedback: z.string().optional(),
@@ -265,6 +266,106 @@ export function taskRoutes(supabase: SupabaseClient): Router {
       }
     },
   );
+
+  // POST /api/tasks/:id/status — General status change endpoint
+  const statusChangeSchema = z.object({
+    status: z.string().min(1, "status is required."),
+  });
+
+  router.post(
+    "/:id/status",
+    requireRole("orchestrator", "admin"),
+    validateBody(statusChangeSchema),
+    async (req, res) => {
+      try {
+        const taskId = req.params.id as string;
+        const newStatus = req.body.status as string;
+
+        // Fetch current task
+        const { data: task, error: fetchErr } = await supabase.from("tasks").select("status").eq("id", taskId).single();
+
+        if (fetchErr || !task) {
+          res.status(404).json({ error: { code: "NOT_FOUND", message: "Task not found." } });
+          return;
+        }
+
+        if (!isValidTransition(task.status as string, newStatus)) {
+          res.status(400).json({
+            error: {
+              code: "INVALID_TRANSITION",
+              message: `Cannot transition from '${task.status}' to '${newStatus}'.`,
+            },
+          });
+          return;
+        }
+
+        await updateTaskStatus(supabase, taskId, newStatus, { currentStatus: task.status as string });
+
+        await logActivity(supabase, {
+          user_id: getDbUserId(req),
+          action: "task_status_changed",
+          details_json: { task_id: taskId, from: task.status, to: newStatus },
+        });
+
+        res.json({ data: { id: taskId, status: newStatus } });
+      } catch (err) {
+        res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+      }
+    },
+  );
+
+  // GET /api/tasks/:id/children
+  router.get("/:id/children", async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*, agents(slug, name)")
+        .eq("parent_task_id", req.params.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      res.json({ data: data ?? [] });
+    } catch (err) {
+      res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+    }
+  });
+
+  // GET /api/tasks/:id/lineage
+  router.get("/:id/lineage", async (req, res) => {
+    try {
+      const taskId = req.params.id;
+      const MAX_DEPTH = 5;
+
+      // Walk up to find root parent
+      const ancestors: Record<string, unknown>[] = [];
+      let currentId: string | null = taskId;
+      let depth = 0;
+
+      while (currentId && depth < MAX_DEPTH) {
+        const { data: task } = await supabase
+          .from("tasks")
+          .select("id, title, type, status, parent_task_id, trigger_source, agents(slug, name)")
+          .eq("id", currentId)
+          .single();
+
+        if (!task) break;
+        if (currentId !== taskId) ancestors.unshift(task);
+        currentId = (task as Record<string, unknown>).parent_task_id as string | null;
+        depth++;
+      }
+
+      // Get direct children
+      const { data: children } = await supabase
+        .from("tasks")
+        .select("id, title, type, status, trigger_source, agents(slug, name)")
+        .eq("parent_task_id", taskId)
+        .order("created_at", { ascending: false });
+
+      res.json({ data: { ancestors, children: children ?? [] } });
+    } catch (err) {
+      res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+    }
+  });
 
   return router;
 }

@@ -1,4 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+import { isValidTransition, shouldSetCompletedAt } from "../engine/status-machine";
 
 export interface TaskInput {
   agent_id: string;
@@ -11,6 +12,8 @@ export interface TaskInput {
   tokens_used?: number;
   cost_sek?: number;
   source?: string;
+  parent_task_id?: string;
+  trigger_source?: string;
 }
 
 export interface ApprovalInput {
@@ -34,7 +37,15 @@ export async function updateTaskStatus(
   status: string,
   extras?: Record<string, unknown>,
 ): Promise<void> {
-  const completedAt = status === "published" || status === "approved" ? new Date().toISOString() : undefined;
+  // Validate transition if current status is provided
+  if (extras?.currentStatus != null) {
+    const from = extras.currentStatus as string;
+    if (!isValidTransition(from, status)) {
+      console.warn(`[task-writer] Invalid status transition: ${from} → ${status} for task ${taskId}`);
+    }
+  }
+
+  const completedAt = shouldSetCompletedAt(status) ? new Date().toISOString() : undefined;
 
   const updatePayload: Record<string, unknown> = { status };
 

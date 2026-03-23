@@ -11,6 +11,7 @@ import { taskRoutes } from "./routes/tasks";
 import { metricRoutes } from "./routes/metrics";
 import { activityRoutes } from "./routes/activity";
 import { killSwitchRoutes } from "./routes/kill-switch";
+import { triggerRoutes } from "./routes/triggers";
 
 export function createApiServer(
   config: AppConfig,
@@ -53,6 +54,7 @@ export function createApiServer(
   app.use("/api/metrics", metricRoutes(supabase));
   app.use("/api/activity", activityRoutes(supabase));
   app.use("/api/kill-switch", killSwitchRoutes(killSwitch, supabase));
+  app.use("/api/triggers", triggerRoutes(supabase));
 
   // Global error handler
   app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
