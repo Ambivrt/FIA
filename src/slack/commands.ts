@@ -326,6 +326,300 @@ export function registerCommands(
         break;
       }
 
+      case "triggers": {
+        const subCmd = args[1]?.toLowerCase();
+
+        // /fia triggers approve <id>
+        if (subCmd === "approve") {
+          const triggerId = args[2];
+          if (!triggerId) {
+            await respond({ response_type: "ephemeral", text: "Usage: `/fia triggers approve <trigger-id>`" });
+            return;
+          }
+          if (!supabase) {
+            await respond({ response_type: "ephemeral", text: ":x: Supabase krävs." });
+            return;
+          }
+          try {
+            const { data: trigger, error: fetchErr } = await supabase
+              .from("pending_triggers")
+              .select("*, agents!target_agent_slug(id)")
+              .eq("id", triggerId)
+              .eq("status", "pending")
+              .single();
+
+            if (fetchErr || !trigger) {
+              await respond({ response_type: "ephemeral", text: `:x: Pending trigger \`${triggerId}\` not found.` });
+              return;
+            }
+
+            // Resolve target agent ID
+            const { data: targetAgent } = await supabase
+              .from("agents")
+              .select("id")
+              .eq("slug", trigger.target_agent_slug)
+              .single();
+
+            if (!targetAgent) {
+              await respond({
+                response_type: "ephemeral",
+                text: `:x: Target agent '${trigger.target_agent_slug}' not found.`,
+              });
+              return;
+            }
+
+            // Import createTask inline to avoid circular deps
+            const { createTask } = await import("../supabase/task-writer");
+            const newTaskId = await createTask(supabase, {
+              agent_id: targetAgent.id,
+              type: trigger.target_task_type,
+              title: `${trigger.target_task_type} (trigger: ${trigger.trigger_name})`,
+              priority: trigger.priority,
+              status: "queued",
+              content_json: trigger.context_json ?? {},
+              source: "trigger",
+              parent_task_id: trigger.source_task_id,
+              trigger_source: trigger.trigger_name,
+            });
+
+            await supabase
+              .from("pending_triggers")
+              .update({ status: "executed", decided_at: new Date().toISOString() })
+              .eq("id", triggerId);
+
+            await supabase.from("tasks").update({ status: "triggered" }).eq("id", trigger.source_task_id);
+
+            await logActivity(supabase, {
+              action: "trigger_approved",
+              details_json: { trigger_id: triggerId, trigger_name: trigger.trigger_name, source: "slack", new_task_id: newTaskId },
+            });
+
+            await respond({
+              response_type: "in_channel",
+              text: `:white_check_mark: Trigger \`${trigger.trigger_name}\` approved — task \`${newTaskId.slice(0, 8)}\` queued for *${trigger.target_agent_slug}*.`,
+            });
+          } catch (err) {
+            await respond({
+              response_type: "ephemeral",
+              text: `:x: Failed to approve trigger: ${(err as Error).message}`,
+            });
+          }
+          return;
+        }
+
+        // /fia triggers reject <id> <reason...>
+        if (subCmd === "reject") {
+          const triggerId = args[2];
+          const reason = args.slice(3).join(" ");
+          if (!triggerId || !reason) {
+            await respond({
+              response_type: "ephemeral",
+              text: "Usage: `/fia triggers reject <trigger-id> <reason>`",
+            });
+            return;
+          }
+          if (!supabase) {
+            await respond({ response_type: "ephemeral", text: ":x: Supabase krävs." });
+            return;
+          }
+          try {
+            const { data: trigger, error: fetchErr } = await supabase
+              .from("pending_triggers")
+              .select("trigger_name")
+              .eq("id", triggerId)
+              .eq("status", "pending")
+              .single();
+
+            if (fetchErr || !trigger) {
+              await respond({ response_type: "ephemeral", text: `:x: Pending trigger \`${triggerId}\` not found.` });
+              return;
+            }
+
+            await supabase
+              .from("pending_triggers")
+              .update({ status: "rejected", decided_at: new Date().toISOString() })
+              .eq("id", triggerId);
+
+            await logActivity(supabase, {
+              action: "trigger_rejected",
+              details_json: { trigger_id: triggerId, trigger_name: trigger.trigger_name, reason, source: "slack" },
+            });
+
+            await respond({
+              response_type: "in_channel",
+              text: `:x: Trigger \`${trigger.trigger_name}\` rejected. Reason: ${reason}`,
+            });
+          } catch (err) {
+            await respond({
+              response_type: "ephemeral",
+              text: `:x: Failed to reject trigger: ${(err as Error).message}`,
+            });
+          }
+          return;
+        }
+
+        // /fia triggers – list pending
+        if (!supabase) {
+          await respond({ response_type: "ephemeral", text: ":x: Supabase krävs." });
+          return;
+        }
+        try {
+          const agentFilter = args[1] === "--agent" ? args[2] : undefined;
+          let query = supabase
+            .from("pending_triggers")
+            .select("*, tasks!source_task_id(id, title, type, agents(slug, name))")
+            .eq("status", "pending")
+            .order("created_at", { ascending: false })
+            .limit(10);
+
+          if (agentFilter) {
+            query = query.eq("target_agent_slug", agentFilter);
+          }
+
+          const { data: pending, error } = await query;
+          if (error) throw error;
+
+          if (!pending || pending.length === 0) {
+            await respond({ response_type: "ephemeral", text: ":white_check_mark: No pending triggers." });
+            return;
+          }
+
+          const PRIORITY_ICON: Record<string, string> = {
+            critical: ":red_circle:",
+            high: ":large_yellow_circle:",
+            normal: ":white_circle:",
+            low: ":white_circle:",
+          };
+
+          const lines = [`:hourglass_flowing_sand: *Pending Triggers (${pending.length})*`];
+          for (const t of pending as unknown as Array<{
+            id: string;
+            trigger_name: string;
+            target_agent_slug: string;
+            target_task_type: string;
+            priority: string;
+            created_at: string;
+            tasks?: { agents?: { slug: string } | null; type?: string } | null;
+          }>) {
+            const sourceAgent = t.tasks?.agents?.slug ?? "?";
+            const icon = PRIORITY_ICON[t.priority] ?? ":white_circle:";
+            const age = Math.round((Date.now() - new Date(t.created_at).getTime()) / 60000);
+            lines.push(
+              `${icon} \`${t.id.slice(0, 8)}\` *${t.trigger_name}* — ${sourceAgent} → ${t.target_agent_slug}/${t.target_task_type} (${t.priority}, ${age}m ago)`,
+            );
+          }
+          lines.push("", "_Approve: `/fia triggers approve <id>` | Reject: `/fia triggers reject <id> <reason>`_");
+
+          await respond({ response_type: "ephemeral", text: lines.join("\n") });
+        } catch (err) {
+          await respond({
+            response_type: "ephemeral",
+            text: `:x: Failed to fetch triggers: ${(err as Error).message}`,
+          });
+        }
+        break;
+      }
+
+      case "lineage": {
+        const taskId = args[1];
+        if (!taskId) {
+          await respond({ response_type: "ephemeral", text: "Usage: `/fia lineage <task-id>`" });
+          return;
+        }
+        if (!supabase) {
+          await respond({ response_type: "ephemeral", text: ":x: Supabase krävs." });
+          return;
+        }
+        try {
+          // Fetch current task
+          const { data: task } = await supabase
+            .from("tasks")
+            .select("id, title, type, status, parent_task_id, trigger_source, agents(slug, name)")
+            .eq("id", taskId)
+            .single();
+
+          if (!task) {
+            await respond({ response_type: "ephemeral", text: `:x: Task \`${taskId}\` not found.` });
+            return;
+          }
+
+          // Walk ancestors
+          const ancestors: typeof task[] = [];
+          let currentId: string | null = (task as unknown as { parent_task_id: string | null }).parent_task_id;
+          let depth = 0;
+          while (currentId && depth < 5) {
+            const { data: parent } = await supabase
+              .from("tasks")
+              .select("id, title, type, status, parent_task_id, trigger_source, agents(slug, name)")
+              .eq("id", currentId)
+              .single();
+            if (!parent) break;
+            ancestors.unshift(parent);
+            currentId = (parent as unknown as { parent_task_id: string | null }).parent_task_id;
+            depth++;
+          }
+
+          // Fetch children
+          const { data: children } = await supabase
+            .from("tasks")
+            .select("id, title, type, status, trigger_source, agents(slug, name)")
+            .eq("parent_task_id", taskId)
+            .order("created_at", { ascending: false });
+
+          const statusIcon = (s: string): string => {
+            const map: Record<string, string> = {
+              completed: ":white_check_mark:",
+              in_progress: ":arrow_forward:",
+              queued: ":hourglass_flowing_sand:",
+              triggered: ":zap:",
+              rejected: ":x:",
+              error: ":red_circle:",
+              escalated: ":warning:",
+            };
+            return map[s] ?? ":white_circle:";
+          };
+
+          const lines = [`:thread: *Task Lineage for \`${taskId.slice(0, 8)}\`*`];
+
+          if (ancestors.length > 0) {
+            lines.push("", "*Ancestors:*");
+            for (const a of ancestors as unknown as Array<{
+              id: string; type: string; status: string; trigger_source?: string | null;
+              agents?: { slug: string } | null;
+            }>) {
+              lines.push(
+                `  ${statusIcon(a.status)} \`${a.id.slice(0, 8)}\` *${a.agents?.slug ?? "?"}*/${a.type} (${a.status})${a.trigger_source ? ` ← ${a.trigger_source}` : ""}`,
+              );
+            }
+          }
+
+          const t = task as unknown as { id: string; type: string; status: string; trigger_source?: string | null; agents?: { slug: string } | null };
+          lines.push("", `*Current:* ${statusIcon(t.status)} \`${t.id.slice(0, 8)}\` *${t.agents?.slug ?? "?"}*/${t.type} (${t.status})`);
+
+          if (children && children.length > 0) {
+            lines.push("", "*Children:*");
+            for (const c of children as unknown as Array<{
+              id: string; type: string; status: string; trigger_source?: string | null;
+              agents?: { slug: string } | null;
+            }>) {
+              lines.push(
+                `  ${statusIcon(c.status)} \`${c.id.slice(0, 8)}\` *${c.agents?.slug ?? "?"}*/${c.type} (${c.status})${c.trigger_source ? ` ← ${c.trigger_source}` : ""}`,
+              );
+            }
+          } else {
+            lines.push("", "_No children._");
+          }
+
+          await respond({ response_type: "ephemeral", text: lines.join("\n") });
+        } catch (err) {
+          await respond({
+            response_type: "ephemeral",
+            text: `:x: Failed to fetch lineage: ${(err as Error).message}`,
+          });
+        }
+        break;
+      }
+
       case "purge": {
         if (!supabase) {
           await respond({ response_type: "ephemeral", text: ":x: Supabase krävs." });
@@ -365,6 +659,10 @@ export function registerCommands(
           "  `/fia approve <task-id>` – Godkänn uppgift",
           "  `/fia reject <task-id> <feedback>` – Avslå uppgift med feedback",
           "  `/fia run <agent> <task-type> [description]` – Trigga agent manuellt",
+          "  `/fia triggers` – Visa pending triggers som väntar på godkännande",
+          "  `/fia triggers approve <id>` – Godkänn pending trigger",
+          "  `/fia triggers reject <id> <reason>` – Avslå pending trigger",
+          "  `/fia lineage <task-id>` – Visa task-träd (föräldrar och barn)",
           "  `/fia purge` – Rensa stale queued/in_progress tasks (>30 min)",
           "  `/fia help` – Visa denna hjälptext",
           "",
