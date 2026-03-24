@@ -113,7 +113,7 @@ export class CampaignAgent extends BaseAgent {
     const modifiedTask: AgentTask = { ...task, input: abPrompt };
     const result = await super.execute(modifiedTask);
 
-    if (result.status === "completed") {
+    if (result.status === "awaiting_review" || result.status === "completed") {
       await this.saveAbTestResult(result.taskId, result.output);
     }
 

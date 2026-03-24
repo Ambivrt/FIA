@@ -16,7 +16,7 @@ export class SeoAgent extends BaseAgent {
   async execute(task: AgentTask): Promise<AgentResult> {
     const result = await super.execute(task);
 
-    if (result.status === "completed" && task.type === "keyword_research") {
+    if ((result.status === "awaiting_review" || result.status === "completed") && task.type === "keyword_research") {
       await this.saveKeywordRankings(result.taskId, result.output);
     }
 

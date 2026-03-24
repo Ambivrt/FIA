@@ -41,7 +41,7 @@ export interface AgentResult {
   tokensIn: number;
   tokensOut: number;
   durationMs: number;
-  status: "completed" | "escalated" | "error";
+  status: "completed" | "awaiting_review" | "escalated" | "error";
   pipeline?: PipelineData;
 }
 
@@ -356,7 +356,7 @@ export abstract class BaseAgent {
         tokensIn: accumulatedTokensIn,
         tokensOut: accumulatedTokensOut,
         durationMs: accumulatedDurationMs,
-        status: "completed",
+        status: "awaiting_review",
         pipeline,
       };
     } catch (err) {
@@ -385,11 +385,6 @@ export abstract class BaseAgent {
         action: "task_error",
         correlation_id: cid,
         status: "error",
-        error: message,
-      });
-
-      await task.onProgress?.("error", `:x: ${this.name} misslyckades: ${message}`, {
-        task_id: taskId,
         error: message,
       });
 

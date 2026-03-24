@@ -21,6 +21,7 @@ import {
 import { createAgent, getAllAgentSlugs } from "../agents/agent-factory";
 import { loadAgentManifest } from "../agents/agent-loader";
 import { ProgressCallback } from "../agents/base-agent";
+import { formatSlackStatus } from "./status-formatter";
 
 export function registerCommands(
   app: App,
@@ -242,15 +243,10 @@ export function registerCommands(
                 text: `:x: *${item.agentSlug}* misslyckades: ${error}`,
               });
             } else if (result) {
-              const statusIcon =
-                result.status === "completed"
-                  ? ":white_check_mark:"
-                  : result.status === "escalated"
-                    ? ":warning:"
-                    : ":x:";
+              const { icon, text } = formatSlackStatus(result.status);
               await app.client.chat.postMessage({
                 channel: command.channel_id,
-                text: `${statusIcon} *${item.agentSlug}* klar (${result.status}). Task: \`${result.taskId}\``,
+                text: `${icon} *${item.agentSlug}* ${text}. Task: \`${result.taskId}\``,
               });
             }
           };
@@ -299,9 +295,10 @@ export function registerCommands(
                 priority: "normal",
                 onProgress,
               });
+              const { icon, text } = formatSlackStatus(result.status);
               await app.client.chat.postMessage({
                 channel: command.channel_id,
-                text: `:white_check_mark: *${agentSlug}* klar (${result.status}). Task: \`${result.taskId}\``,
+                text: `${icon} *${agentSlug}* ${text}. Task: \`${result.taskId}\``,
               });
             } catch (err) {
               await app.client.chat.postMessage({

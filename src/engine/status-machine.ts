@@ -23,7 +23,7 @@ export type TaskStatus =
 
 export const VALID_TRANSITIONS: Record<string, string[]> = {
   queued: ["in_progress"],
-  in_progress: ["completed", "error"],
+  in_progress: ["completed", "awaiting_review", "error"],
   completed: ["awaiting_review", "delivered", "triggered", "acknowledged"],
   awaiting_review: ["approved", "rejected", "revision_requested"],
   approved: ["delivered", "activated", "live"],

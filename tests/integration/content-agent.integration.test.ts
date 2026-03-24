@@ -332,7 +332,7 @@ describe("BaseAgent – self-eval flow", () => {
       input: "Write a blog post",
     });
 
-    expect(result.status).toBe("completed");
+    expect(result.status).toBe("awaiting_review");
     expect(result.pipeline).toBeDefined();
     expect(result.pipeline!.self_eval).toBeDefined();
     expect(result.pipeline!.self_eval!.pass).toBe(true);
@@ -381,7 +381,7 @@ describe("BaseAgent – self-eval flow", () => {
       input: "Write a blog post",
     });
 
-    expect(result.status).toBe("completed");
+    expect(result.status).toBe("awaiting_review");
     expect(result.output).toBe("Improved content with CTA");
     expect(result.pipeline!.self_eval!.revision_triggered).toBe(true);
     // Tokens should be accumulated: generation + revision
@@ -430,7 +430,7 @@ describe("BaseAgent – self-eval flow", () => {
       input: "Write a blog post",
     });
 
-    expect(result.status).toBe("completed");
+    expect(result.status).toBe("awaiting_review");
     expect(result.output).toBe("Improved content");
     expect(result.pipeline!.self_eval!.revision_triggered).toBe(true);
     // 3 calls: generation + self-eval + revision
@@ -469,7 +469,7 @@ describe("BaseAgent – self-eval flow", () => {
       input: "Write a blog post",
     });
 
-    expect(result.status).toBe("completed");
+    expect(result.status).toBe("awaiting_review");
     expect(result.output).toBe("Good content");
     expect(result.pipeline!.self_eval!.revision_triggered).toBe(false);
     // Only 2 calls: generation + self-eval. No revision.

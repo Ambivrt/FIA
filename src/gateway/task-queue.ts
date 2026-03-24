@@ -175,9 +175,14 @@ export class TaskQueue {
       const agent = await createAgent(item.agentSlug, this.config, this.logger, this.supabase);
 
       const result = await agent.execute(item.task);
-      item.status = "completed";
       item.result = result;
-      this.completed++;
+      if (result.status === "error") {
+        item.status = "failed";
+        this.failed++;
+      } else {
+        item.status = "completed";
+        this.completed++;
+      }
 
       this.logger.info(`Queue item completed: ${item.agentSlug}/${item.task.type}`, {
         action: "queue_complete",
