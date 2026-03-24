@@ -3,6 +3,7 @@
 
 import cron from "node-cron";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { isSchedulableTaskType } from "./task-types";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -150,6 +151,15 @@ export async function createScheduledJob(
 ): Promise<ScheduledJob> {
   validateCronExpression(input.cron_expression);
   if (input.priority) validatePriority(input.priority);
+
+  // Validate task_type against agent's allowed types
+  const { data: agentRow } = await supabase.from("agents").select("slug").eq("id", input.agent_id).single();
+  if (agentRow?.slug && !isSchedulableTaskType(agentRow.slug, input.task_type)) {
+    throw new CronServiceError(
+      "VALIDATION_ERROR",
+      `Ogiltig uppgiftstyp "${input.task_type}" för agent "${agentRow.slug}".`,
+    );
+  }
 
   const row = {
     agent_id: input.agent_id,
