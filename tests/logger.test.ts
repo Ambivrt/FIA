@@ -26,7 +26,7 @@ function makeTempConfig(): AppConfig {
     ga4CredentialsPath: "",
     bufferAccessToken: "",
     gatewayApiHost: "127.0.0.1",
-  gatewayApiPort: 3001,
+    gatewayApiPort: 3001,
     usdToSek: 10.5,
     queueMaxConcurrency: 3,
   };

@@ -22,7 +22,13 @@ describe("dnsRebindingProtection", () => {
   it("allows requests with valid Host header", () => {
     const { req, res } = mockReqRes("127.0.0.1:3001");
     let called = false;
-    middleware(req as Request, res as Response, (() => { called = true; }) as NextFunction);
+    middleware(
+      req as Request,
+      res as Response,
+      (() => {
+        called = true;
+      }) as NextFunction,
+    );
     expect(called).toBe(true);
     expect(res.status).not.toHaveBeenCalled();
   });
@@ -30,14 +36,26 @@ describe("dnsRebindingProtection", () => {
   it("allows requests with localhost Host header", () => {
     const { req, res } = mockReqRes("localhost:3001");
     let called = false;
-    middleware(req as Request, res as Response, (() => { called = true; }) as NextFunction);
+    middleware(
+      req as Request,
+      res as Response,
+      (() => {
+        called = true;
+      }) as NextFunction,
+    );
     expect(called).toBe(true);
   });
 
   it("rejects requests with invalid Host header", () => {
     const { req, res } = mockReqRes("evil.attacker.com:3001");
     let called = false;
-    middleware(req as Request, res as Response, (() => { called = true; }) as NextFunction);
+    middleware(
+      req as Request,
+      res as Response,
+      (() => {
+        called = true;
+      }) as NextFunction,
+    );
     expect(called).toBe(false);
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith({
@@ -48,7 +66,13 @@ describe("dnsRebindingProtection", () => {
   it("rejects requests with DNS rebinding Host header", () => {
     const { req, res } = mockReqRes("192.168.1.100:3001");
     let called = false;
-    middleware(req as Request, res as Response, (() => { called = true; }) as NextFunction);
+    middleware(
+      req as Request,
+      res as Response,
+      (() => {
+        called = true;
+      }) as NextFunction,
+    );
     expect(called).toBe(false);
     expect(res.status).toHaveBeenCalledWith(403);
   });
@@ -56,14 +80,26 @@ describe("dnsRebindingProtection", () => {
   it("allows requests without Host header", () => {
     const { req, res } = mockReqRes(undefined);
     let called = false;
-    middleware(req as Request, res as Response, (() => { called = true; }) as NextFunction);
+    middleware(
+      req as Request,
+      res as Response,
+      (() => {
+        called = true;
+      }) as NextFunction,
+    );
     expect(called).toBe(true);
   });
 
   it("is case-insensitive for Host matching", () => {
     const { req, res } = mockReqRes("LOCALHOST:3001");
     let called = false;
-    middleware(req as Request, res as Response, (() => { called = true; }) as NextFunction);
+    middleware(
+      req as Request,
+      res as Response,
+      (() => {
+        called = true;
+      }) as NextFunction,
+    );
     expect(called).toBe(true);
     expect(res.status).not.toHaveBeenCalled();
   });
