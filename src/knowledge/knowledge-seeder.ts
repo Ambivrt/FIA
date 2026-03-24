@@ -178,11 +178,7 @@ export async function seedAgentKnowledge(
 /**
  * Seed shared brand context files (knowledge/brand/*.md) as _shared system_context.
  */
-export async function seedBrandContext(
-  supabase: SupabaseClient,
-  config: AppConfig,
-  dryRun = false,
-): Promise<SeedDiff> {
+export async function seedBrandContext(supabase: SupabaseClient, config: AppConfig, dryRun = false): Promise<SeedDiff> {
   const brandDir = path.join(config.knowledgeDir, "brand");
   const inserts: KnowledgeInsert[] = [];
   let sortOrder = 0;
