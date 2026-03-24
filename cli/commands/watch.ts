@@ -109,7 +109,7 @@ async function render(): Promise<void> {
   // Agenter
   for (const agent of agents) {
     const ds = agent.display_status as unknown as DisplayStatusResult;
-    const badge = statusBadge(ds);
+    const badge = statusBadge(ds, 10);
     const hb = relativeTime(agent.last_heartbeat);
 
     // Hitta pågående task för agenten
@@ -122,10 +122,9 @@ async function render(): Promise<void> {
       taskInfo = chalk.dim("\u2014");
     }
 
-    const label = agentLabel(agent.slug, agent.name);
+    const label = agentLabel(agent.slug, agent.name, 22);
     process.stdout.write(
-      EARTH.plum("\u2502") +
-        `  ${label.padEnd(28)} ${badge.padEnd(18)} ${chalk.dim("\u2665")} ${hb.padEnd(8)} ${taskInfo}\n`,
+      EARTH.plum("\u2502") + `  ${label} ${badge} ${chalk.dim("\u2665")} ${hb.padEnd(8)} ${taskInfo}\n`,
     );
   }
 
