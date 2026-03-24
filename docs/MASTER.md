@@ -372,16 +372,16 @@ triggers: # Deklarativa triggers (nytt i v0.5.1)
 
 Dessa task-typer kan schemaläggas av användaren i Dashboard, CLI och Slack. Trigger-skapade typer (t.ex. `rapid_response_article`, `campaign_setup`) exkluderas — de skapas automatiskt.
 
-| Agent        | Slug         | Schemaläggbara jobbtyper                                                                                          |
-| ------------ | ------------ | ----------------------------------------------------------------------------------------------------------------- |
-| Strategy     | strategy     | `quarterly_plan`, `monthly_plan`, `campaign_brief`, `research`, `trend_analysis`                                  |
+| Agent        | Slug         | Schemaläggbara jobbtyper                                                                                           |
+| ------------ | ------------ | ------------------------------------------------------------------------------------------------------------------ |
+| Strategy     | strategy     | `quarterly_plan`, `monthly_plan`, `campaign_brief`, `research`, `trend_analysis`                                   |
 | Content      | content      | `blog_post`, `linkedin`, `newsletter`, `case_study`, `whitepaper`, `metadata`, `alt_text`, `ab_variants`, `images` |
-| Campaign     | campaign     | `email_sequence`, `ad_copy`, `landing_page`, `ab_variants`, `segmentation`                                        |
-| SEO          | seo          | `seo_audit`, `keyword_research`, `bulk_optimization`, `content_recommendations`                                   |
-| Lead         | lead         | `lead_scoring`, `nurture_email`, `nurture_sequences`                                                              |
-| Analytics    | analytics    | `morning_pulse`, `weekly_report`, `quarterly_review`, `anomaly_detection`                                         |
-| Brand        | brand        | `default`                                                                                                         |
-| Intelligence | intelligence | `morning_scan`, `midday_sweep`, `weekly_intelligence`                                                             |
+| Campaign     | campaign     | `email_sequence`, `ad_copy`, `landing_page`, `ab_variants`, `segmentation`                                         |
+| SEO          | seo          | `seo_audit`, `keyword_research`, `bulk_optimization`, `content_recommendations`                                    |
+| Lead         | lead         | `lead_scoring`, `nurture_email`, `nurture_sequences`                                                               |
+| Analytics    | analytics    | `morning_pulse`, `weekly_report`, `quarterly_review`, `anomaly_detection`                                          |
+| Brand        | brand        | `default`                                                                                                          |
+| Intelligence | intelligence | `morning_scan`, `midday_sweep`, `weekly_intelligence`                                                              |
 
 > **Källa:** `fia-frontend/src/types/fia.ts` (`AGENT_TASK_TYPES`) och `fia/src/shared/task-types.ts`. Backend validerar i `cron-service.ts`.
 
