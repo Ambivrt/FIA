@@ -44,6 +44,23 @@ async function main(): Promise<void> {
     // Sync agent manifests → Supabase config_json (dashboard reads this)
     const { syncAgentManifests } = await import("./supabase/manifest-sync");
     await syncAgentManifests(supabase, config, logger);
+
+    // Seed knowledge from YAML → agent_knowledge table
+    try {
+      const { seedAllKnowledge } = await import("./knowledge/knowledge-seeder");
+      const diffs = await seedAllKnowledge(supabase, config);
+      const totalItems = diffs.reduce((s, d) => s + d.added, 0);
+      if (totalItems > 0) {
+        logger.info(`Knowledge seeded: ${totalItems} items across ${diffs.length} agents`, {
+          action: "knowledge_seed",
+          agents: diffs.map((d) => d.slug),
+        });
+      }
+    } catch (seedErr) {
+      logger.warn(`Knowledge seed failed (non-fatal): ${(seedErr as Error).message}`, {
+        action: "knowledge_seed_error",
+      });
+    }
   } else {
     logger.warn("Supabase not configured – skipping", { action: "supabase_init" });
   }

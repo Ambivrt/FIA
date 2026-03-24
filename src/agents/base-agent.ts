@@ -6,6 +6,7 @@ import { Logger } from "../gateway/logger";
 import { AgentManifest, resolveAgentFiles, loadSkills } from "./agent-loader";
 import { loadBrandContext } from "../context/context-manager";
 import { buildSystemPrompt, buildTaskPrompt } from "../context/prompt-builder";
+import { fetchAgentSkills, fetchSystemContext, fetchTaskContext as fetchTaskCtxFromDb } from "../knowledge/knowledge-reader";
 import { routeRequest, AgentRouting } from "../gateway/router";
 import { LLMResponse, ToolDefinition, PipelineData } from "../llm/types";
 import { createTask, updateTaskStatus, createApproval } from "../supabase/task-writer";
@@ -54,7 +55,23 @@ export abstract class BaseAgent {
     protected readonly manifest: AgentManifest,
   ) {}
 
-  protected getSystemPrompt(): string {
+  protected async getSystemPrompt(): Promise<string> {
+    // Try Supabase first, fall back to disk
+    try {
+      const skills = await fetchAgentSkills(this.supabase, this.slug);
+      if (skills.length > 0) {
+        const systemCtx = await fetchSystemContext(this.supabase, this.slug);
+        const brandContext = loadBrandContext(this.config.knowledgeDir);
+        return buildSystemPrompt(brandContext, skills, systemCtx || undefined);
+      }
+    } catch (err) {
+      this.logger.warn(`Supabase knowledge fetch failed, falling back to disk: ${(err as Error).message}`, {
+        agent: this.slug,
+        action: "knowledge_fallback",
+      });
+    }
+
+    // Disk fallback
     const brandContext = loadBrandContext(this.config.knowledgeDir);
     const skills = loadSkills(this.config.knowledgeDir, this.slug, this.manifest);
     const extraFiles = this.manifest.system_context.filter((f) => f !== "SKILL.md");
@@ -62,7 +79,15 @@ export abstract class BaseAgent {
     return buildSystemPrompt(brandContext, skills, extraContext || undefined);
   }
 
-  protected getTaskContext(taskType: string): string {
+  protected async getTaskContext(taskType: string): Promise<string> {
+    // Try Supabase first, fall back to disk
+    try {
+      const dbContext = await fetchTaskCtxFromDb(this.supabase, this.slug, taskType);
+      if (dbContext) return dbContext;
+    } catch {
+      // Fall through to disk
+    }
+
     const files = this.manifest.task_context[taskType];
     if (!files || files.length === 0) return "";
     return resolveAgentFiles(this.config.knowledgeDir, this.slug, files);
@@ -76,8 +101,8 @@ export abstract class BaseAgent {
       toolChoice?: { type: "auto" | "any" | "tool"; name?: string };
     },
   ): Promise<LLMResponse> {
-    const systemPrompt = this.getSystemPrompt();
-    const taskContext = this.getTaskContext(taskType);
+    const systemPrompt = await this.getSystemPrompt();
+    const taskContext = await this.getTaskContext(taskType);
     const fullPrompt = buildTaskPrompt(taskContext, userPrompt);
 
     return routeRequest(this.config, this.logger, this.manifest.routing as AgentRouting, taskType, {

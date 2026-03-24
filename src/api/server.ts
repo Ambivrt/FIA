@@ -13,6 +13,7 @@ import { metricRoutes } from "./routes/metrics";
 import { activityRoutes } from "./routes/activity";
 import { killSwitchRoutes } from "./routes/kill-switch";
 import { triggerRoutes } from "./routes/triggers";
+import { knowledgeRoutes } from "./routes/knowledge";
 
 export function createApiServer(
   config: AppConfig,
@@ -65,6 +66,7 @@ export function createApiServer(
   app.use("/api/activity", activityRoutes(supabase));
   app.use("/api/kill-switch", killSwitchRoutes(killSwitch, supabase));
   app.use("/api/triggers", triggerRoutes(supabase, config));
+  app.use("/api/knowledge", knowledgeRoutes(supabase, config));
 
   // Global error handler
   app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
