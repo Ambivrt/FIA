@@ -18,7 +18,7 @@ export class AnalyticsAgent extends BaseAgent {
     const effectiveType = this.getEffectiveTaskType(task.type);
     const result = await super.execute({ ...task, type: effectiveType });
 
-    if (result.status === "completed") {
+    if (result.status === "awaiting_review" || result.status === "completed") {
       await this.extractAndWriteMetrics(task.type, result.output);
     }
 

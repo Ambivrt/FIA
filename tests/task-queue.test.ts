@@ -14,7 +14,7 @@ jest.mock("../src/agents/agent-factory", () => ({
       tokensIn: 100,
       tokensOut: 200,
       durationMs: 1000,
-      status: "completed",
+      status: "awaiting_review",
     }),
   }),
 }));
@@ -182,7 +182,7 @@ describe("TaskQueue", () => {
               tokensIn: 0,
               tokensOut: 0,
               durationMs: 0,
-              status: "completed",
+              status: "awaiting_review",
             })),
           ),
         })
@@ -194,7 +194,7 @@ describe("TaskQueue", () => {
             tokensIn: 0,
             tokensOut: 0,
             durationMs: 0,
-            status: "completed",
+            status: "awaiting_review",
           }),
         });
 

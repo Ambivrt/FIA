@@ -10,6 +10,7 @@ import { getSlackApp } from "../slack/app";
 import { CHANNELS } from "../slack/channels";
 import { ProgressCallback } from "../agents/base-agent";
 import { LLMError, AgentError } from "../utils/errors";
+import { formatSlackStatus } from "../slack/status-formatter";
 
 interface ScheduledJobRow {
   id: string;
@@ -223,9 +224,10 @@ export class DynamicScheduler {
 
         if (slackApp) {
           try {
+            const { icon, text } = formatSlackStatus(result.status);
             await slackApp.client.chat.postMessage({
               channel,
-              text: `:white_check_mark: *${job.agent_slug}* klar (${result.status}). Task: \`${result.taskId}\` _[schemalagd]_`,
+              text: `${icon} *${job.agent_slug}* ${text}. Task: \`${result.taskId}\` _[schemalagd]_`,
             });
           } catch {
             /* non-critical */

@@ -190,7 +190,7 @@ describe("ContentAgent", () => {
       const agent = createContentAgent();
       const result = await agent.execute(makeTask());
 
-      expect(result.status).toBe("completed");
+      expect(result.status).toBe("awaiting_review");
       expect(result.output).toBe("En bra bloggpost om AI.");
     });
 
@@ -209,7 +209,7 @@ describe("ContentAgent", () => {
       const result = await agent.execute(makeTask());
 
       expect(result.output).toBe("Förbättrat utkast.");
-      expect(result.status).toBe("completed");
+      expect(result.status).toBe("awaiting_review");
     });
 
     it("escalates after max rejection attempts", async () => {

@@ -49,7 +49,7 @@ export class LeadAgent extends BaseAgent {
     });
 
     if (review.decision !== "approved") {
-      result.status = review.escalated ? "escalated" : "completed";
+      result.status = review.escalated ? "escalated" : "awaiting_review";
     }
 
     return result;
