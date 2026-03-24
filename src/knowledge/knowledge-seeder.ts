@@ -91,15 +91,16 @@ export async function seedAgentKnowledge(
     });
   }
 
-  // --- Task Context ---
+  // --- Task Context & Few-shot ---
   for (const [taskType, files] of Object.entries(manifest.task_context ?? {})) {
     for (const file of files) {
       const fullPath = path.join(config.knowledgeDir, "agents", agentSlug, file);
       if (!fs.existsSync(fullPath)) continue;
       const content = fs.readFileSync(fullPath, "utf-8");
+      const isFewShot = file.includes("few-shot/") || file.includes("few_shot/");
       inserts.push({
         agent_slug: agentSlug,
-        category: "task_context",
+        category: isFewShot ? "few_shot" : "task_context",
         task_type: taskType,
         slug: file,
         title: path.basename(file, path.extname(file)),
@@ -175,6 +176,77 @@ export async function seedAgentKnowledge(
 }
 
 /**
+ * Seed shared brand context files (knowledge/brand/*.md) as _shared system_context.
+ */
+export async function seedBrandContext(
+  supabase: SupabaseClient,
+  config: AppConfig,
+  dryRun = false,
+): Promise<SeedDiff> {
+  const brandDir = path.join(config.knowledgeDir, "brand");
+  const inserts: KnowledgeInsert[] = [];
+  let sortOrder = 0;
+
+  if (fs.existsSync(brandDir)) {
+    const files = fs.readdirSync(brandDir).filter((f) => f.endsWith(".md"));
+    for (const file of files) {
+      const content = fs.readFileSync(path.join(brandDir, file), "utf-8");
+      inserts.push({
+        agent_slug: "_shared",
+        category: "system_context",
+        slug: `brand/${file}`,
+        title: path.basename(file, ".md"),
+        description: `Shared brand context: ${path.basename(file, ".md")}`,
+        body: content,
+        sort_order: sortOrder++,
+        source: "yaml",
+      });
+    }
+  }
+
+  if (dryRun) {
+    const { data: existing } = await supabase
+      .from("agent_knowledge")
+      .select("slug, category, task_type, body, version")
+      .eq("agent_slug", "_shared")
+      .eq("category", "system_context");
+
+    const existingMap = new Map((existing ?? []).map((r: any) => [`${r.category}::${r.slug}`, r]));
+
+    let added = 0;
+    let updated = 0;
+    let unchanged = 0;
+    const items: Array<{ slug: string; category: string; diff: string }> = [];
+
+    for (const ins of inserts) {
+      const key = `${ins.category}::${ins.slug}`;
+      const ex = existingMap.get(key);
+      if (!ex) {
+        added++;
+        items.push({ slug: ins.slug, category: ins.category, diff: "Ny" });
+      } else if (ex.body !== ins.body) {
+        updated++;
+        items.push({ slug: ins.slug, category: ins.category, diff: "Ändrad" });
+      } else {
+        unchanged++;
+      }
+    }
+
+    return { slug: "_shared", added, updated, unchanged, items };
+  }
+
+  if (inserts.length > 0) {
+    const { error } = await supabase.from("agent_knowledge").upsert(
+      inserts.map((ins) => ({ ...ins, task_type: null })),
+      { onConflict: "agent_slug,category,task_type,slug", ignoreDuplicates: false },
+    );
+    if (error) throw error;
+  }
+
+  return { slug: "_shared", added: inserts.length, updated: 0, unchanged: 0, items: [] };
+}
+
+/**
  * Seed knowledge for all agents.
  */
 export async function seedAllKnowledge(
@@ -184,6 +256,20 @@ export async function seedAllKnowledge(
 ): Promise<SeedDiff[]> {
   const slugs = getAllAgentSlugs();
   const results: SeedDiff[] = [];
+
+  // Seed shared brand context first
+  try {
+    const brandDiff = await seedBrandContext(supabase, config, dryRun);
+    results.push(brandDiff);
+  } catch (err) {
+    results.push({
+      slug: "_shared",
+      added: 0,
+      updated: 0,
+      unchanged: 0,
+      items: [{ slug: "_shared", category: "error", diff: (err as Error).message }],
+    });
+  }
 
   for (const slug of slugs) {
     try {

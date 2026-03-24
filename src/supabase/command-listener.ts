@@ -8,6 +8,7 @@ import { loadAgentManifest } from "../agents/agent-loader";
 import { getAllAgentSlugs } from "../agents/agent-factory";
 import { TriggerConfig } from "../engine/trigger-types";
 import { AppConfig } from "../utils/config";
+import { seedAllKnowledge, seedAgentKnowledge } from "../knowledge/knowledge-seeder";
 
 interface Command {
   id: string;
@@ -232,6 +233,42 @@ export function startCommandListener(
 
             logger.info(`Triggers reseeded: ${reseeded.join(", ") || "none"}`, {
               action: "reseed_triggers_complete",
+            });
+            break;
+          }
+
+          case "reseed_knowledge": {
+            if (!appConfig) {
+              logger.warn("reseed_knowledge: appConfig not available", { action: "reseed_knowledge_error" });
+              break;
+            }
+
+            const knowledgeSlug = cmd.target_slug ?? (p.slug as string | undefined);
+            let diffs;
+
+            if (knowledgeSlug) {
+              const diff = await seedAgentKnowledge(supabase, appConfig, knowledgeSlug, false);
+              diffs = [diff];
+            } else {
+              diffs = await seedAllKnowledge(supabase, appConfig, false);
+            }
+
+            const totalItems = diffs.reduce((s, d) => s + d.added, 0);
+
+            await logActivity(supabase, {
+              user_id: cmd.issued_by,
+              action: "knowledge_reseeded",
+              details_json: {
+                scope: knowledgeSlug ? "single" : "all",
+                agent_slug: knowledgeSlug,
+                agents: diffs.map((d) => d.slug),
+                total_items: totalItems,
+                source: "dashboard",
+              },
+            });
+
+            logger.info(`Knowledge reseeded: ${diffs.map((d) => `${d.slug}(${d.added})`).join(", ")}`, {
+              action: "reseed_knowledge_complete",
             });
             break;
           }
