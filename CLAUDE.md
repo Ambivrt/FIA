@@ -198,6 +198,16 @@ Se `.env.example` för alla nyckelnamn. Aldrig i kod. Kritiska:
 - [x] Reseed från YAML: dry-run diff + bekräftelsedialog (admin only)
 - [x] 4 nya API-endpoints, 11 nya React-komponenter, 40+ i18n-nycklar
 
+### Klart (Deploy 0.5.5, 2026-03-24)
+
+- [x] Knowledge Library: kunskapsseeder (skills, system_context, task_context, few_shot, memory)
+- [x] Brand context seedas som delad system_context (`knowledge/brand/*.md`)
+- [x] Few-shot-filer kategoriseras korrekt som `few_shot` (inte `task_context`)
+- [x] `reseed_knowledge`-command i command-listener (Dashboard → Gateway)
+- [x] "Populera från server"-knapp i Knowledge Library (admin only)
+- [x] Fix: upsert-konflikt – funktionellt unikt index → vanligt unikt index på `agent_knowledge`
+- [x] Fix: `emitCommand` returnerar fel så reseed-knappen visar felmeddelanden
+
 ### Pågår
 
 - [ ] Gemini context caching

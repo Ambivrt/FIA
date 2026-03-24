@@ -2,7 +2,7 @@
 
 All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och principer. Gateway- och Dashboard-repon pekar hit.
 
-**Version:** 0.5.3
+**Version:** 0.5.5
 **Senast uppdaterad:** 2026-03-24
 
 ---
@@ -11,31 +11,37 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 ### Övergripande status
 
-| Delsystem            | Status                                                             | Deploy             |
-| -------------------- | ------------------------------------------------------------------ | ------------------ |
-| Gateway (backend)    | Solid MVP, 8 agenter, trigger engine, dynamisk scheduler, CI/CD    | 0.5.3 (2026-03-24) |
-| CLI                  | 16 kommandon, cron CRUD, triggers, lineage                         | 0.5.3 (2026-03-24) |
-| Dashboard (frontend) | Robust MVP, cron-hantering, trigger-kö, task-relationer, i18n, PWA | Live på Lovable    |
-| Supabase (DB)        | 11 tabeller, RLS, Realtime, pending_triggers, scheduled_jobs       | EU-region aktiv    |
-| GCP (hosting)        | Compute Engine konfigurerad                                        | europe-north1-b    |
-| Slack                | cron CRUD, triggers, lineage, notify_slack, auto-notiser           | 0.5.3 (2026-03-24) |
-| MCP-integrationer    | gws kopplad till agenter (Drive, Docs, Sheets)                     | Live               |
+| Delsystem            | Status                                                                        | Deploy             |
+| -------------------- | ----------------------------------------------------------------------------- | ------------------ |
+| Gateway (backend)    | Solid MVP, 8 agenter, trigger engine, knowledge seeder, dynamisk scheduler    | 0.5.5 (2026-03-24) |
+| CLI                  | 16 kommandon, cron CRUD, triggers, lineage                                    | 0.5.5 (2026-03-24) |
+| Dashboard (frontend) | Robust MVP, Knowledge Library, cron-hantering, trigger-kö, task-relationer    | 0.5.5 (2026-03-24) |
+| Supabase (DB)        | 12 tabeller, RLS, Realtime, pending_triggers, scheduled_jobs, agent_knowledge | EU-region aktiv    |
+| GCP (hosting)        | Compute Engine konfigurerad                                                   | europe-north1-b    |
+| Slack                | cron CRUD, triggers, lineage, notify_slack, auto-notiser                      | 0.5.5 (2026-03-24) |
+| MCP-integrationer    | gws kopplad till agenter (Drive, Docs, Sheets)                                | Live               |
 
 ### Backend – Gateway (Ambivrt/FIA)
 
-**Kodbas:** ~85 TypeScript-filer, ~9 500 LOC, TypeScript strict mode, 22 testfiler (304 tester), CI/CD via GitHub Actions, ESLint + Prettier.
+**Kodbas:** ~90 TypeScript-filer, ~10 000 LOC, TypeScript strict mode, 22 testfiler (304 tester), CI/CD via GitHub Actions, ESLint + Prettier.
 
-**Nytt i 0.5.3:**
+**Nytt i 0.5.5:**
 
-| Komponent                                                                  | Status |
-| -------------------------------------------------------------------------- | ------ |
-| Delad cron-service (`src/shared/cron-service.ts`) – CRUD med validering    | Klart  |
-| `fia cron` CLI-kommando – list, create, edit, delete, enable, disable      | Klart  |
-| `/fia cron` Slack-kommandon – samma CRUD via Slack                         | Klart  |
-| CLI Supabase-klient (`cli/lib/supabase.ts`) – direkt DB-åtkomst            | Klart  |
-| Triple-interface komplett: Dashboard + CLI + Slack har likvärdig cron-CRUD | Klart  |
-| `update_schedule`-command → scheduler.reload() vid alla mutationer         | Klart  |
-| CLI-version bumpad till 0.5.3 (15 → 16 kommandon)                          | Klart  |
+| Komponent                                                                     | Status |
+| ----------------------------------------------------------------------------- | ------ |
+| Knowledge seeder (`src/knowledge/knowledge-seeder.ts`) – seed från YAML/disk  | Klart  |
+| Brand context seedas som delad `_shared` system_context                       | Klart  |
+| Few-shot-filer kategoriseras som `few_shot` (detekterar `few-shot/`-sökvägar) | Klart  |
+| `reseed_knowledge`-command i command-listener (Dashboard → Gateway)           | Klart  |
+| Knowledge REST-endpoint (`POST /api/knowledge/reseed`) med dry-run + confirm  | Klart  |
+| Fix: upsert-konflikt – COALESCE-baserat index → vanligt unikt index           | Klart  |
+| Fix: `emitCommand` returnerar fel istället för att svälja dem                 | Klart  |
+
+**Klart sedan tidigare (0.5.3):**
+
+- Delad cron-service, `fia cron` CLI + Slack CRUD
+- Triple-interface komplett: Dashboard + CLI + Slack har likvärdig cron-CRUD
+- `update_schedule`-command → scheduler.reload()
 
 **Klart sedan tidigare (0.5.1–0.5.2):**
 
@@ -57,17 +63,22 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 **Kodbas:** React 18.3 + Vite 5.4 + TypeScript 5.8 (strict: true), Tailwind 3.4 + shadcn/ui, TanStack React Query 5.83, 15 sidor, 30+ komponenter, 80+ API-funktioner.
 
-**Senaste (0.5.2–0.5.3):**
+**Nytt i 0.5.5:**
 
-| Komponent                                                       | Status |
-| --------------------------------------------------------------- | ------ |
-| SchedulerSection – komplett CRUD för schemalagda jobb           | Klart  |
-| Visuell cron-editor (daglig/veckovis/månatlig + avancerat läge) | Klart  |
-| Realtidssynk med `update_schedule`-command                      | Klart  |
-| Trigger-konfiguration: AgentTriggersTab, TriggerCard, reseed    | Klart  |
-| TriggersConfigPage med systemövergripande trigger-översikt      | Klart  |
-| TaskStatusBadge (17 statusar), task-relationer                  | Klart  |
-| i18n-nycklar (sv + en, 40+ nycklar)                             | Klart  |
+| Komponent                                                               | Status |
+| ----------------------------------------------------------------------- | ------ |
+| Knowledge Library-sida med filtrering, sökning, CRUD                    | Klart  |
+| "Populera från server"-knapp (reseed knowledge, admin only)             | Klart  |
+| `agent_knowledge`-tabell med RLS + Realtime                             | Klart  |
+| Fix: upsert-index (COALESCE → plain unique), felhantering i emitCommand | Klart  |
+
+**Klart sedan tidigare (0.5.2–0.5.3):**
+
+- SchedulerSection – komplett CRUD för schemalagda jobb
+- Visuell cron-editor (daglig/veckovis/månatlig + avancerat läge)
+- Trigger-konfiguration: AgentTriggersTab, TriggerCard, reseed
+- TriggersConfigPage med systemövergripande trigger-översikt
+- TaskStatusBadge (17 statusar), task-relationer, i18n-nycklar
 
 **Kvarstår:**
 
