@@ -58,7 +58,7 @@ export function registerStatusCommand(program: Command): void {
             : "";
 
         const label = agentLabel(agent.slug, agent.name);
-        const line = `  ${badge.padEnd(28)} ${label.padEnd(26)} ${chalk.dim("\u2665")} ${hb.padEnd(10)} ${taskInfo}`;
+        const line = `  ${label.padEnd(26)} ${badge.padEnd(18)} ${chalk.dim("\u2665")} ${hb.padEnd(10)} ${taskInfo}`;
         lines.push(line);
       }
 

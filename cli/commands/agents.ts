@@ -3,7 +3,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { apiGet } from "../lib/api-client";
-import { statusBadge, relativeTime, createTable } from "../lib/formatters";
+import { statusBadge, relativeTime, createTable, agentLabel } from "../lib/formatters";
 import type { AgentResponse, TaskResponse, PaginatedResponse } from "../types";
 import type { DisplayStatusResult } from "../types";
 
@@ -78,8 +78,8 @@ export function registerAgentsCommand(program: Command): void {
           .reduce((sum, [, v]) => sum + v, 0);
 
         table.push([
-          statusBadge(ds) + " " + agent.slug,
-          ds.label.toLowerCase(),
+          agentLabel(agent.slug, agent.name),
+          statusBadge(ds),
           relativeTime(agent.last_heartbeat),
           `${totalDone} done`,
           agent.autonomy_level,
