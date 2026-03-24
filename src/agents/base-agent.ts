@@ -6,7 +6,11 @@ import { Logger } from "../gateway/logger";
 import { AgentManifest, resolveAgentFiles, loadSkills } from "./agent-loader";
 import { loadBrandContext } from "../context/context-manager";
 import { buildSystemPrompt, buildTaskPrompt } from "../context/prompt-builder";
-import { fetchAgentSkills, fetchSystemContext, fetchTaskContext as fetchTaskCtxFromDb } from "../knowledge/knowledge-reader";
+import {
+  fetchAgentSkills,
+  fetchSystemContext,
+  fetchTaskContext as fetchTaskCtxFromDb,
+} from "../knowledge/knowledge-reader";
 import { routeRequest, AgentRouting } from "../gateway/router";
 import { LLMResponse, ToolDefinition, PipelineData } from "../llm/types";
 import { createTask, updateTaskStatus, createApproval } from "../supabase/task-writer";

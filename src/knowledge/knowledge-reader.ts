@@ -78,11 +78,7 @@ export async function fetchSystemContext(supabase: SupabaseClient, agentSlug: st
 /**
  * Fetch task context for a specific task type. Includes task_context and few_shot items.
  */
-export async function fetchTaskContext(
-  supabase: SupabaseClient,
-  agentSlug: string,
-  taskType: string,
-): Promise<string> {
+export async function fetchTaskContext(supabase: SupabaseClient, agentSlug: string, taskType: string): Promise<string> {
   const [taskCtx, fewShot] = await Promise.all([
     fetchKnowledge(supabase, agentSlug, "task_context", taskType),
     fetchKnowledge(supabase, agentSlug, "few_shot", taskType),

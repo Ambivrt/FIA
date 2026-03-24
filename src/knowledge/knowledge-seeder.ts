@@ -191,7 +191,13 @@ export async function seedAllKnowledge(
       results.push(diff);
     } catch (err) {
       // Non-fatal per agent
-      results.push({ slug, added: 0, updated: 0, unchanged: 0, items: [{ slug, category: "error", diff: (err as Error).message }] });
+      results.push({
+        slug,
+        added: 0,
+        updated: 0,
+        unchanged: 0,
+        items: [{ slug, category: "error", diff: (err as Error).message }],
+      });
     }
   }
 
