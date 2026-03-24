@@ -20,6 +20,7 @@ import { registerWatchCommand } from "./commands/watch";
 import { registerConfigCommand } from "./commands/config";
 import { registerTriggersCommand } from "./commands/triggers";
 import { registerLineageCommand } from "./commands/lineage";
+import { registerCronCommand } from "./commands/cron";
 
 const program = new Command();
 
@@ -49,6 +50,7 @@ registerWatchCommand(program);
 registerConfigCommand(program);
 registerTriggersCommand(program);
 registerLineageCommand(program);
+registerCronCommand(program);
 
 // Globalt felhantering
 program.exitOverride();
