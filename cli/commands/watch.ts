@@ -124,8 +124,7 @@ async function render(): Promise<void> {
 
     const label = agentLabel(agent.slug, agent.name, 22);
     process.stdout.write(
-      EARTH.plum("\u2502") +
-        `  ${label} ${badge} ${chalk.dim("\u2665")} ${hb.padEnd(8)} ${taskInfo}\n`,
+      EARTH.plum("\u2502") + `  ${label} ${badge} ${chalk.dim("\u2665")} ${hb.padEnd(8)} ${taskInfo}\n`,
     );
   }
 
