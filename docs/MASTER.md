@@ -27,15 +27,15 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 **Nytt i 0.5.5:**
 
-| Komponent                                                                          | Status |
-| ---------------------------------------------------------------------------------- | ------ |
-| Knowledge seeder (`src/knowledge/knowledge-seeder.ts`) – seed från YAML/disk       | Klart  |
-| Brand context seedas som delad `_shared` system_context                            | Klart  |
-| Few-shot-filer kategoriseras som `few_shot` (detekterar `few-shot/`-sökvägar)      | Klart  |
-| `reseed_knowledge`-command i command-listener (Dashboard → Gateway)                | Klart  |
-| Knowledge REST-endpoint (`POST /api/knowledge/reseed`) med dry-run + confirm       | Klart  |
-| Fix: upsert-konflikt – COALESCE-baserat index → vanligt unikt index                | Klart  |
-| Fix: `emitCommand` returnerar fel istället för att svälja dem                      | Klart  |
+| Komponent                                                                     | Status |
+| ----------------------------------------------------------------------------- | ------ |
+| Knowledge seeder (`src/knowledge/knowledge-seeder.ts`) – seed från YAML/disk  | Klart  |
+| Brand context seedas som delad `_shared` system_context                       | Klart  |
+| Few-shot-filer kategoriseras som `few_shot` (detekterar `few-shot/`-sökvägar) | Klart  |
+| `reseed_knowledge`-command i command-listener (Dashboard → Gateway)           | Klart  |
+| Knowledge REST-endpoint (`POST /api/knowledge/reseed`) med dry-run + confirm  | Klart  |
+| Fix: upsert-konflikt – COALESCE-baserat index → vanligt unikt index           | Klart  |
+| Fix: `emitCommand` returnerar fel istället för att svälja dem                 | Klart  |
 
 **Klart sedan tidigare (0.5.3):**
 
@@ -65,11 +65,11 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 **Nytt i 0.5.5:**
 
-| Komponent                                                                | Status |
-| ------------------------------------------------------------------------ | ------ |
-| Knowledge Library-sida med filtrering, sökning, CRUD                     | Klart  |
-| "Populera från server"-knapp (reseed knowledge, admin only)              | Klart  |
-| `agent_knowledge`-tabell med RLS + Realtime                              | Klart  |
+| Komponent                                                               | Status |
+| ----------------------------------------------------------------------- | ------ |
+| Knowledge Library-sida med filtrering, sökning, CRUD                    | Klart  |
+| "Populera från server"-knapp (reseed knowledge, admin only)             | Klart  |
+| `agent_knowledge`-tabell med RLS + Realtime                             | Klart  |
 | Fix: upsert-index (COALESCE → plain unique), felhantering i emitCommand | Klart  |
 
 **Klart sedan tidigare (0.5.2–0.5.3):**
