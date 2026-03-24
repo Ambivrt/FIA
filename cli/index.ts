@@ -20,13 +20,14 @@ import { registerWatchCommand } from "./commands/watch";
 import { registerConfigCommand } from "./commands/config";
 import { registerTriggersCommand } from "./commands/triggers";
 import { registerLineageCommand } from "./commands/lineage";
+import { registerCronCommand } from "./commands/cron";
 
 const program = new Command();
 
 program
   .name("fia")
   .description("FIA CLI – Terminal interface for Forefront Intelligent Automation")
-  .version("0.5.2")
+  .version("0.5.3")
   .action(() => {
     // Visa banner när fia körs utan kommando
     process.stdout.write(banner());
@@ -49,6 +50,7 @@ registerWatchCommand(program);
 registerConfigCommand(program);
 registerTriggersCommand(program);
 registerLineageCommand(program);
+registerCronCommand(program);
 
 // Globalt felhantering
 program.exitOverride();

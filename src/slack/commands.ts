@@ -7,6 +7,17 @@ import { TaskQueue, QueueCompleteCallback } from "../gateway/task-queue";
 import { updateTaskStatus, createApproval, purgeOrphanedTasks } from "../supabase/task-writer";
 import { logActivity } from "../supabase/activity-writer";
 import { resolveDisplayStatus, type DisplayStatus } from "../shared/display-status";
+import {
+  listScheduledJobs,
+  getScheduledJob,
+  createScheduledJob,
+  updateScheduledJob,
+  deleteScheduledJob,
+  enableScheduledJob,
+  disableScheduledJob,
+  resolveAgentBySlug,
+  CronServiceError,
+} from "../shared/cron-service";
 import { createAgent, getAllAgentSlugs } from "../agents/agent-factory";
 import { loadAgentManifest } from "../agents/agent-loader";
 import { ProgressCallback } from "../agents/base-agent";
@@ -32,7 +43,7 @@ export function registerCommands(
 
     switch (subcommand) {
       case "status": {
-        let statusText = ":robot_face: *FIA Gateway v0.5.2*\nGateway is running.";
+        let statusText = ":robot_face: *FIA Gateway v0.5.3*\nGateway is running.";
 
         if (killSwitch) {
           const ks = killSwitch.getStatus();
@@ -640,6 +651,196 @@ export function registerCommands(
         break;
       }
 
+      case "cron":
+      case "schedule":
+      case "jobs": {
+        if (!supabase) {
+          await respond({ response_type: "ephemeral", text: ":x: Supabase krävs." });
+          break;
+        }
+
+        const cronSubCmd = args[1]?.toLowerCase();
+
+        try {
+          // /fia cron create <agent> <task-type> <m> <h> <dom> <mon> <dow> <title...>
+          if (cronSubCmd === "create") {
+            const agentSlug = args[2];
+            const taskType = args[3];
+            const cronFields = args.slice(4, 9);
+            const titleParts = args.slice(9);
+
+            if (!agentSlug || !taskType || cronFields.length < 5 || titleParts.length === 0) {
+              await respond({
+                response_type: "ephemeral",
+                text:
+                  "Usage: `/fia cron create <agent> <task-type> <min> <hour> <dom> <mon> <dow> <title...>`\n" +
+                  "Example: `/fia cron create analytics morning_pulse 0 7 * * 1-5 Morgonpuls varje vardag`",
+              });
+              break;
+            }
+
+            const cronExpr = cronFields.join(" ");
+            const title = titleParts.join(" ");
+
+            const agent = await resolveAgentBySlug(supabase, agentSlug);
+            const job = await createScheduledJob(
+              supabase,
+              {
+                agent_id: agent.id,
+                cron_expression: cronExpr,
+                task_type: taskType,
+                title,
+              },
+              "slack",
+            );
+
+            await logActivity(supabase, {
+              action: "scheduled_job_created",
+              details_json: { job_id: job.id, agent: agentSlug, cron: cronExpr, source: "slack" },
+            });
+
+            await respond({
+              response_type: "in_channel",
+              text: `:white_check_mark: *Cron-jobb skapat:* \`${job.id.slice(0, 8)}\` – *${agentSlug}*/${taskType} \`${cronExpr}\` "${title}"`,
+            });
+            break;
+          }
+
+          // /fia cron edit <id> <field>=<value> ...
+          if (cronSubCmd === "edit") {
+            const jobId = args[2];
+            const kvPairs = args.slice(3);
+            if (!jobId || kvPairs.length === 0) {
+              await respond({
+                response_type: "ephemeral",
+                text: "Usage: `/fia cron edit <id> <field>=<value> ...`\nFields: cron, task_type, title, priority, description, agent",
+              });
+              break;
+            }
+
+            const updates: Record<string, unknown> = {};
+            for (const kv of kvPairs) {
+              const eqIdx = kv.indexOf("=");
+              if (eqIdx === -1) continue;
+              const key = kv.slice(0, eqIdx).toLowerCase();
+              const val = kv.slice(eqIdx + 1);
+              if (key === "cron") updates.cron_expression = val.replace(/_/g, " ");
+              else if (key === "task_type") updates.task_type = val;
+              else if (key === "title") updates.title = val.replace(/_/g, " ");
+              else if (key === "priority") updates.priority = val;
+              else if (key === "description") updates.description = val.replace(/_/g, " ");
+              else if (key === "agent") {
+                const a = await resolveAgentBySlug(supabase, val);
+                updates.agent_id = a.id;
+              }
+            }
+
+            if (Object.keys(updates).length === 0) {
+              await respond({ response_type: "ephemeral", text: ":x: Inga giltiga fält att uppdatera." });
+              break;
+            }
+
+            const job = await updateScheduledJob(supabase, jobId, updates, "slack");
+
+            await respond({
+              response_type: "in_channel",
+              text: `:pencil2: *Cron-jobb uppdaterat:* \`${job.id.slice(0, 8)}\` – *${(job as any).agents?.slug ?? "?"}*/${job.task_type} "${job.title}"`,
+            });
+            break;
+          }
+
+          // /fia cron delete <id>
+          if (cronSubCmd === "delete") {
+            const jobId = args[2];
+            if (!jobId) {
+              await respond({ response_type: "ephemeral", text: "Usage: `/fia cron delete <id>`" });
+              break;
+            }
+
+            const job = await getScheduledJob(supabase, jobId);
+            await deleteScheduledJob(supabase, job.id, "slack");
+
+            await logActivity(supabase, {
+              action: "scheduled_job_deleted",
+              details_json: { job_id: job.id, title: job.title, source: "slack" },
+            });
+
+            await respond({
+              response_type: "in_channel",
+              text: `:wastebasket: *Cron-jobb borttaget:* \`${job.id.slice(0, 8)}\` – "${job.title}"`,
+            });
+            break;
+          }
+
+          // /fia cron enable <id>
+          if (cronSubCmd === "enable") {
+            const jobId = args[2];
+            if (!jobId) {
+              await respond({ response_type: "ephemeral", text: "Usage: `/fia cron enable <id>`" });
+              break;
+            }
+            const job = await enableScheduledJob(supabase, jobId, "slack");
+            await respond({
+              response_type: "in_channel",
+              text: `:white_check_mark: Cron-jobb *aktiverat*: \`${job.id.slice(0, 8)}\` – "${job.title}"`,
+            });
+            break;
+          }
+
+          // /fia cron disable <id>
+          if (cronSubCmd === "disable") {
+            const jobId = args[2];
+            if (!jobId) {
+              await respond({ response_type: "ephemeral", text: "Usage: `/fia cron disable <id>`" });
+              break;
+            }
+            const job = await disableScheduledJob(supabase, jobId, "slack");
+            await respond({
+              response_type: "in_channel",
+              text: `:no_entry_sign: Cron-jobb *inaktiverat*: \`${job.id.slice(0, 8)}\` – "${job.title}"`,
+            });
+            break;
+          }
+
+          // /fia cron – list all (default)
+          const jobs = await listScheduledJobs(supabase);
+
+          if (jobs.length === 0) {
+            await respond({ response_type: "ephemeral", text: "_Inga schemalagda jobb._" });
+            break;
+          }
+
+          const PRIORITY_ICON: Record<string, string> = {
+            critical: ":red_circle:",
+            high: ":large_yellow_circle:",
+            normal: ":white_circle:",
+            low: ":white_circle:",
+          };
+
+          const lines = [`:calendar: *Schemalagda jobb (${jobs.length})*`];
+          for (const j of jobs) {
+            const agentSlug = (j as any).agents?.slug ?? "?";
+            const icon = j.enabled ? ":white_check_mark:" : ":no_entry_sign:";
+            const pIcon = PRIORITY_ICON[j.priority] ?? ":white_circle:";
+            lines.push(
+              `${icon} ${pIcon} \`${j.id.slice(0, 8)}\` \`${j.cron_expression}\` – *${agentSlug}*/${j.task_type} "${j.title}"`,
+            );
+          }
+          lines.push(
+            "",
+            "_Create: `/fia cron create <agent> <task-type> <cron 5 fält> <titel>`_",
+            "_Edit: `/fia cron edit <id> <fält>=<värde>`  |  Delete: `/fia cron delete <id>`_",
+            "_Enable/Disable: `/fia cron enable|disable <id>`_",
+          );
+
+          await respond({ response_type: "ephemeral", text: lines.join("\n") });
+        } catch (err) {
+          const msg = err instanceof CronServiceError ? err.message : (err as Error).message;
+          await respond({ response_type: "ephemeral", text: `:x: ${msg}` });
+        }
+        break;
+      }
+
       case "purge": {
         if (!supabase) {
           await respond({ response_type: "ephemeral", text: ":x: Supabase krävs." });
@@ -683,6 +884,11 @@ export function registerCommands(
           "  `/fia triggers approve <id>` – Godkänn pending trigger",
           "  `/fia triggers reject <id> <reason>` – Avslå pending trigger",
           "  `/fia lineage <task-id>` – Visa task-träd (föräldrar och barn)",
+          "  `/fia cron` – Lista schemalagda cron-jobb",
+          "  `/fia cron create <agent> <type> <cron 5 fält> <titel>` – Skapa jobb",
+          "  `/fia cron edit <id> <fält>=<värde>` – Redigera jobb",
+          "  `/fia cron delete <id>` – Ta bort jobb",
+          "  `/fia cron enable|disable <id>` – Aktivera/inaktivera jobb",
           "  `/fia purge` – Rensa stale queued/in_progress tasks (>30 min)",
           "  `/fia help` – Visa denna hjälptext",
           "",
