@@ -53,6 +53,23 @@ export function colorByAgent(slug: string, text: string): string {
   return colorFn(text);
 }
 
+// Ikon per agent-slug
+const AGENT_ICONS: Record<string, string> = {
+  strategy: "♟",
+  content: "✏",
+  campaign: "📣",
+  seo: "🔍",
+  lead: "🎯",
+  analytics: "📊",
+  brand: "🛡",
+  intelligence: "📡",
+};
+
+export function agentLabel(slug: string, name: string): string {
+  const icon = AGENT_ICONS[slug] ?? "●";
+  return `${icon} ${colorByAgent(slug, name)}`;
+}
+
 export function relativeTime(dateStr: string | null): string {
   if (!dateStr) return "—";
   const diff = Date.now() - new Date(dateStr).getTime();

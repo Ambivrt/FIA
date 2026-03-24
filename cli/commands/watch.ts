@@ -4,7 +4,7 @@ import { Command } from "commander";
 import chalk from "chalk";
 import { apiGet } from "../lib/api-client";
 import { subscribeToActivityLog, unsubscribe } from "../lib/realtime";
-import { statusBadge, relativeTime, progressBar, EARTH, GRADIENT } from "../lib/formatters";
+import { statusBadge, relativeTime, progressBar, EARTH, GRADIENT, agentLabel } from "../lib/formatters";
 import type {
   AgentResponse,
   KillSwitchStatus,
@@ -122,8 +122,9 @@ async function render(): Promise<void> {
       taskInfo = chalk.dim("\u2014");
     }
 
+    const label = agentLabel(agent.slug, agent.name);
     process.stdout.write(
-      EARTH.plum("\u2502") + `  ${badge.padEnd(28)} ${chalk.dim("\u2665")} ${hb.padEnd(8)} ${taskInfo}\n`,
+      EARTH.plum("\u2502") + `  ${badge.padEnd(28)} ${label.padEnd(26)} ${chalk.dim("\u2665")} ${hb.padEnd(8)} ${taskInfo}\n`,
     );
   }
 
