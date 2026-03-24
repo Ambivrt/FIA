@@ -66,8 +66,7 @@ const AGENT_ICONS: Record<string, string> = {
 };
 
 export function agentLabel(slug: string, name: string): string {
-  const icon = AGENT_ICONS[slug] ?? "●";
-  return `${icon} ${colorByAgent(slug, name)}`;
+  return colorByAgent(slug, name);
 }
 
 export function relativeTime(dateStr: string | null): string {
