@@ -65,10 +65,7 @@ function validateCronExpression(expr: string): void {
 
 function validatePriority(p: string): void {
   if (!VALID_PRIORITIES.includes(p as (typeof VALID_PRIORITIES)[number])) {
-    throw new CronServiceError(
-      "VALIDATION_ERROR",
-      `Ogiltig prioritet "${p}". Giltiga: ${VALID_PRIORITIES.join(", ")}`,
-    );
+    throw new CronServiceError("VALIDATION_ERROR", `Ogiltig prioritet "${p}". Giltiga: ${VALID_PRIORITIES.join(", ")}`);
   }
 }
 
@@ -94,11 +91,7 @@ export async function resolveAgentBySlug(
   supabase: SupabaseClient,
   slug: string,
 ): Promise<{ id: string; slug: string; name: string }> {
-  const { data, error } = await supabase
-    .from("agents")
-    .select("id, slug, name")
-    .eq("slug", slug)
-    .single();
+  const { data, error } = await supabase.from("agents").select("id, slug, name").eq("slug", slug).single();
 
   if (error || !data) {
     throw new CronServiceError("AGENT_NOT_FOUND", `Agent "${slug}" hittades inte.`);
@@ -111,20 +104,14 @@ export async function resolveJobId(supabase: SupabaseClient, input: string): Pro
   if (input.length === 36 && input.includes("-")) return input;
 
   // Prefix match
-  const { data, error } = await supabase
-    .from("scheduled_jobs")
-    .select("id")
-    .like("id", `${input}%`);
+  const { data, error } = await supabase.from("scheduled_jobs").select("id").like("id", `${input}%`);
 
   if (error) throw new CronServiceError("DB_ERROR", error.message);
   if (!data || data.length === 0) {
     throw new CronServiceError("JOB_NOT_FOUND", `Inget jobb med ID-prefix "${input}".`);
   }
   if (data.length > 1) {
-    throw new CronServiceError(
-      "AMBIGUOUS_ID",
-      `"${input}" matchar ${data.length} jobb. Ange fler tecken.`,
-    );
+    throw new CronServiceError("AMBIGUOUS_ID", `"${input}" matchar ${data.length} jobb. Ange fler tecken.`);
   }
   return data[0].id;
 }
@@ -141,10 +128,7 @@ export async function listScheduledJobs(supabase: SupabaseClient): Promise<Sched
   return (data ?? []) as unknown as ScheduledJob[];
 }
 
-export async function getScheduledJob(
-  supabase: SupabaseClient,
-  id: string,
-): Promise<ScheduledJob> {
+export async function getScheduledJob(supabase: SupabaseClient, id: string): Promise<ScheduledJob> {
   const fullId = await resolveJobId(supabase, id);
 
   const { data, error } = await supabase
@@ -222,11 +206,7 @@ export async function updateScheduledJob(
   return data as unknown as ScheduledJob;
 }
 
-export async function deleteScheduledJob(
-  supabase: SupabaseClient,
-  id: string,
-  issuedBy: string,
-): Promise<void> {
+export async function deleteScheduledJob(supabase: SupabaseClient, id: string, issuedBy: string): Promise<void> {
   const fullId = await resolveJobId(supabase, id);
 
   const { error } = await supabase.from("scheduled_jobs").delete().eq("id", fullId);

@@ -10,14 +10,7 @@
 
 import { Command } from "commander";
 import chalk from "chalk";
-import {
-  createTable,
-  shortId,
-  relativeTime,
-  successMsg,
-  errorMsg,
-  EARTH,
-} from "../lib/formatters";
+import { createTable, shortId, relativeTime, successMsg, errorMsg, EARTH } from "../lib/formatters";
 import { getSupabaseClient } from "../lib/supabase";
 import {
   listScheduledJobs,
@@ -84,7 +77,7 @@ export function registerCronCommand(program: Command): void {
     .command("create")
     .description("Create a new scheduled cron job")
     .requiredOption("--agent <slug>", "Agent slug (e.g. analytics, content)")
-    .requiredOption("--cron <expression>", "Cron expression (e.g. \"0 7 * * 1-5\")")
+    .requiredOption("--cron <expression>", 'Cron expression (e.g. "0 7 * * 1-5")')
     .requiredOption("--task-type <type>", "Task type (e.g. morning_pulse)")
     .requiredOption("--title <title>", "Job title")
     .option("--priority <priority>", "Priority: critical, high, normal, low", "normal")
@@ -120,9 +113,7 @@ export function registerCronCommand(program: Command): void {
             "cli",
           );
 
-          successMsg(
-            `Job created: ${shortId(job.id)} – ${opts.agent}/${opts.taskType} "${opts.title}" [${opts.cron}]`,
-          );
+          successMsg(`Job created: ${shortId(job.id)} – ${opts.agent}/${opts.taskType} "${opts.title}" [${opts.cron}]`);
         } catch (err) {
           handleError(err);
         }

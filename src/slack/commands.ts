@@ -672,7 +672,8 @@ export function registerCommands(
             if (!agentSlug || !taskType || cronFields.length < 5 || titleParts.length === 0) {
               await respond({
                 response_type: "ephemeral",
-                text: "Usage: `/fia cron create <agent> <task-type> <min> <hour> <dom> <mon> <dow> <title...>`\n" +
+                text:
+                  "Usage: `/fia cron create <agent> <task-type> <min> <hour> <dom> <mon> <dow> <title...>`\n" +
                   "Example: `/fia cron create analytics morning_pulse 0 7 * * 1-5 Morgonpuls varje vardag`",
               });
               break;
