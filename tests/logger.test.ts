@@ -25,7 +25,8 @@ function makeTempConfig(): AppConfig {
     linkedinAccessToken: "",
     ga4CredentialsPath: "",
     bufferAccessToken: "",
-    gatewayApiPort: 3001,
+    gatewayApiHost: "127.0.0.1",
+  gatewayApiPort: 3001,
     usdToSek: 10.5,
     queueMaxConcurrency: 3,
   };

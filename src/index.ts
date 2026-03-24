@@ -101,7 +101,7 @@ async function main(): Promise<void> {
   // --- REST API ---
   if (supabase) {
     const app = createApiServer(config, logger, supabase, killSwitch);
-    startApiServer(app, config.gatewayApiPort, logger);
+    startApiServer(app, config.gatewayApiPort, config.gatewayApiHost, logger);
   } else {
     logger.warn("REST API not started – Supabase required", { action: "api_init" });
   }

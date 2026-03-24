@@ -6,6 +6,7 @@ import { AppConfig } from "../utils/config";
 import { Logger } from "../gateway/logger";
 import { KillSwitch } from "../utils/kill-switch";
 import { requireAuth } from "./middleware/auth";
+import { dnsRebindingProtection } from "./middleware/dns-rebinding";
 import { agentRoutes } from "./routes/agents";
 import { taskRoutes } from "./routes/tasks";
 import { metricRoutes } from "./routes/metrics";
@@ -22,6 +23,15 @@ export function createApiServer(
   const app = express();
 
   app.use(express.json());
+
+  // DNS rebinding protection — validate Host header
+  const port = config.gatewayApiPort;
+  const host = config.gatewayApiHost;
+  app.use(
+    dnsRebindingProtection({
+      allowedHosts: [`${host}:${port}`, `localhost:${port}`, `127.0.0.1:${port}`],
+    }),
+  );
 
   // Assign correlation ID to every request
   app.use((req, _res, next) => {
@@ -65,8 +75,8 @@ export function createApiServer(
   return app;
 }
 
-export function startApiServer(app: express.Express, port: number, logger: Logger): void {
-  app.listen(port, () => {
-    logger.info(`API server listening on port ${port}`, { action: "api_start" });
+export function startApiServer(app: express.Express, port: number, host: string, logger: Logger): void {
+  app.listen(port, host, () => {
+    logger.info(`API server listening on ${host}:${port}`, { action: "api_start" });
   });
 }
