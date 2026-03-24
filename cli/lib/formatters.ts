@@ -33,9 +33,10 @@ const CHALK_MAP: Record<DisplayStatus, chalk.Chalk> = {
   error: chalk.red,
 };
 
-export function statusBadge(result: DisplayStatusResult): string {
+export function statusBadge(result: DisplayStatusResult, width?: number): string {
   const colorFn = CHALK_MAP[result.status];
-  return colorFn(`${result.symbol} ${result.label.toLowerCase()}`);
+  const text = `${result.symbol} ${result.label.toLowerCase()}`;
+  return colorFn(width ? text.padEnd(width) : text);
 }
 
 export function statusSymbol(result: DisplayStatusResult): string {
@@ -65,8 +66,9 @@ const AGENT_ICONS: Record<string, string> = {
   intelligence: "📡",
 };
 
-export function agentLabel(slug: string, name: string): string {
-  return colorByAgent(slug, name);
+export function agentLabel(slug: string, name: string, width?: number): string {
+  const padded = width ? name.padEnd(width) : name;
+  return colorByAgent(slug, padded);
 }
 
 export function relativeTime(dateStr: string | null): string {

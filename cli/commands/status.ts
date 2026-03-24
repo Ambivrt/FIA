@@ -50,6 +50,7 @@ export function registerStatusCommand(program: Command): void {
             color: string;
             symbol: string;
           },
+          10,
         );
         const hb = relativeTime(agent.last_heartbeat);
         const taskInfo =
@@ -57,8 +58,8 @@ export function registerStatusCommand(program: Command): void {
             ? chalk.dim(Object.keys(agent.tasks_today).find((k) => k === "in_progress") ? "" : "")
             : "";
 
-        const label = agentLabel(agent.slug, agent.name);
-        const line = `  ${label.padEnd(28)} ${badge.padEnd(18)} ${chalk.dim("\u2665")} ${hb.padEnd(10)} ${taskInfo}`;
+        const label = agentLabel(agent.slug, agent.name, 22);
+        const line = `  ${label} ${badge} ${chalk.dim("\u2665")} ${hb.padEnd(10)} ${taskInfo}`;
         lines.push(line);
       }
 
