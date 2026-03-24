@@ -165,7 +165,7 @@ export async function seedAgentKnowledge(
     const { error } = await supabase.from("agent_knowledge").upsert(
       inserts.map((ins) => ({
         ...ins,
-        task_type: ins.task_type ?? null,
+        task_type: ins.task_type ?? "",
       })),
       { onConflict: "agent_slug,category,task_type,slug", ignoreDuplicates: false },
     );
@@ -233,7 +233,7 @@ export async function seedBrandContext(supabase: SupabaseClient, config: AppConf
 
   if (inserts.length > 0) {
     const { error } = await supabase.from("agent_knowledge").upsert(
-      inserts.map((ins) => ({ ...ins, task_type: null })),
+      inserts.map((ins) => ({ ...ins, task_type: "" })),
       { onConflict: "agent_slug,category,task_type,slug", ignoreDuplicates: false },
     );
     if (error) throw error;
