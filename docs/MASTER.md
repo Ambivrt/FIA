@@ -2,69 +2,47 @@
 
 All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och principer. Gateway- och Dashboard-repon pekar hit.
 
-**Version:** 0.5.2
-**Senast uppdaterad:** 2026-03-23
+**Version:** 0.5.3
+**Senast uppdaterad:** 2026-03-24
 
 ---
 
-## Nuläge (2026-03-23)
+## Nuläge (2026-03-24)
 
 ### Övergripande status
 
 | Delsystem            | Status                                                              | Deploy             |
 | -------------------- | ------------------------------------------------------------------- | ------------------ |
-| Gateway (backend)    | Solid MVP, 8 agenter, trigger engine, trigger config, CI/CD         | 0.5.2 (2026-03-23) |
-| CLI                  | 15 kommandon, triggers, lineage, trigger config/reseed              | 0.5.2 (2026-03-23) |
-| Dashboard (frontend) | Robust MVP, trigger-kö, trigger-konfig, task-relationer, i18n, PWA  | Live på Lovable    |
-| Supabase (DB)        | 11 tabeller, RLS, Realtime, pending_triggers                        | EU-region aktiv    |
+| Gateway (backend)    | Solid MVP, 8 agenter, trigger engine, dynamisk scheduler, CI/CD    | 0.5.3 (2026-03-24) |
+| CLI                  | 16 kommandon, cron CRUD, triggers, lineage                         | 0.5.3 (2026-03-24) |
+| Dashboard (frontend) | Robust MVP, cron-hantering, trigger-kö, task-relationer, i18n, PWA | Live på Lovable    |
+| Supabase (DB)        | 11 tabeller, RLS, Realtime, pending_triggers, scheduled_jobs       | EU-region aktiv    |
 | GCP (hosting)        | Compute Engine konfigurerad                                         | europe-north1-b    |
-| Slack                | triggers, lineage, notify_slack live, pending trigger notifications | 0.5.2 (2026-03-23) |
+| Slack                | cron CRUD, triggers, lineage, notify_slack, auto-notiser           | 0.5.3 (2026-03-24) |
 | MCP-integrationer    | gws kopplad till agenter (Drive, Docs, Sheets)                      | Live               |
 
 ### Backend – Gateway (Ambivrt/FIA)
 
-**Kodbas:** ~80 TypeScript-filer, ~9 000 LOC, TypeScript strict mode, 22 testfiler (304 tester), CI/CD via GitHub Actions, ESLint + Prettier.
+**Kodbas:** ~85 TypeScript-filer, ~9 500 LOC, TypeScript strict mode, 22 testfiler (304 tester), CI/CD via GitHub Actions, ESLint + Prettier.
 
-**Nytt i 0.5.1:**
-
-| Komponent                                                 | Status |
-| --------------------------------------------------------- | ------ |
-| Task Status & Trigger Engine (`src/engine/`)              | Klart  |
-| Utökad statusmodell (17 statusar, statusmaskin)           | Klart  |
-| Deklarativa triggers i agent.yaml (7 triggers, 4 agenter) | Klart  |
-| pending_triggers-tabell + API endpoints                   | Klart  |
-| Task-relationer (parent_task_id, children, lineage)       | Klart  |
-| Migration 013: status + triggers                          | Klart  |
-
-**Nytt i 0.5.2:**
-
-| Komponent                                                           | Status |
-| ------------------------------------------------------------------- | ------ |
-| Trigger-konfiguration i config_json (runtime source of truth)       | Klart  |
-| GET/PATCH `/api/agents/:slug/triggers` endpoints                    | Klart  |
-| POST reseed endpoints (per agent + alla agenter, dry-run + confirm) | Klart  |
-| Trigger engine läser från config_json istället för YAML             | Klart  |
-| Zod-schema för trigger-patch-validering (`trigger-config.ts`)       | Klart  |
-| `reseed_triggers` command i command-listener                        | Klart  |
-| `_yaml_triggers` i config_json för dashboard-diff                   | Klart  |
-
-**Nytt i 0.5.2 (forts.) – CLI & Slack:**
+**Nytt i 0.5.3:**
 
 | Komponent                                                                     | Status |
 | ----------------------------------------------------------------------------- | ------ |
-| `fia triggers` – lista pending trigger-kö (brand-färgad tabell)               | Klart  |
-| `fia triggers approve/reject` – godkänn/avslå pending trigger                 | Klart  |
-| `fia triggers config [agent] --enable/--disable` – visa/växla trigger-config  | Klart  |
-| `fia triggers reseed [agent] --confirm` – dry-run diff + reseed från YAML     | Klart  |
-| `fia lineage <task-id>` – ASCII-träd: ancestor → current → children           | Klart  |
-| `fia watch` – visar pending trigger-räknare (gul när > 0)                     | Klart  |
-| CLI-version bumpad till 0.5.2 (13 → 15 kommandon)                             | Klart  |
-| `cli/types.ts` – PendingTrigger, TriggerConfig, LineageTask                   | Klart  |
-| Slack `/fia triggers` – Block Kit-lista med pending triggers                  | Klart  |
-| Slack `/fia triggers approve/reject` – godkänn/avslå i Slack                  | Klart  |
-| Slack `/fia lineage <task-id>` – ancestor + current + children                | Klart  |
-| `notify_slack`-action i trigger-engine – postar via Bolt (ej längre deferred) | Klart  |
-| Pending trigger → auto-notis till `#fia-orchestrator` med approve-kommando    | Klart  |
+| Delad cron-service (`src/shared/cron-service.ts`) – CRUD med validering       | Klart  |
+| `fia cron` CLI-kommando – list, create, edit, delete, enable, disable         | Klart  |
+| `/fia cron` Slack-kommandon – samma CRUD via Slack                            | Klart  |
+| CLI Supabase-klient (`cli/lib/supabase.ts`) – direkt DB-åtkomst              | Klart  |
+| Triple-interface komplett: Dashboard + CLI + Slack har likvärdig cron-CRUD    | Klart  |
+| `update_schedule`-command → scheduler.reload() vid alla mutationer            | Klart  |
+| CLI-version bumpad till 0.5.3 (15 → 16 kommandon)                             | Klart  |
+
+**Klart sedan tidigare (0.5.1–0.5.2):**
+- Trigger engine med config_json, reseed, 7 triggers i 4 agenter
+- CLI: triggers, lineage, config/reseed (15 kommandon)
+- Slack: triggers, lineage, auto-notiser
+- Dashboard: trigger-konfiguration, trigger-kö, task-relationer
+- 17-statusmodell med statusmaskin
 
 **Kvarstår:**
 
@@ -78,24 +56,16 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
 
 **Kodbas:** React 18.3 + Vite 5.4 + TypeScript 5.8 (strict: true), Tailwind 3.4 + shadcn/ui, TanStack React Query 5.83, 15 sidor, 30+ komponenter, 80+ API-funktioner.
 
-**Nytt i 0.5.1:**
-
-| Komponent                                    | Status |
-| -------------------------------------------- | ------ |
-| TaskStatusBadge (17 statusar, ikoner/färger) | Klart  |
-| TriggersPage (trigger-godkännandekö)         | Klart  |
-| Task-relationer i TaskDetailSheet            | Klart  |
-
-**Nytt i 0.5.2:**
+**Senaste (0.5.2–0.5.3):**
 
 | Komponent                                                      | Status |
 | -------------------------------------------------------------- | ------ |
-| AgentTriggersTab (ny flik i AgentDetailPage)                   | Klart  |
-| TriggerCard med collapsed/expanded vy och inline-redigering    | Klart  |
-| TriggersConfigPage (`/triggers/config`) med grupperad översikt | Klart  |
-| Reseed-stöd i SettingsPage (admin) och AgentTriggersTab        | Klart  |
-| Enable/disable toggle med optimistisk uppdatering              | Klart  |
-| 11 nya trigger-komponenter (`components/triggers/`)            | Klart  |
+| SchedulerSection – komplett CRUD för schemalagda jobb           | Klart  |
+| Visuell cron-editor (daglig/veckovis/månatlig + avancerat läge)| Klart  |
+| Realtidssynk med `update_schedule`-command                     | Klart  |
+| Trigger-konfiguration: AgentTriggersTab, TriggerCard, reseed   | Klart  |
+| TriggersConfigPage med systemövergripande trigger-översikt     | Klart  |
+| TaskStatusBadge (17 statusar), task-relationer                 | Klart  |
 | i18n-nycklar (sv + en, 40+ nycklar)                            | Klart  |
 
 **Kvarstår:**
@@ -162,7 +132,7 @@ All arkitektur, agentdefinitioner, datamodell, API-kontrakt, roadmap och princip
                     └───────────────────────────────┘
 ```
 
-**Triple-interface:** Slack, Dashboard och CLI fungerar parallellt. Gateway är källan till sanning – skriver agentdata till Supabase, dashboarden läser via Supabase Realtime, CLI:n pratar med gatewayens REST API. Kommandon (pausa, godkänn, kill switch) kan ges via alla tre gränssnitten.
+**Triple-interface:** Slack, Dashboard och CLI fungerar parallellt. Gateway är källan till sanning – skriver agentdata till Supabase, dashboarden läser via Supabase Realtime, CLI:n pratar med REST API och Supabase direkt (cron-CRUD). Kommandon (pausa, godkänn, kill switch, cron-jobb) kan ges via alla tre gränssnitten. Delad affärslogik i `src/shared/` (display-status, cron-service).
 
 ---
 
@@ -233,7 +203,7 @@ z.union([
 | ----------------- | ------------------------------------ | --------------------------------------------------------------- |
 | Runtime           | Node.js ≥20 LTS (PM2)                | Always-on daemon                                                |
 | Språk             | TypeScript (strict mode)             | Typsäkerhet                                                     |
-| Scheduler         | node-cron                            | Tidsbaserade triggers (10 cron-jobb)                            |
+| Scheduler         | node-cron + DynamicScheduler         | Databasdriven schemaläggning (scheduled_jobs-tabell, hot reload) |
 | Task Queue        | In-memory prioritetskö               | Max 3 concurrent, prioritetsordning (urgent → low)              |
 | Slack             | Bolt SDK (Socket Mode)               | Orchestrator-gränssnitt                                         |
 | Modell-router     | Manifest-driven (agent.yaml)         | Dirigerar uppgifter till rätt LLM                               |
@@ -247,7 +217,7 @@ z.union([
 | Databas-klient    | `@supabase/supabase-js`              | Heartbeats, tasks, metrics, activity_log                        |
 | Realtime-lyssnare | Supabase Realtime                    | Kommandon + task-uppdateringar från Dashboard                   |
 | REST API          | Express (intern, port 3001)          | Dashboard- och CLI-kommandon                                    |
-| CLI               | Commander + chalk + boxen            | Terminalverktyg (11 kommandon, Supabase Realtime)               |
+| CLI               | Commander + chalk + boxen            | Terminalverktyg (16 kommandon, cron CRUD, Supabase Realtime)    |
 | Validering        | Zod                                  | Config-validering, API-inputvalidering                          |
 | Status Machine    | `src/engine/status-machine.ts`       | Tillåtna statusövergångar, validering                           |
 | Trigger Engine    | `src/engine/trigger-engine.ts`       | Deklarativ trigger-matching och exekvering                      |
@@ -1042,7 +1012,7 @@ CREATE TABLE activity_log (
 ```sql
 CREATE TABLE commands (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  command_type text NOT NULL,                      -- pause_agent | resume_agent | approve_task | reject_task | revision_task | kill_switch | update_config
+  command_type text NOT NULL,                      -- pause_agent | resume_agent | approve_task | reject_task | revision_task | kill_switch | update_config | update_schedule | reseed_triggers
   target_slug text,
   payload_json jsonb,
   issued_by uuid NOT NULL REFERENCES profiles(id),
@@ -1103,7 +1073,7 @@ CREATE TABLE scheduled_jobs (
 );
 ```
 
-Notering: Hanterar dashboard-baserad schemaläggning. Gateway har egen node-cron med fasta 10 jobb (se "Schemalagda uppgifter"). Tabellen möjliggör framtida dynamisk schemaläggning via Dashboard.
+Notering: Hanteras dynamiskt av DynamicScheduler (`src/gateway/scheduler.ts`). Gateway läser alla enabled jobb vid uppstart, node-cron schemalägger dem, och `update_schedule`-command triggar hot reload. CRUD via Dashboard, CLI (`fia cron`) och Slack (`/fia cron`). 10 default-jobb seedades via migration 014.
 
 ### Migrationer
 
@@ -1122,6 +1092,7 @@ Notering: Hanterar dashboard-baserad schemaläggning. Gateway har egen node-cron
 | 011 | `011_backfill_agent_config_json.sql`        | Populerar `config_json` från manifestfiler                                              |
 | 012 | `012_nullable_commands_issued_by.sql`       | `commands.issued_by` nullable                                                           |
 | 013 | `013_extended_task_status_and_triggers.sql` | Utökad status-constraint, `parent_task_id`, `trigger_source`, `pending_triggers`-tabell |
+| 014 | `014_seed_scheduled_jobs.sql`               | `scheduled_jobs`-tabell + seed av 10 default cron-jobb                                 |
 
 ### Row Level Security
 
@@ -1431,7 +1402,11 @@ Funktioner:
 
 ---
 
-## Schemalagda uppgifter
+## Schemalagda uppgifter (dynamisk)
+
+Cron-jobb lagras i `scheduled_jobs`-tabellen och hanteras via DynamicScheduler. CRUD-operationer via Dashboard, CLI och Slack triggar scheduler-reload automatiskt via `update_schedule`-command.
+
+**Default-jobb (seedade via migration 014):**
 
 | Tid                    | Agent        | Uppgift             | Cron                   |
 | ---------------------- | ------------ | ------------------- | ---------------------- |
@@ -1446,27 +1421,40 @@ Funktioner:
 | 09:00 första måndagen  | Strategy     | Månadsplanering     | `0 9 1-7 * 1`          |
 | 09:00 sista fredagen Q | Analytics    | Kvartalsöversikt    | `0 9 25-31 3,6,9,12 5` |
 
-Alla schemalagda tasks respekterar kill switch och agent-pausstatus.
+**Hantering – triple-interface:**
+
+| Gränssnitt | Skapa | Redigera | Ta bort | Aktivera/Inaktivera |
+| ---------- | ----- | -------- | ------- | ------------------- |
+| Dashboard  | SchedulerSection (visuell cron-editor) | ✓ | ✓ | ✓ |
+| CLI        | `fia cron create --agent ... --cron ...` | `fia cron edit <id>` | `fia cron delete <id>` | `fia cron enable/disable <id>` |
+| Slack      | `/fia cron create <agent> <type> <cron> <titel>` | `/fia cron edit <id>` | `/fia cron delete <id>` | `/fia cron enable/disable <id>` |
+
+Alla schemalagda tasks respekterar kill switch och agent-pausstatus. Delad affärslogik i `src/shared/cron-service.ts`.
 
 ---
 
 ## Slack-kommandon
 
-| Kommando                             | Beskrivning                                                      |
-| ------------------------------------ | ---------------------------------------------------------------- |
-| `/fia status`                        | Systemstatus (agenter, kill switch, kö, scheduler)               |
-| `/fia kill`                          | Aktivera kill switch                                             |
-| `/fia resume`                        | Avaktivera kill switch                                           |
-| `/fia run <agent> <task>`            | Manuell trigger av agent                                         |
-| `/fia approve <task-id>`             | Godkänn uppgift                                                  |
-| `/fia reject <task-id>`              | Avslå uppgift                                                    |
-| `/fia queue`                         | Visa köade uppgifter                                             |
-| `/fia triggers`                      | Lista pending triggers som väntar på godkännande                 |
-| `/fia triggers approve <id>`         | Godkänn pending trigger → skapar downstream task                 |
-| `/fia triggers reject <id> <reason>` | Avslå pending trigger                                            |
-| `/fia lineage <task-id>`             | Visa task-träd: ancestors, current, children                     |
-| `/fia purge`                         | Rensa föräldralösa tasks                                         |
-| `/fia help`                          | Visa alla kommandon, agenter, uppgiftstyper och schemalagda jobb |
+| Kommando                                                  | Beskrivning                                                      |
+| --------------------------------------------------------- | ---------------------------------------------------------------- |
+| `/fia status`                                             | Systemstatus (agenter, kill switch, kö, scheduler)               |
+| `/fia kill`                                               | Aktivera kill switch                                             |
+| `/fia resume`                                             | Avaktivera kill switch                                           |
+| `/fia run <agent> <task>`                                 | Manuell trigger av agent                                         |
+| `/fia approve <task-id>`                                  | Godkänn uppgift                                                  |
+| `/fia reject <task-id>`                                   | Avslå uppgift                                                    |
+| `/fia queue`                                              | Visa köade uppgifter                                             |
+| `/fia triggers`                                           | Lista pending triggers som väntar på godkännande                 |
+| `/fia triggers approve <id>`                              | Godkänn pending trigger → skapar downstream task                 |
+| `/fia triggers reject <id> <reason>`                      | Avslå pending trigger                                            |
+| `/fia cron`                                               | Lista alla schemalagda cron-jobb                                 |
+| `/fia cron create <agent> <type> <cron 5 fält> <titel>`  | Skapa nytt cron-jobb                                             |
+| `/fia cron edit <id> <fält>=<värde>`                      | Redigera cron-jobb                                               |
+| `/fia cron delete <id>`                                   | Ta bort cron-jobb                                                |
+| `/fia cron enable\|disable <id>`                          | Aktivera/inaktivera cron-jobb                                    |
+| `/fia lineage <task-id>`                                  | Visa task-träd: ancestors, current, children                     |
+| `/fia purge`                                              | Rensa föräldralösa tasks                                         |
+| `/fia help`                                               | Visa alla kommandon, agenter, uppgiftstyper och schemalagda jobb |
 
 **Auto-notiser (gateway → Slack):**
 
@@ -1487,7 +1475,7 @@ Slack-kanaler:
 
 ## FIA CLI
 
-Terminalverktyg som pratar med gatewayens REST API (port 3001). Tredje gränssnittet efter Slack och Dashboard. Lever i `cli/` i samma repo, delar `.env` och TypeScript-konfiguration.
+Terminalverktyg som pratar med gatewayens REST API (port 3001) och Supabase direkt (för cron-hantering). Tredje gränssnittet efter Slack och Dashboard. Lever i `cli/` i samma repo, delar `.env` och TypeScript-konfiguration.
 
 **Auth:** `FIA_CLI_TOKEN` i `.env` – enkel bearer token som bypaschar Supabase JWT (admin-roll).
 
@@ -1497,7 +1485,7 @@ Terminalverktyg som pratar med gatewayens REST API (port 3001). Tredje gränssni
 
 | Kommando                                           | Beskrivning                                           |
 | -------------------------------------------------- | ----------------------------------------------------- |
-| `fia`                                              | Visa FIA-banner (Forefront gradient + Earth)          |
+| `fia`                                              | Visa FIA-banner                                       |
 | `fia status`                                       | Systemöversikt (kill switch, kö, agenter)             |
 | `fia agents [slug]`                                | Agenttabell eller detaljvy per agent                  |
 | `fia run <agent> <task> [--priority]`              | Trigga task manuellt (spinner + polling)              |
@@ -1515,14 +1503,19 @@ Terminalverktyg som pratar med gatewayens REST API (port 3001). Tredje gränssni
 | `fia triggers reject <id> --reason`                | Avslå pending trigger                                 |
 | `fia triggers config [agent] [--enable/--disable]` | Visa/växla trigger-konfiguration per agent            |
 | `fia triggers reseed [agent] [--confirm]`          | Dry-run diff + reseed triggers från agent.yaml        |
+| `fia cron [--agent]`                               | Lista alla schemalagda cron-jobb                      |
+| `fia cron create --agent --cron --task-type --title` | Skapa nytt cron-jobb                                |
+| `fia cron edit <id> [--cron] [--title] [--priority]` | Redigera cron-jobb                                 |
+| `fia cron delete <id> [--yes]`                     | Ta bort cron-jobb (bekräftelse krävs)                 |
+| `fia cron enable/disable <id>`                     | Aktivera/inaktivera cron-jobb                         |
 | `fia lineage <task-id>`                            | ASCII-träd: ancestors → current → children            |
 
 ### Filstruktur
 
 ```
 cli/
-├── index.ts              # Commander setup, banner vid tomt kommando (v0.5.2)
-├── commands/             # Ett kommando per fil (13 st + helpers)
+├── index.ts              # Commander setup, banner vid tomt kommando (v0.5.3)
+├── commands/             # Ett kommando per fil (14 st + helpers)
 │   ├── status.ts         # fia status
 │   ├── agents.ts         # fia agents [slug]
 │   ├── run.ts            # fia run (POST + polling)
@@ -1536,21 +1529,17 @@ cli/
 │   ├── watch.ts          # fia watch (terminal-dashboard + trigger-räknare)
 │   ├── config.ts         # fia config
 │   ├── triggers.ts       # fia triggers (list/approve/reject/config/reseed)
+│   ├── cron.ts           # fia cron (list/create/edit/delete/enable/disable)
 │   ├── lineage.ts        # fia lineage (task-träd)
 │   └── helpers.ts        # resolveTaskId (kort → fullt UUID)
 ├── lib/
 │   ├── api-client.ts     # HTTP-klient (native fetch, Bearer token)
 │   ├── formatters.ts     # Earth-palett, tabeller, boxen, relativeTime
 │   ├── realtime.ts       # Supabase Realtime (activity_log INSERT)
+│   ├── supabase.ts       # Cachad Supabase-klient (för cron CRUD)
 │   └── config.ts         # .env-läsare (dotenv)
-└── types.ts              # CLI-typer: PendingTrigger, TriggerConfig, LineageTask + re-export
+└── types.ts              # CLI-typer + re-export
 ```
-
-### Forefront-branding i CLI
-
-**Earth-palett:** `#7D5365` (plum), `#42504E` (forest), `#555977` (slate), `#756256` (walnut), `#7E7C83` (stone). Används för agent-färgning, tabellrubriker, boxramar.
-
-**Gradient:** `#FF6B0B` (orange) → `#FFB7F8` (pink) → `#79F2FB` (cyan). Används i ASCII-banner och watch-titel.
 
 ---
 
@@ -1629,44 +1618,12 @@ GCP-projekt: ffcg-fia
 
 ## Varumärkeskontext
 
-### Forefront – varför vi finns
+Se `knowledge/brand/` för komplett varumärkesplattform (platform.md, tonality.md, visual.md, messages.md). Sammanfattning:
 
-Vi bidrar till utvecklingen av ett hållbart samhälle i framkant genom att säkerställa att människa och teknik går hand i hand.
-
-### Löfte
-
-Delade visioner. Större ambitioner.
-
-### Övertygelser
-
-1. Sikta högre – modiga idéer, långsiktiga möjligheter
-2. Ständigt göra bättre – kontinuerlig förbättring
-3. Alltid ihop – nära partnerskap, fler perspektiv
-
-### Karaktärsdrag
-
-Modiga, Hängivna, Lustfyllda
-
-### Tonalitetsregler
-
-1. Skriv som till en klok kollega
-2. Var konkret och tydlig
-3. Visa nyfikenhet
-4. Humor tillåtet, aldrig på andras bekostnad
-5. Aktivt språk
-6. Varje text ska ha en tydlig poäng
-
-### Budskapshierarki
-
-- **Nivå 1 (hero):** "Vi ser framåt – Vad ser du?", "Bra, och lite läskigt – så ska rätt beslut kännas"
-- **Nivå 2–3** för artiklar och sociala medier
-
-### Visuell identitet
-
-- Organiska färger: `#7D5365`, `#42504E`, `#555977`, `#756256`, `#7E7C83`
-- Gradient (energi): `#FF6B0B` → `#FFB7F8` → `#79F2FB`
-- Typsnitt: Manrope (fallback Arial)
-- Logotyp: "forefront" i gemener, Manrope Semibold
+- **Ton:** Klok kollega – konkret, nyfiken, aktiv röst
+- **Färger (Earth):** `#7D5365`, `#42504E`, `#555977`, `#756256`, `#7E7C83`
+- **Gradient:** `#FF6B0B` → `#FFB7F8` → `#79F2FB`
+- **Typsnitt:** Manrope
 
 ---
 
@@ -1796,15 +1753,20 @@ Deploy 0.2 (2026-03-15). Gateway + Dashboard MVP live. 4 arbetsdagar, en person 
 
 ### Deploy 0.5.2 (2026-03-23): Trigger Configuration
 
-- Trigger-konfiguration i dashboard: visa, enable/disable, redigera triggers per agent
+- Trigger-konfiguration i dashboard + CLI + Slack
 - Trigger engine läser från config_json (Supabase) istället för agent.yaml
-- config_json.triggers seedas vid gateway-startup, dashboarden äger efter det
-- TriggersConfigPage: systemövergripande trigger-översikt med filter
-- Reseed från YAML: dry-run diff + bekräftelsedialog (admin only)
-- 4 nya API-endpoints (GET/PATCH triggers, reseed per agent + alla)
-- 11 nya React-komponenter, 40+ i18n-nycklar (sv + en)
-- Zod-schema för trigger-patch-validering
-- reseed_triggers command i command-listener
+- Reseed från YAML: dry-run diff + bekräftelsedialog
+- 4 nya API-endpoints, 11 nya React-komponenter
+
+### Deploy 0.5.3 (2026-03-24): Cron Job Management
+
+- **Triple-interface komplett för cron-jobb:** Dashboard + CLI + Slack har likvärdig CRUD
+- Delad cron-service (`src/shared/cron-service.ts`) med validering och `update_schedule`-command
+- `fia cron` CLI-kommando: list, create, edit, delete, enable, disable
+- `/fia cron` Slack-kommandon: samma CRUD
+- CLI Supabase-klient (`cli/lib/supabase.ts`) för direkt DB-åtkomst
+- Scheduler hot reload vid alla mutationer (Dashboard, CLI, Slack)
+- Korrigerar arkitekturen: de 10 default-jobben lever nu som dynamiska rader, inte hårdkodade
 
 ### Nästa steg – Fas 1 avslut
 
