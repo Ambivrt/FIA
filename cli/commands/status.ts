@@ -3,7 +3,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { apiGet } from "../lib/api-client";
-import { statusBadge, relativeTime, box, EARTH } from "../lib/formatters";
+import { statusBadge, relativeTime, box, EARTH, agentLabel } from "../lib/formatters";
 import type { AgentResponse, KillSwitchStatus } from "../types";
 
 export function registerStatusCommand(program: Command): void {
@@ -57,8 +57,8 @@ export function registerStatusCommand(program: Command): void {
             ? chalk.dim(Object.keys(agent.tasks_today).find((k) => k === "in_progress") ? "" : "")
             : "";
 
-        // Hitta vilken task som körs via tasks_today
-        const line = `  ${badge.padEnd(28)} ${chalk.dim("\u2665")} ${hb.padEnd(10)} ${taskInfo}`;
+        const label = agentLabel(agent.slug, agent.name);
+        const line = `  ${badge.padEnd(28)} ${label.padEnd(26)} ${chalk.dim("\u2665")} ${hb.padEnd(10)} ${taskInfo}`;
         lines.push(line);
       }
 
