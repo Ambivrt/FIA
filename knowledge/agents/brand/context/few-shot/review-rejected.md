@@ -1,23 +1,67 @@
-# Exempel: Brand Review – UNDERKÄND
+# Few-shot: Brand Agent review — AVVISAD
 
-## Innehåll som granskades
+## Inkommande text (LinkedIn kortformat)
 
-**Typ:** Blogginlägg
-**Källa:** Content Agent
+> 🚀 5 sätt AI-agenter förändrar spelplanen 2026!
+> 
+> AI-agenter är inte längre science fiction — de är här, och de förändrar ALLT. Här är fem game changers du behöver känna till:
+> 
+> 1. Automatisering av repetitiva uppgifter — spara upp till 40% av din tid!
+> 1. Proaktiva assistenter som tänker åt dig
+> 1. Sömlös integration med dina befintliga verktyg
+> 1. Skalbar produktivitet utan extra headcount
+> 1. 24/7 tillgänglighet — din AI sover aldrig
+> 
+> Vi på Forefront hjälper organisationer att kickstarta sin AI-resa med cutting-edge lösningar som levererar värde från dag ett.
+> 
+> 👉 Boka en kostnadsfri konsultation idag! Kontakta oss på info@forefront.se
+> 
+> #AI #DigitalTransformation #Framtiden #Innovation #AIagenter
 
-> **Rubrik:** Forefront – er partner inom framtidens digitalisering
->
-> I en alltmer komplex och snabbföränderlig omvärld ställs organisationer inför ökade krav på digital mognad. Det är i detta sammanhang som Forefront positionerar sig som en strategisk partner med kapabilitet att adressera de mest komplexa utmaningarna.
->
-> Genom vår holistiska approach och vår unika kombination av teknisk spetskompetens och strategisk rådgivning skapar vi förutsättningar för hållbar digital transformation. Våra kunder vittnar om avsevärda effektiviseringar och ökad innovationsförmåga.
->
-> Kontakta oss idag för att påbörja er transformationsresa.
-
-## Brand Agent-granskning
+## Brand Agents bedömning
 
 ```json
 {
-  "decision": "rejected",
-  "feedback": "Texten bryter mot flera tonalitetsregler: (1) Passivt språk genomgående – 'det är i detta sammanhang', 'ställs inför ökade krav'. Skriv aktivt: 'Organisationer möter nya krav'. (2) Buzzwords utan substans: 'holistisk approach', 'kapabilitet att adressera', 'digital mognad'. Var konkret – vad gör vi faktiskt? (3) Kanslispråk: 'i en alltmer komplex och snabbföränderlig omvärld' – skriv som till en klok kollega, inte i en årsredovisning. (4) Självhävdelse: 'unik kombination' – visa med exempel istället. (5) Ingen tydlig poäng – vad ska läsaren tänka, göra eller känna? (6) Generisk CTA utan värde. Föreslår omskrivning med konkret kundexempel och personligt tilltal."
+  "verdict": "rejected",
+  "overall_score": 1,
+  "dimensions": {
+    "tonality": {
+      "score": 1,
+      "comment": "Saknar alla tre bärande principer. Inte nyfiken — levererar påståenden utan frågor. Inte modig — säger samma sak som alla andra. Inte lustfylld — generisk entusiasm är inte humor."
+    },
+    "substance": {
+      "score": 1,
+      "comment": "Ingen tes, inga belägg, inga konkreta exempel. '40% av din tid' saknar källa. Fem punkter som kunde stå i vilken tech-blogg som helst."
+    },
+    "forbidden_patterns": {
+      "pass": false,
+      "violations": [
+        "Topp-5-lista som struktur",
+        "Emojis (🚀👉)",
+        "Clickbait: 'förändrar ALLT' med versaler",
+        "Generiskt konsultspråk: 'kickstarta', 'cutting-edge', 'levererar värde', 'sömlös', 'skalbar', 'game changers'",
+        "Killgissning: '40% av din tid' utan källa",
+        "Säljpush i CTA: 'Boka en kostnadsfri konsultation'"
+      ]
+    },
+    "channel_fit": {
+      "score": 2,
+      "comment": "Längden är ok för kortformat men strukturen (numrerad lista) är förbjuden."
+    },
+    "brand_consistency": {
+      "score": 1,
+      "comment": "Texten kunde stå på vilken konsultfirmas LinkedIn som helst. Noll Forefront-identitet. CTA:n är transaktionell och generisk."
+    }
+  },
+  "summary": "Avvisad. Texten bryter mot sex förbjudna mönster och saknar Forefronts tonalitet helt. Kan inte redigeras till godkänt — kräver omskrivning från grunden. Utgå från en konkret händelse eller insikt, ta en egen vinkel, och skriv som till en klok kollega som redan vet att AI finns.",
+  "required_changes": [
+    "Ta bort listformat — skriv i löpande text med narrativ ingång",
+    "Ta bort alla emojis",
+    "Ersätt alla buzzwords med konkret språk",
+    "Hitta en egen vinkel — vad ser Forefront som andra missar?",
+    "Bygg CTA som naturlig förlängning av textens poäng, inte som säljpitch",
+    "Belägg påståenden med källor eller konkreta exempel"
+  ],
+  "strengths": []
 }
 ```
