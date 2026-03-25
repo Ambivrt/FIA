@@ -167,14 +167,30 @@ async function createDriveFolder(name: string, parentId: string | undefined, con
   }
 
   const raw = await handleGwsToolUse({ toolName: "drive_create_folder", input }, config);
-  const parsed = JSON.parse(raw);
 
-  // The MCP tool typically returns { id: "...", name: "..." } or similar
-  const folderId = parsed.id ?? parsed.folderId ?? parsed.folder_id;
-  if (!folderId) {
-    throw new Error(`drive_create_folder returned no folder ID: ${raw}`);
+  // Try direct JSON parse first (simple { id: "..." } response)
+  try {
+    const parsed = JSON.parse(raw);
+    const folderId = parsed.id ?? parsed.folderId ?? parsed.folder_id;
+    if (folderId) return String(folderId);
+
+    // MCP response: { content: [{ text: "...{json}..." }] }
+    if (parsed.content && Array.isArray(parsed.content)) {
+      const text = parsed.content.map((c: { text?: string }) => c.text ?? "").join("");
+      const jsonMatch = text.match(/"folderId"\s*:\s*"([^"]+)"/);
+      if (jsonMatch) return jsonMatch[1];
+      const idMatch = text.match(/ID:\s*(\S+)/);
+      if (idMatch) return idMatch[1];
+    }
+  } catch {
+    // Not JSON — try regex on raw text
+    const jsonMatch = raw.match(/"folderId"\s*:\s*"([^"]+)"/);
+    if (jsonMatch) return jsonMatch[1];
+    const idMatch = raw.match(/ID:\s*(\S+)/);
+    if (idMatch) return idMatch[1];
   }
-  return String(folderId);
+
+  throw new Error(`drive_create_folder returned no folder ID: ${raw}`);
 }
 
 async function verifyFolder(folderId: string, config: AppConfig): Promise<boolean> {
