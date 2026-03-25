@@ -16,6 +16,7 @@ routing:
   images: nano-banana-2
 system_context:
   - context/tone-examples.md
+  - context/drive-folders.md
 task_context:
   blog_post:
     - context/templates/blog-post.md

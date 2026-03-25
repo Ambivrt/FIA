@@ -12,7 +12,8 @@ routing:
   default: claude-sonnet
   insights: claude-opus
   report_writing: claude-opus
-system_context: []
+system_context:
+  - context/drive-folders.md
 task_context:
   morning_pulse:
     - context/templates/morning-pulse.md

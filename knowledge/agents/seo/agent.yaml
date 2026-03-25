@@ -13,10 +13,12 @@ routing:
   content_recommendations: claude-opus
 system_context:
   - context/geo-guidelines.md
+  - context/drive-folders.md
 task_context:
   seo_audit:
     - context/templates/seo-audit.md
 tools:
+  - "gws:drive"
   - "gws:analytics"
   - "gws:sheets"
 autonomy: autonomous
