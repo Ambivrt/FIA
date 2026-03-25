@@ -73,4 +73,4 @@ FIA nås via tre gränssnitt:
 
 ---
 
-**Version:** 0.5.5 · **Senast uppdaterad:** 2026-03-25
+**Version:** 0.5.6 · **Senast uppdaterad:** 2026-03-25

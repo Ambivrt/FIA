@@ -635,7 +635,7 @@ export const openApiSpec = generator.generateDocument({
   openapi: "3.0.3",
   info: {
     title: "FIA Gateway API",
-    version: "0.5.5",
+    version: "0.5.6",
     description:
       "REST API för Forefront Intelligent Automation. Internt API – exponeras ej mot internet. Autentisering via JWT (Supabase Auth) eller FIA_CLI_TOKEN.",
   },

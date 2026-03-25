@@ -29,7 +29,7 @@ async function main(): Promise<void> {
 
   const logger = createLogger(config);
 
-  logger.info("FIA Gateway v0.5.5 starting", {
+  logger.info("FIA Gateway v0.5.6 starting", {
     action: "gateway_start",
     status: "success",
   });
