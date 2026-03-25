@@ -85,9 +85,17 @@ rl.question("Paste the authorization code here: ", async (code) => {
       process.exit(1);
     }
 
+    // Include client_id and client_secret so gws CLI can refresh tokens
+    const fullCredentials = {
+      ...tokens,
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      token_type: tokens.token_type || "Bearer",
+    };
+
     const credsPath = path.join(CREDS_DIR, ".gworkspace-credentials.json");
     fs.mkdirSync(CREDS_DIR, { recursive: true });
-    fs.writeFileSync(credsPath, JSON.stringify(tokens, null, 2));
+    fs.writeFileSync(credsPath, JSON.stringify(fullCredentials, null, 2));
 
     console.log("\nTokens saved to:", credsPath);
     console.log("Scopes:", tokens.scope || "(not returned)");
