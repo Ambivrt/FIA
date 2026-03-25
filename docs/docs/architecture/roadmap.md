@@ -155,6 +155,10 @@ Google Drive-mappstruktur och CLI-verktyg för agenter.
 | Agent-kontext           | Auto-genererade `drive-folders.md` med folder-IDs per agent          |
 | Utökade agentverktyg    | `gws:drive` tillagt på Strategy och SEO agenter                      |
 | Deklarativ mappstruktur | `src/mcp/drive-structure.ts` med trädstruktur och agent→mapp-mapping |
+| googleapis global auth  | `ensureGlobalAuth()` sätter `google.options({ auth })` + refresh     |
+| MCP isError-detektion   | `gws.ts` kastar errors vid `{ isError: true }` från MCP-verktyg      |
+| MCP svar-parsning       | Folder-ID extraheras ur formaterad text (inte bara enkel JSON)        |
+| OAuth auth-script       | `expiry_date` (timestamp), full `drive`-scope, Desktop App-stöd       |
 
 ---
 

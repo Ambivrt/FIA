@@ -218,6 +218,12 @@ Se `.env.example` för alla nyckelnamn. Aldrig i kod. Kritiska:
 - [x] Auto-genererade `drive-folders.md` kontextfiler per agent med folder-IDs
 - [x] `gws:drive` tillagt på Strategy och SEO agenter
 - [x] Nya filer: `src/mcp/drive-structure.ts`, `src/mcp/drive-setup.ts`, `src/api/routes/drive.ts`, `cli/commands/drive.ts`
+- [x] Fix: googleapis global auth — `ensureGlobalAuth()` sätter `google.options({ auth })` + token refresh
+- [x] Fix: MCP `isError` response-detektion i `gws.ts` (felaktiga svar kastade inte errors)
+- [x] Fix: MCP Drive-svar-parsning — folder-ID extraheras ur formaterad text, inte bara JSON
+- [x] Fix: `gws-auth.mjs` — `expiry_date` (timestamp) istället för bara `expires_in`, full `drive`-scope
+- [x] `.gworkspace-credentials.json` och `gcp-oauth.keys.json` tillagda i `.gitignore`
+- [x] Debug-script: `scripts/test-drive-auth.mjs` för OAuth-felsökning
 
 ### Pågår
 
