@@ -1,0 +1,110 @@
+site_name: FIA – Forefront Intelligent Automation
+site_description: Dokumentation för FIA, AI-agentgateway för marknadsoperationer
+site_url: https://docs.fia.forefront.se
+repo_url: https://github.com/ambivrt/fia
+repo_name: ambivrt/fia
+
+theme:
+  name: material
+  language: sv
+  font:
+    text: Manrope
+    code: JetBrains Mono
+  palette:
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Byt till mörkt läge
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Byt till ljust läge
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.indexes
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - search.suggest
+  icon:
+    repo: fontawesome/brands/github
+
+extra_css:
+  - assets/css/custom.css
+
+markdown_extensions:
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.details
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - tables
+  - attr_list
+  - toc:
+      permalink: true
+
+plugins:
+  - search:
+      lang: sv
+  - swagger-ui-tag
+
+nav:
+  - Hem: index.md
+  - Arkitektur:
+      - architecture/index.md
+      - Systemöversikt: architecture/overview.md
+      - Agentkluster: architecture/agents.md
+      - Agentreferens: architecture/agents-reference.md
+      - Datamodell: architecture/data-model.md
+      - API-kontrakt: architecture/api-contracts.md
+      - Trigger Engine: architecture/trigger-engine.md
+      - LLM-routing: architecture/llm-routing.md
+      - Säkerhet: architecture/security.md
+      - Roadmap: architecture/roadmap.md
+  - Gateway:
+      - gateway/index.md
+      - Installation: gateway/setup.md
+      - Deploy: gateway/deploy.md
+      - Agent YAML: gateway/agents-yaml.md
+      - MCP-integrationer: gateway/mcp-integrations.md
+      - Scheduler: gateway/scheduler.md
+      - Felsökning: gateway/troubleshooting.md
+  - Gränssnitt:
+      - interfaces/index.md
+      - Dashboard:
+          - Översikt: interfaces/dashboard/overview.md
+          - Agenter: interfaces/dashboard/agents.md
+          - Godkännanden: interfaces/dashboard/approvals.md
+          - Triggers: interfaces/dashboard/triggers.md
+          - Inställningar: interfaces/dashboard/settings.md
+      - CLI:
+          - Installation: interfaces/cli/install.md
+          - Kommandon: interfaces/cli/commands.md
+          - Realtid: interfaces/cli/realtime.md
+      - Slack:
+          - Kommandon: interfaces/slack/commands.md
+          - Kanaler: interfaces/slack/channels.md
+  - Användarmanual:
+      - user-guide/index.md
+      - Kom igång: user-guide/getting-started.md
+      - Dagligt arbetsflöde: user-guide/daily-workflow.md
+      - Godkänna innehåll: user-guide/approvals.md
+      - Triggers: user-guide/triggers.md
+      - Nödstopp: user-guide/kill-switch.md
+      - FAQ: user-guide/faq.md

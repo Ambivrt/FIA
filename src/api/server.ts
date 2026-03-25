@@ -7,6 +7,7 @@ import { Logger } from "../gateway/logger";
 import { KillSwitch } from "../utils/kill-switch";
 import { requireAuth } from "./middleware/auth";
 import { dnsRebindingProtection } from "./middleware/dns-rebinding";
+import { openApiSpec } from "./openapi";
 import { agentRoutes } from "./routes/agents";
 import { taskRoutes } from "./routes/tasks";
 import { metricRoutes } from "./routes/metrics";
@@ -43,6 +44,11 @@ export function createApiServer(
   // Health check (no auth, no rate limit)
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  // OpenAPI spec (no auth, no rate limit)
+  app.get("/api/openapi.json", (_req, res) => {
+    res.json(openApiSpec);
   });
 
   // Rate limiting on all /api routes

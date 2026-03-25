@@ -1,0 +1,63 @@
+/* Forefront brand colors */
+:root {
+  --ff-plum: #7d5365;
+  --ff-forest: #42504e;
+  --ff-slate: #555977;
+  --ff-brown: #756256;
+  --ff-grey: #7e7c83;
+  --ff-gradient-start: #ff6b0b;
+  --ff-gradient-mid: #ffb7f8;
+  --ff-gradient-end: #79f2fb;
+}
+
+/* Light mode */
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: var(--ff-forest);
+  --md-accent-fg-color: var(--ff-plum);
+  --md-primary-fg-color--light: #5a6e6b;
+  --md-primary-fg-color--dark: #344240;
+}
+
+/* Dark mode */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: var(--ff-forest);
+  --md-accent-fg-color: #79f2fb;
+  --md-primary-fg-color--light: #5a6e6b;
+  --md-primary-fg-color--dark: #344240;
+}
+
+/* Header gradient */
+.md-header {
+  background: linear-gradient(135deg, #42504e, #555977);
+}
+
+/* Tabs bar */
+.md-tabs {
+  background: linear-gradient(135deg, #42504e 60%, #555977);
+}
+
+/* Footer */
+.md-footer {
+  background-color: var(--ff-forest);
+}
+
+/* Admonition accent colors */
+.md-typeset .admonition.tip,
+.md-typeset details.tip {
+  border-color: var(--ff-plum);
+}
+
+.md-typeset .admonition.tip > .admonition-title,
+.md-typeset details.tip > summary {
+  background-color: rgba(125, 83, 101, 0.1);
+}
+
+/* Code block styling */
+.md-typeset code {
+  border-radius: 4px;
+}
+
+/* Mermaid diagram styling */
+.mermaid {
+  margin: 1em 0;
+}
