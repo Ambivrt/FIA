@@ -1,5 +1,5 @@
 -- Migration 008: Add commands table for Dashboard → Gateway communication
--- Commands table enables audit trail and structured command flow per MASTER.md spec.
+-- Commands table enables audit trail and structured command flow.
 
 CREATE TABLE commands (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
