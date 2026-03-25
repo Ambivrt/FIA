@@ -54,44 +54,74 @@ npm install @alanse/mcp-server-google-workspace
 Satt foljande i `.env`:
 
 ```bash
-GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE=/absolute/path/to/credentials.json
-GOOGLE_WORKSPACE_CLI_IMPERSONATED_USER=fia@forefront.se
-GWORKSPACE_CREDS_DIR=/absolute/path/to/oauth-dir/
+GWORKSPACE_CREDS_DIR=/home/marcus_landstrom/FIA
 ```
 
 !!! danger "Absoluta sokvagar"
 Anvand alltid absoluta sokvagar. Tilde (`~`) expanderas **inte** korrekt i gws CLI v0.4.4.
 
-### OAuth-exportflow
+!!! warning "Produktion: byt till fia@forefront.se"
+GWS ar for narvarande autentiserat med marcus.landstrom@forefront.se (utvecklarkonto). For produktion ska ett dedikerat tjanstekonto `fia@forefront.se` anvandas sa att agenter inte opererar pa en personlig Drive/Gmail. Skapa kontot i Google Workspace Admin, kor auth-scriptet som det kontot, och uppdatera credentials.
 
-OAuth-credentials maste exporteras fran Google Cloud Shell och overföras till VPS:en:
+### OAuth-autentisering (headless VPS)
 
-1. Oppna [Google Cloud Shell](https://shell.cloud.google.com/)
-2. Kor `gws auth login` i Cloud Shell
-3. Genomför OAuth-flodet i webblasaren
-4. Kopiera genererad `credentials.json` fran Cloud Shell till VPS:en:
+Auth-scriptet `scripts/gws-auth.mjs` gor headless OAuth utan extra dependencies. Det genererar en URL som oppnas i webbläsare pa valfri dator.
 
-=== "Bash"
+#### Forutsattningar
 
-    ```bash
-    # Pa Cloud Shell
-    cat ~/.config/gws/credentials.json | base64
+1. OAuth Client ID konfigurerat i Google Cloud Console (projekt `ffcg-fia`)
+2. `client_secret.json` placerad i `~/.config/gws/` (skapas via `gws auth setup`)
+3. `http://localhost` konfigurerat som Authorized redirect URI
 
-    # Pa VPS:en
-    echo "<base64-strang>" | base64 -d > /home/user/gws-credentials/credentials.json
-    ```
-
-=== "PowerShell"
-
-    ```powershell
-    # Pa lokal maskin efter nedladdning fran Cloud Shell
-    [System.Convert]::FromBase64String((Get-Content encoded.txt)) | Set-Content credentials.json -AsByteStream
-    ```
-
-5. Satt absolut sokvag i `.env`:
+#### Steg
 
 ```bash
-GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE=/home/user/gws-credentials/credentials.json
+cd ~/FIA
+
+# Hamta client_id och client_secret fran:
+cat ~/.config/gws/client_secret.json
+
+# Kor auth-scriptet
+CLIENT_ID="ditt-id.apps.googleusercontent.com" \
+CLIENT_SECRET="GOCSPX-din-secret" \
+GWORKSPACE_CREDS_DIR=/home/marcus_landstrom/FIA \
+node scripts/gws-auth.mjs
+```
+
+1. Scriptet visar en OAuth-URL
+2. Oppna URL:en i webbläsare pa din dator (logga in som ratt Google-konto)
+3. Godkann alla behorigheter
+4. Sidan redirectar till `http://localhost/?code=XXXX&scope=...` (visar fel -- det ar forväntat)
+5. Kopiera allt mellan `code=` och `&scope` i URL:en
+6. Klistra in i terminalen och tryck Enter
+7. Tokens sparas till `$GWORKSPACE_CREDS_DIR/.gworkspace-credentials.json`
+
+#### gws CLI med token
+
+gws CLI v0.4.4 laser inte plaintext-credentials automatiskt. For att anvanda gws CLI direkt, exportera token:
+
+```bash
+export GOOGLE_WORKSPACE_CLI_TOKEN=$(cat ~/FIA/.gworkspace-credentials.json | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).access_token))")
+gws drive files list
+```
+
+!!! note "Access token giltig i 1 timme"
+Access token fran OAuth loper ut efter ~1 timme. Gateway-MCP-wrappern (`src/mcp/gws.ts`) hanterar token-refresh automatiskt via refresh_token. For manuell CLI-anvandning, kor export-kommandot igen.
+
+#### Alternativ: gws auth export (fran maskin med webbläsare)
+
+Om du har tillgang till en maskin med webbläsare (t.ex. lokal dator):
+
+```bash
+# Pa maskin med webbläsare
+npx @googleworkspace/cli auth login
+npx @googleworkspace/cli auth export --unmasked > credentials.json
+
+# Kopiera till VPS
+scp credentials.json user@VPS:~/FIA/gws-credentials.json
+
+# Pa VPS
+export GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE=/home/marcus_landstrom/FIA/gws-credentials.json
 ```
 
 ---
@@ -99,7 +129,7 @@ GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE=/home/user/gws-credentials/credentials.jso
 ## Kanda buggar i gws CLI v0.4.4
 
 !!! bug "SA-nycklar ignoreras tyst"
-Service Account (SA) JSON-nycklar satt via `GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE` ignoreras tyst av gws CLI v0.4.4. Inga felmeddelanden visas -- anropen misslyckas bara. **Losning:** Anvand OAuth-export fran Cloud Shell istallet.
+Service Account (SA) JSON-nycklar satt via `GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE` ignoreras tyst av gws CLI v0.4.4. Inga felmeddelanden visas -- anropen misslyckas bara. **Losning:** Anvand OAuth via `scripts/gws-auth.mjs`.
 
 !!! bug "Tilde expanderas inte"
 Sokvagar med `~` (t.ex. `~/credentials.json`) expanderas inte. Anvand alltid absoluta sokvagar.
@@ -107,8 +137,11 @@ Sokvagar med `~` (t.ex. `~/credentials.json`) expanderas inte. Anvand alltid abs
 !!! bug "gws analytics ar inte ett giltigt kommando"
 `gws analytics` finns inte i CLI:n. Google Analytics 4-data maste hamtas via direkt API-integration (planerad for Fas 2).
 
-!!! bug "OAuth kravr Cloud Shell"
-`gws auth login` fungerar inte pa en headless VPS -- OAuth-flodet kravr en webbläsare. Anvand Cloud Shell for att generera credentials och overfora dem manuellt.
+!!! bug "gws auth login hanger pa headless VPS"
+`gws auth login` visar en URL men accepterar inte input (stdin-bugg). Anvand `scripts/gws-auth.mjs` istallet -- det gor samma OAuth-flow men med fungerande stdin.
+
+!!! bug "Plaintext credentials ignoreras av CLI"
+gws CLI v0.4.4 kraver krypterade credentials (`credentials.enc`). Plaintext JSON-filer ignoreras aven om `gws auth status` visar `plain_credentials_exists: true`. **Losning:** Anvand `GOOGLE_WORKSPACE_CLI_TOKEN` env var for direkt CLI-anvandning, eller lat MCP-wrappern hantera auth.
 
 ---
 
