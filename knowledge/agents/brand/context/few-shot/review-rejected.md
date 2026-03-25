@@ -3,19 +3,19 @@
 ## Inkommande text (LinkedIn kortformat)
 
 > 🚀 5 sätt AI-agenter förändrar spelplanen 2026!
-> 
+>
 > AI-agenter är inte längre science fiction — de är här, och de förändrar ALLT. Här är fem game changers du behöver känna till:
-> 
+>
 > 1. Automatisering av repetitiva uppgifter — spara upp till 40% av din tid!
 > 1. Proaktiva assistenter som tänker åt dig
 > 1. Sömlös integration med dina befintliga verktyg
 > 1. Skalbar produktivitet utan extra headcount
 > 1. 24/7 tillgänglighet — din AI sover aldrig
-> 
+>
 > Vi på Forefront hjälper organisationer att kickstarta sin AI-resa med cutting-edge lösningar som levererar värde från dag ett.
-> 
+>
 > 👉 Boka en kostnadsfri konsultation idag! Kontakta oss på info@forefront.se
-> 
+>
 > #AI #DigitalTransformation #Framtiden #Innovation #AIagenter
 
 ## Brand Agents bedömning

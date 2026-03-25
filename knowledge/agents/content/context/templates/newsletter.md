@@ -103,8 +103,8 @@ Blanda:
   "target_audience": "Kort beskrivning av vem numret riktar sig till",
   "core_theme": "Övergripande tema i en mening",
   "content_blocks": [
-    {"title": "Block 1 rubrik", "type": "insight | trend | recommendation"},
-    {"title": "Block 2 rubrik", "type": "insight | trend | recommendation"}
+    { "title": "Block 1 rubrik", "type": "insight | trend | recommendation" },
+    { "title": "Block 2 rubrik", "type": "insight | trend | recommendation" }
   ],
   "cta_type": "question | invitation | event",
   "sender_name": "Avsändarens namn"
