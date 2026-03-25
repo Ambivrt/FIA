@@ -1,13 +1,13 @@
 /* Forefront brand colors */
 :root {
-  --ff-plum: #7D5365;
-  --ff-forest: #42504E;
+  --ff-plum: #7d5365;
+  --ff-forest: #42504e;
   --ff-slate: #555977;
   --ff-brown: #756256;
-  --ff-grey: #7E7C83;
-  --ff-gradient-start: #FF6B0B;
-  --ff-gradient-mid: #FFB7F8;
-  --ff-gradient-end: #79F2FB;
+  --ff-grey: #7e7c83;
+  --ff-gradient-start: #ff6b0b;
+  --ff-gradient-mid: #ffb7f8;
+  --ff-gradient-end: #79f2fb;
 }
 
 /* Light mode */
@@ -21,19 +21,19 @@
 /* Dark mode */
 [data-md-color-scheme="slate"] {
   --md-primary-fg-color: var(--ff-forest);
-  --md-accent-fg-color: #79F2FB;
+  --md-accent-fg-color: #79f2fb;
   --md-primary-fg-color--light: #5a6e6b;
   --md-primary-fg-color--dark: #344240;
 }
 
 /* Header gradient */
 .md-header {
-  background: linear-gradient(135deg, #42504E, #555977);
+  background: linear-gradient(135deg, #42504e, #555977);
 }
 
 /* Tabs bar */
 .md-tabs {
-  background: linear-gradient(135deg, #42504E 60%, #555977);
+  background: linear-gradient(135deg, #42504e 60%, #555977);
 }
 
 /* Footer */

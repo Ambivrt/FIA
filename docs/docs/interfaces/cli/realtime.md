@@ -35,15 +35,15 @@ Varje loggrad formateras med tidsstämpel, agent, nivå och meddelande:
 
 ### Färgkodning
 
-| Nivå | Färg | Beskrivning |
-|------|------|-------------|
-| `INFO` | Grön | Normal aktivitet |
-| `WARN` | Gul | Varningar |
-| `ERROR` | Röd | Fel |
-| `DEBUG` | Grå | Felsökning (dold som standard) |
+| Nivå    | Färg | Beskrivning                    |
+| ------- | ---- | ------------------------------ |
+| `INFO`  | Grön | Normal aktivitet               |
+| `WARN`  | Gul  | Varningar                      |
+| `ERROR` | Röd  | Fel                            |
+| `DEBUG` | Grå  | Felsökning (dold som standard) |
 
 !!! tip "Avbryt"
-    Tryck `Ctrl+C` för att stoppa streamningen.
+Tryck `Ctrl+C` för att stoppa streamningen.
 
 ---
 
@@ -86,12 +86,12 @@ fia watch
 
 ### Uppdateringar
 
-| Datakälla | Uppdateringsfrekvens |
-|-----------|---------------------|
-| Agenttabell | Realtid (Supabase) |
-| Köstatistik | Realtid (Supabase) |
-| Senaste aktivitet | Realtid (Supabase) |
-| Heartbeat-timer | Klientsidigt (1s intervall) |
+| Datakälla         | Uppdateringsfrekvens        |
+| ----------------- | --------------------------- |
+| Agenttabell       | Realtid (Supabase)          |
+| Köstatistik       | Realtid (Supabase)          |
+| Senaste aktivitet | Realtid (Supabase)          |
+| Heartbeat-timer   | Klientsidigt (1s intervall) |
 
 ---
 
@@ -124,22 +124,22 @@ CLI Process
 
 ```typescript
 // cli/lib/realtime.ts (förenklad)
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
 export function subscribeToActivityLog(
   onEvent: (event: ActivityLogEvent) => void,
-  filter?: { agent?: string; level?: string }
+  filter?: { agent?: string; level?: string },
 ): () => void {
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const channel = supabase
-    .channel('cli-activity-log')
+    .channel("cli-activity-log")
     .on(
-      'postgres_changes',
+      "postgres_changes",
       {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'activity_log',
+        event: "INSERT",
+        schema: "public",
+        table: "activity_log",
       },
       (payload) => {
         const event = payload.new as ActivityLogEvent;
@@ -149,7 +149,7 @@ export function subscribeToActivityLog(
         if (filter?.level && event.level !== filter.level) return;
 
         onEvent(event);
-      }
+      },
     )
     .subscribe();
 
@@ -163,14 +163,14 @@ export function subscribeToActivityLog(
 ### Anslutningshantering
 
 !!! note "Reconnect"
-    Supabase-klienten hanterar automatisk reconnect vid nätverksavbrott. CLI:t visar ett varningsmeddelande vid frånkoppling och bekräftelse vid återanslutning.
+Supabase-klienten hanterar automatisk reconnect vid nätverksavbrott. CLI:t visar ett varningsmeddelande vid frånkoppling och bekräftelse vid återanslutning.
 
-| Händelse | CLI-beteende |
-|----------|-------------|
-| Ansluten | Visar `✓ Ansluten till Supabase Realtime` |
-| Frånkopplad | Visar `⚠ Frånkopplad – försöker återansluta...` |
-| Återansluten | Visar `✓ Återansluten` |
-| `Ctrl+C` | Avslutar prenumeration och stänger processen |
+| Händelse     | CLI-beteende                                    |
+| ------------ | ----------------------------------------------- |
+| Ansluten     | Visar `✓ Ansluten till Supabase Realtime`       |
+| Frånkopplad  | Visar `⚠ Frånkopplad – försöker återansluta...` |
+| Återansluten | Visar `✓ Återansluten`                          |
+| `Ctrl+C`     | Avslutar prenumeration och stänger processen    |
 
 !!! warning "Filtrering"
-    Filtrering sker **klientsidigt** i CLI:t. Alla events skickas från Supabase och filtreras i callback-funktionen. Vid hög aktivitet kan detta innebära viss overhead.
+Filtrering sker **klientsidigt** i CLI:t. Alla events skickas från Supabase och filtreras i callback-funktionen. Vid hög aktivitet kan detta innebära viss overhead.

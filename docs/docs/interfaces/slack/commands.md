@@ -3,31 +3,31 @@
 FIA:s Slack-bot exponerar alla viktiga funktioner som slash-kommandon via `/fia`. Boten körs med **Socket Mode** – ingen publik URL krävs.
 
 !!! info "Socket Mode"
-    Socket Mode använder WebSocket istället för HTTP-webhooks. FIA:s gateway ansluter direkt till Slack via `SLACK_APP_TOKEN`. Detta innebär att boten fungerar bakom brandväggar och NAT utan att exponera en publik endpoint.
+Socket Mode använder WebSocket istället för HTTP-webhooks. FIA:s gateway ansluter direkt till Slack via `SLACK_APP_TOKEN`. Detta innebär att boten fungerar bakom brandväggar och NAT utan att exponera en publik endpoint.
 
 ---
 
 ## Kommandoöversikt
 
-| Kommando | Beskrivning |
-|----------|-------------|
-| `/fia status` | Systemöversikt: agenter, kö, kill switch |
-| `/fia kill` | Aktivera kill switch |
-| `/fia resume` | Avaktivera kill switch |
-| `/fia run <agent> <task>` | Starta en task manuellt |
-| `/fia approve <task-id>` | Godkänn en task |
-| `/fia reject <task-id> <feedback>` | Avvisa en task med feedback |
-| `/fia queue` | Visa köade och pågående tasks |
-| `/fia triggers` | Lista väntande triggers |
-| `/fia triggers approve <id>` | Godkänn en väntande trigger |
-| `/fia triggers reject <id>` | Avvisa en väntande trigger |
-| `/fia cron` | Lista schemalagda cron-jobb |
-| `/fia cron create <agent> <task> <schedule>` | Skapa nytt cron-jobb |
-| `/fia cron edit <id> <schedule>` | Redigera cron-schema |
-| `/fia cron delete <id>` | Ta bort cron-jobb |
-| `/fia cron enable <id>` | Aktivera cron-jobb |
-| `/fia cron disable <id>` | Inaktivera cron-jobb |
-| `/fia lineage <task-id>` | Visa task-relationer (parent/child) |
+| Kommando                                     | Beskrivning                              |
+| -------------------------------------------- | ---------------------------------------- |
+| `/fia status`                                | Systemöversikt: agenter, kö, kill switch |
+| `/fia kill`                                  | Aktivera kill switch                     |
+| `/fia resume`                                | Avaktivera kill switch                   |
+| `/fia run <agent> <task>`                    | Starta en task manuellt                  |
+| `/fia approve <task-id>`                     | Godkänn en task                          |
+| `/fia reject <task-id> <feedback>`           | Avvisa en task med feedback              |
+| `/fia queue`                                 | Visa köade och pågående tasks            |
+| `/fia triggers`                              | Lista väntande triggers                  |
+| `/fia triggers approve <id>`                 | Godkänn en väntande trigger              |
+| `/fia triggers reject <id>`                  | Avvisa en väntande trigger               |
+| `/fia cron`                                  | Lista schemalagda cron-jobb              |
+| `/fia cron create <agent> <task> <schedule>` | Skapa nytt cron-jobb                     |
+| `/fia cron edit <id> <schedule>`             | Redigera cron-schema                     |
+| `/fia cron delete <id>`                      | Ta bort cron-jobb                        |
+| `/fia cron enable <id>`                      | Aktivera cron-jobb                       |
+| `/fia cron disable <id>`                     | Inaktivera cron-jobb                     |
+| `/fia lineage <task-id>`                     | Visa task-relationer (parent/child)      |
 
 ---
 
@@ -60,7 +60,7 @@ Pågående:    1
 ```
 
 !!! danger "Stoppar alla agenter"
-    Kill switch påverkar alla agenter omedelbart. En bekräftelse krävs innan aktivering.
+Kill switch påverkar alla agenter omedelbart. En bekräftelse krävs innan aktivering.
 
 Svar:
 
@@ -94,10 +94,10 @@ Alla agenter återupptar normal drift.
 /fia run analytics daily_report
 ```
 
-| Parameter | Beskrivning | Obligatorisk |
-|-----------|-------------|-------------|
-| `agent` | Agent-slug (t.ex. `content`) | Ja |
-| `task` | Uppgiftstyp (t.ex. `blog_post`) | Ja |
+| Parameter | Beskrivning                     | Obligatorisk |
+| --------- | ------------------------------- | ------------ |
+| `agent`   | Agent-slug (t.ex. `content`)    | Ja           |
+| `task`    | Uppgiftstyp (t.ex. `blog_post`) | Ja           |
 
 Svar:
 
@@ -128,10 +128,10 @@ Status: awaiting_review → approved
 /fia reject abc123 Tonen är för formell. Skriv mer personligt.
 ```
 
-| Parameter | Beskrivning | Obligatorisk |
-|-----------|-------------|-------------|
-| `task-id` | Task-ID (UUID eller kort-ID) | Ja |
-| `feedback` | Fritext med feedback till agenten | Ja |
+| Parameter  | Beskrivning                       | Obligatorisk |
+| ---------- | --------------------------------- | ------------ |
+| `task-id`  | Task-ID (UUID eller kort-ID)      | Ja           |
+| `feedback` | Fritext med feedback till agenten | Ja           |
 
 Svar:
 
@@ -253,4 +253,4 @@ abc123 (content/blog_post) ✓ completed
 ```
 
 !!! tip "Korta ID:n"
-    Slack-kommandon accepterar både fullständiga UUID:n och korta ID:n (första 6 tecknen). Gatewayen söker automatiskt efter matchande task.
+Slack-kommandon accepterar både fullständiga UUID:n och korta ID:n (första 6 tecknen). Gatewayen söker automatiskt efter matchande task.

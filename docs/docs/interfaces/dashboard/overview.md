@@ -6,19 +6,19 @@ FIA Dashboard är en **Progressive Web App (PWA)** som ger Marketing Orchestrato
 
 ## Teknikstack
 
-| Komponent | Teknologi | Version |
-|-----------|-----------|---------|
-| UI-ramverk | React | 18.3 |
-| Bundler | Vite (SWC) | 5.4 |
-| Språk | TypeScript strict | 5.8 |
-| Styling | Tailwind CSS + shadcn/ui (Radix) | 3.4 |
-| Server state | TanStack React Query | 5.83 |
-| Routing | React Router DOM | 6.30 |
-| Formulär | React Hook Form + Zod | — |
-| Grafer | Recharts | — |
-| Ikoner | Lucide React | — |
-| i18n | i18next | — |
-| Databas-klient | @supabase/supabase-js | 2.99 |
+| Komponent      | Teknologi                        | Version |
+| -------------- | -------------------------------- | ------- |
+| UI-ramverk     | React                            | 18.3    |
+| Bundler        | Vite (SWC)                       | 5.4     |
+| Språk          | TypeScript strict                | 5.8     |
+| Styling        | Tailwind CSS + shadcn/ui (Radix) | 3.4     |
+| Server state   | TanStack React Query             | 5.83    |
+| Routing        | React Router DOM                 | 6.30    |
+| Formulär       | React Hook Form + Zod            | —       |
+| Grafer         | Recharts                         | —       |
+| Ikoner         | Lucide React                     | —       |
+| i18n           | i18next                          | —       |
+| Databas-klient | @supabase/supabase-js            | 2.99    |
 
 ---
 
@@ -40,29 +40,29 @@ src/
 ```
 
 !!! tip "shadcn/ui"
-    Alla primitiva UI-komponenter (knappar, dialoger, tabeller, badges) kommer från shadcn/ui som bygger på Radix UI. Komponenterna kopieras in i `src/components/ui/` och anpassas med Tailwind-klasser.
+Alla primitiva UI-komponenter (knappar, dialoger, tabeller, badges) kommer från shadcn/ui som bygger på Radix UI. Komponenterna kopieras in i `src/components/ui/` och anpassas med Tailwind-klasser.
 
 ---
 
 ## Routing
 
-| Route | Sida | Beskrivning |
-|-------|------|-------------|
-| `/login` | LoginPage | Supabase Auth (magic link / OAuth) |
-| `/install` | InstallPage | PWA-installationsguide |
-| `/` | DashboardPage | Systemöversikt med KPI:er och agentpuls |
-| `/agents` | AgentsListPage | Rutnät med agentkort |
-| `/agents/:slug` | AgentDetailPage | Agentdetaljer med flikar |
-| `/approvals` | ApprovalsPage | Godkännandekö (tasks med `awaiting_review`) |
-| `/triggers` | TriggersPage | Väntande triggers-kö |
-| `/triggers/config` | TriggersConfigPage | Trigger-konfiguration per agent |
-| `/calendar` | CalendarPage | Innehållskalender |
-| `/activity` | ActivityPage | Aktivitetslogg |
-| `/settings` | SettingsPage | Kill switch, tema, roller |
-| `/costs` | CostsPage | LLM-kostnadsöversikt |
+| Route              | Sida               | Beskrivning                                 |
+| ------------------ | ------------------ | ------------------------------------------- |
+| `/login`           | LoginPage          | Supabase Auth (magic link / OAuth)          |
+| `/install`         | InstallPage        | PWA-installationsguide                      |
+| `/`                | DashboardPage      | Systemöversikt med KPI:er och agentpuls     |
+| `/agents`          | AgentsListPage     | Rutnät med agentkort                        |
+| `/agents/:slug`    | AgentDetailPage    | Agentdetaljer med flikar                    |
+| `/approvals`       | ApprovalsPage      | Godkännandekö (tasks med `awaiting_review`) |
+| `/triggers`        | TriggersPage       | Väntande triggers-kö                        |
+| `/triggers/config` | TriggersConfigPage | Trigger-konfiguration per agent             |
+| `/calendar`        | CalendarPage       | Innehållskalender                           |
+| `/activity`        | ActivityPage       | Aktivitetslogg                              |
+| `/settings`        | SettingsPage       | Kill switch, tema, roller                   |
+| `/costs`           | CostsPage          | LLM-kostnadsöversikt                        |
 
 !!! note "Skyddade routes"
-    Alla routes utom `/login` och `/install` kräver autentisering via `AuthContext`. Obehöriga omdirigeras automatiskt till `/login`.
+Alla routes utom `/login` och `/install` kräver autentisering via `AuthContext`. Obehöriga omdirigeras automatiskt till `/login`.
 
 ---
 
@@ -75,8 +75,8 @@ Dashboarden använder tre lager för tillståndshantering:
 ```typescript
 // Exempel: hämta alla agenter
 const { data: agents, isLoading } = useQuery({
-  queryKey: ['agents'],
-  queryFn: () => supabase.from('agents').select('*'),
+  queryKey: ["agents"],
+  queryFn: () => supabase.from("agents").select("*"),
   staleTime: 30_000,
 });
 ```
@@ -87,29 +87,33 @@ const { data: agents, isLoading } = useQuery({
 
 ### 2. React Context – Auth + Theme
 
-| Context | Ansvar |
-|---------|--------|
-| `AuthContext` | Inloggningsstatus, JWT, roll, Supabase-session |
-| `ThemeContext` | Aktivt färgschema, ljus/mörkt läge |
+| Context        | Ansvar                                         |
+| -------------- | ---------------------------------------------- |
+| `AuthContext`  | Inloggningsstatus, JWT, roll, Supabase-session |
+| `ThemeContext` | Aktivt färgschema, ljus/mörkt läge             |
 
 ### 3. Realtime sync – Supabase PostgreSQL Changes
 
 ```typescript
 // Prenumeration på task-uppdateringar
 supabase
-  .channel('tasks')
-  .on('postgres_changes', {
-    event: '*',
-    schema: 'public',
-    table: 'tasks',
-  }, (payload) => {
-    queryClient.invalidateQueries({ queryKey: ['tasks'] });
-  })
+  .channel("tasks")
+  .on(
+    "postgres_changes",
+    {
+      event: "*",
+      schema: "public",
+      table: "tasks",
+    },
+    (payload) => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  )
   .subscribe();
 ```
 
 !!! info "Realtime-synk"
-    Supabase Realtime lyssnar på `INSERT`, `UPDATE` och `DELETE` events på tabellerna `tasks`, `agents`, `pending_triggers` och `system_settings`. Vid förändring invalideras relevanta React Query-cacher automatiskt.
+Supabase Realtime lyssnar på `INSERT`, `UPDATE` och `DELETE` events på tabellerna `tasks`, `agents`, `pending_triggers` och `system_settings`. Vid förändring invalideras relevanta React Query-cacher automatiskt.
 
 ---
 
@@ -117,12 +121,12 @@ supabase
 
 Dashboarden är installbar som PWA på desktop och mobil.
 
-| Funktion | Implementation |
-|----------|---------------|
+| Funktion       | Implementation                       |
+| -------------- | ------------------------------------ |
 | Service worker | Workbox (precache + runtime caching) |
-| Manifest | `manifest.json` med Forefront-ikoner |
-| Offline-stöd | Cachad shell + offline-fallback |
-| Uppdatering | Prompt vid ny version tillgänglig |
+| Manifest       | `manifest.json` med Forefront-ikoner |
+| Offline-stöd   | Cachad shell + offline-fallback      |
+| Uppdatering    | Prompt vid ny version tillgänglig    |
 
 ```json
 {
@@ -140,19 +144,19 @@ Dashboarden är installbar som PWA på desktop och mobil.
 
 Dashboarden erbjuder **5 färgscheman × 2 lägen = 10 kombinationer**.
 
-| Färgschema | Primärfärg | Beskrivning |
-|------------|-----------|-------------|
-| Earth | `#7D5365` | Forefront-palett (standard) |
-| Ocean | `#555977` | Blålila toner |
-| Forest | `#42504E` | Gröna toner |
-| Sand | `#756256` | Varma jordtoner |
-| Slate | `#7E7C83` | Neutral grå |
+| Färgschema | Primärfärg | Beskrivning                 |
+| ---------- | ---------- | --------------------------- |
+| Earth      | `#7D5365`  | Forefront-palett (standard) |
+| Ocean      | `#555977`  | Blålila toner               |
+| Forest     | `#42504E`  | Gröna toner                 |
+| Sand       | `#756256`  | Varma jordtoner             |
+| Slate      | `#7E7C83`  | Neutral grå                 |
 
 Varje schema finns i **ljust** och **mörkt** läge. Alla färger definieras som HSL-baserade CSS-variabler:
 
 ```css
 :root {
-  --primary: 340 25% 42%;        /* Earth primary */
+  --primary: 340 25% 42%; /* Earth primary */
   --primary-foreground: 0 0% 98%;
   --background: 0 0% 100%;
   --card: 0 0% 100%;
@@ -167,4 +171,4 @@ Varje schema finns i **ljust** och **mörkt** läge. Alla färger definieras som
 ```
 
 !!! tip "Temaväljare"
-    Användaren väljer schema och läge under **Inställningar → Utseende**. Valet sparas i `localStorage` och synkas inte mellan enheter.
+Användaren väljer schema och läge under **Inställningar → Utseende**. Valet sparas i `localStorage` och synkas inte mellan enheter.

@@ -6,13 +6,13 @@ FIA Gateway anvander Model Context Protocol (MCP) for att ge agenter tillgang ti
 
 ## Oversikt
 
-| Integration | Status | Wrapper | Anvands av |
-|-------------|--------|---------|------------|
-| Google Workspace (gws) | Live | `src/mcp/gws.ts` | Content, Strategy, Analytics, SEO, Intelligence |
-| HubSpot | Fas 2 | `src/mcp/hubspot.ts` (placeholder) | Campaign, Lead, Analytics, Strategy |
-| LinkedIn | Fas 2 | `src/mcp/linkedin.ts` (placeholder) | Campaign |
-| Buffer | Fas 2 | `src/mcp/buffer.ts` (placeholder) | Content, Campaign |
-| GA4 Analytics | Fas 2 (direkt API) | -- | Analytics |
+| Integration            | Status             | Wrapper                             | Anvands av                                      |
+| ---------------------- | ------------------ | ----------------------------------- | ----------------------------------------------- |
+| Google Workspace (gws) | Live               | `src/mcp/gws.ts`                    | Content, Strategy, Analytics, SEO, Intelligence |
+| HubSpot                | Fas 2              | `src/mcp/hubspot.ts` (placeholder)  | Campaign, Lead, Analytics, Strategy             |
+| LinkedIn               | Fas 2              | `src/mcp/linkedin.ts` (placeholder) | Campaign                                        |
+| Buffer                 | Fas 2              | `src/mcp/buffer.ts` (placeholder)   | Content, Campaign                               |
+| GA4 Analytics          | Fas 2 (direkt API) | --                                  | Analytics                                       |
 
 ---
 
@@ -27,17 +27,17 @@ GWS-integrationen har tva lager:
 
 ### Tillgangliga tjanster
 
-| Tjanst i agent.yaml | Verktygprefix | Antal verktyg | Exempel |
-|---------------------|--------------|---------------|---------|
-| `gws:drive` | `drive_` | 8 | `drive_list_files`, `drive_search`, `drive_create_file` |
-| `gws:docs` | `gdocs_` | 9 | `gdocs_create`, `gdocs_read`, `gdocs_export` |
-| `gws:sheets` | `gsheets_` | 6 | `gsheets_read`, `gsheets_append_data`, `gsheets_batch_update` |
-| `gws:gmail` | `gmail_` | 4 | `gmail_search_messages`, `gmail_send_message` |
-| `gws:calendar` | `calendar_` | 5 | `calendar_list_events`, `calendar_create_event` |
-| `gws:analytics` | -- | 0 | Inte i MCP-paketet annu. GA4 via direkt API i Fas 2. |
+| Tjanst i agent.yaml | Verktygprefix | Antal verktyg | Exempel                                                       |
+| ------------------- | ------------- | ------------- | ------------------------------------------------------------- |
+| `gws:drive`         | `drive_`      | 8             | `drive_list_files`, `drive_search`, `drive_create_file`       |
+| `gws:docs`          | `gdocs_`      | 9             | `gdocs_create`, `gdocs_read`, `gdocs_export`                  |
+| `gws:sheets`        | `gsheets_`    | 6             | `gsheets_read`, `gsheets_append_data`, `gsheets_batch_update` |
+| `gws:gmail`         | `gmail_`      | 4             | `gmail_search_messages`, `gmail_send_message`                 |
+| `gws:calendar`      | `calendar_`   | 5             | `calendar_list_events`, `calendar_create_event`               |
+| `gws:analytics`     | --            | 0             | Inte i MCP-paketet annu. GA4 via direkt API i Fas 2.          |
 
 !!! info "Kurerade verktyg"
-    Gateway exponerar inte alla 130+ verktyg fran MCP-paketet. Istallet valjs en kurerad delmangd per tjanst for att halla verktygslistan liten och token-effektiv for LLM-anrop.
+Gateway exponerar inte alla 130+ verktyg fran MCP-paketet. Istallet valjs en kurerad delmangd per tjanst for att halla verktygslistan liten och token-effektiv for LLM-anrop.
 
 ### Setup
 
@@ -60,7 +60,7 @@ GWORKSPACE_CREDS_DIR=/absolute/path/to/oauth-dir/
 ```
 
 !!! danger "Absoluta sokvagar"
-    Anvand alltid absoluta sokvagar. Tilde (`~`) expanderas **inte** korrekt i gws CLI v0.4.4.
+Anvand alltid absoluta sokvagar. Tilde (`~`) expanderas **inte** korrekt i gws CLI v0.4.4.
 
 ### OAuth-exportflow
 
@@ -99,16 +99,16 @@ GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE=/home/user/gws-credentials/credentials.jso
 ## Kanda buggar i gws CLI v0.4.4
 
 !!! bug "SA-nycklar ignoreras tyst"
-    Service Account (SA) JSON-nycklar satt via `GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE` ignoreras tyst av gws CLI v0.4.4. Inga felmeddelanden visas -- anropen misslyckas bara. **Losning:** Anvand OAuth-export fran Cloud Shell istallet.
+Service Account (SA) JSON-nycklar satt via `GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE` ignoreras tyst av gws CLI v0.4.4. Inga felmeddelanden visas -- anropen misslyckas bara. **Losning:** Anvand OAuth-export fran Cloud Shell istallet.
 
 !!! bug "Tilde expanderas inte"
-    Sokvagar med `~` (t.ex. `~/credentials.json`) expanderas inte. Anvand alltid absoluta sokvagar.
+Sokvagar med `~` (t.ex. `~/credentials.json`) expanderas inte. Anvand alltid absoluta sokvagar.
 
 !!! bug "gws analytics ar inte ett giltigt kommando"
-    `gws analytics` finns inte i CLI:n. Google Analytics 4-data maste hamtas via direkt API-integration (planerad for Fas 2).
+`gws analytics` finns inte i CLI:n. Google Analytics 4-data maste hamtas via direkt API-integration (planerad for Fas 2).
 
 !!! bug "OAuth kravr Cloud Shell"
-    `gws auth login` fungerar inte pa en headless VPS -- OAuth-flodet kravr en webbläsare. Anvand Cloud Shell for att generera credentials och overfora dem manuellt.
+`gws auth login` fungerar inte pa en headless VPS -- OAuth-flodet kravr en webbläsare. Anvand Cloud Shell for att generera credentials och overfora dem manuellt.
 
 ---
 
@@ -133,16 +133,16 @@ Agent manifest (tools: ["gws:drive", "gws:docs"])
 
 Verktyg deklareras i varje agents `agent.yaml` under `tools`:
 
-| Agent | Verktyg |
-|-------|---------|
-| Content | `buffer`, `gws:drive`, `gws:docs` |
-| Strategy | `gws:analytics`, `gws:calendar`, `gws:sheets`, `hubspot` |
-| Campaign | `hubspot`, `linkedin`, `buffer` |
-| SEO | `gws:analytics`, `gws:sheets` |
-| Lead | `hubspot` |
-| Analytics | `gws:analytics`, `gws:sheets`, `gws:drive`, `hubspot` |
-| Intelligence | `gws:drive`, `gws:docs`, `gws:sheets` |
-| Brand | *(inga verktyg)* |
+| Agent        | Verktyg                                                  |
+| ------------ | -------------------------------------------------------- |
+| Content      | `buffer`, `gws:drive`, `gws:docs`                        |
+| Strategy     | `gws:analytics`, `gws:calendar`, `gws:sheets`, `hubspot` |
+| Campaign     | `hubspot`, `linkedin`, `buffer`                          |
+| SEO          | `gws:analytics`, `gws:sheets`                            |
+| Lead         | `hubspot`                                                |
+| Analytics    | `gws:analytics`, `gws:sheets`, `gws:drive`, `hubspot`    |
+| Intelligence | `gws:drive`, `gws:docs`, `gws:sheets`                    |
+| Brand        | _(inga verktyg)_                                         |
 
 !!! note "Minsta mojliga rattighet"
-    Varje agent far enbart tillgang till de verktyg den behover. Brand Agent har t.ex. inga verktyg alls -- den granskar enbart innehall.
+Varje agent far enbart tillgang till de verktyg den behover. Brand Agent har t.ex. inga verktyg alls -- den granskar enbart innehall.

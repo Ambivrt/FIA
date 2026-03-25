@@ -67,44 +67,44 @@ plugins:
 nav:
   - Hem: index.md
   - Arkitektur:
-    - architecture/index.md
-    - Systemöversikt: architecture/overview.md
-    - Agentkluster: architecture/agents.md
-    - Agentreferens: architecture/agents-reference.md
-    - Datamodell: architecture/data-model.md
-    - API-kontrakt: architecture/api-contracts.md
-    - Trigger Engine: architecture/trigger-engine.md
-    - LLM-routing: architecture/llm-routing.md
-    - Säkerhet: architecture/security.md
-    - Roadmap: architecture/roadmap.md
+      - architecture/index.md
+      - Systemöversikt: architecture/overview.md
+      - Agentkluster: architecture/agents.md
+      - Agentreferens: architecture/agents-reference.md
+      - Datamodell: architecture/data-model.md
+      - API-kontrakt: architecture/api-contracts.md
+      - Trigger Engine: architecture/trigger-engine.md
+      - LLM-routing: architecture/llm-routing.md
+      - Säkerhet: architecture/security.md
+      - Roadmap: architecture/roadmap.md
   - Gateway:
-    - gateway/index.md
-    - Installation: gateway/setup.md
-    - Deploy: gateway/deploy.md
-    - Agent YAML: gateway/agents-yaml.md
-    - MCP-integrationer: gateway/mcp-integrations.md
-    - Scheduler: gateway/scheduler.md
-    - Felsökning: gateway/troubleshooting.md
+      - gateway/index.md
+      - Installation: gateway/setup.md
+      - Deploy: gateway/deploy.md
+      - Agent YAML: gateway/agents-yaml.md
+      - MCP-integrationer: gateway/mcp-integrations.md
+      - Scheduler: gateway/scheduler.md
+      - Felsökning: gateway/troubleshooting.md
   - Gränssnitt:
-    - interfaces/index.md
-    - Dashboard:
-      - Översikt: interfaces/dashboard/overview.md
-      - Agenter: interfaces/dashboard/agents.md
-      - Godkännanden: interfaces/dashboard/approvals.md
-      - Triggers: interfaces/dashboard/triggers.md
-      - Inställningar: interfaces/dashboard/settings.md
-    - CLI:
-      - Installation: interfaces/cli/install.md
-      - Kommandon: interfaces/cli/commands.md
-      - Realtid: interfaces/cli/realtime.md
-    - Slack:
-      - Kommandon: interfaces/slack/commands.md
-      - Kanaler: interfaces/slack/channels.md
+      - interfaces/index.md
+      - Dashboard:
+          - Översikt: interfaces/dashboard/overview.md
+          - Agenter: interfaces/dashboard/agents.md
+          - Godkännanden: interfaces/dashboard/approvals.md
+          - Triggers: interfaces/dashboard/triggers.md
+          - Inställningar: interfaces/dashboard/settings.md
+      - CLI:
+          - Installation: interfaces/cli/install.md
+          - Kommandon: interfaces/cli/commands.md
+          - Realtid: interfaces/cli/realtime.md
+      - Slack:
+          - Kommandon: interfaces/slack/commands.md
+          - Kanaler: interfaces/slack/channels.md
   - Användarmanual:
-    - user-guide/index.md
-    - Kom igång: user-guide/getting-started.md
-    - Dagligt arbetsflöde: user-guide/daily-workflow.md
-    - Godkänna innehåll: user-guide/approvals.md
-    - Triggers: user-guide/triggers.md
-    - Nödstopp: user-guide/kill-switch.md
-    - FAQ: user-guide/faq.md
+      - user-guide/index.md
+      - Kom igång: user-guide/getting-started.md
+      - Dagligt arbetsflöde: user-guide/daily-workflow.md
+      - Godkänna innehåll: user-guide/approvals.md
+      - Triggers: user-guide/triggers.md
+      - Nödstopp: user-guide/kill-switch.md
+      - FAQ: user-guide/faq.md

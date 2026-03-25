@@ -10,11 +10,7 @@ Här hittar du svar på de vanligaste frågorna om FIA, ordnade efter ämne.
 
 Det kan bero på flera saker: ett tillfälligt problem med en extern tjänst, ett oväntat svar från LLM-modellen, eller ett nätverksproblem. Oftast löser sig felet automatiskt inom några minuter.
 
-!!! tip "Vad du kan göra"
-    1. Vänta 15 minuter -- många fel löser sig själva.
-    2. Kontrollera **Aktivitet** i sidomenyn för att se felmeddelandet.
-    3. Om felet kvarstår, prova att pausa och återaktivera agenten.
-    4. Kontakta teknisk support om inget hjälper.
+!!! tip "Vad du kan göra" 1. Vänta 15 minuter -- många fel löser sig själva. 2. Kontrollera **Aktivitet** i sidomenyn för att se felmeddelandet. 3. Om felet kvarstår, prova att pausa och återaktivera agenten. 4. Kontakta teknisk support om inget hjälper.
 
 ### Kan jag köra en uppgift manuellt?
 
@@ -41,7 +37,7 @@ Uppgiften skickas tillbaka till agenten som skapade den, tillsammans med din fee
 Nej, ett godkännande kan inte ångras efter att det gjorts. Om innehållet redan publicerats behöver du hantera det manuellt i respektive plattform (blogg, sociala medier, etc.).
 
 !!! warning "Granska noggrant"
-    Eftersom godkännanden inte kan ångras är det viktigt att läsa igenom innehållet ordentligt innan du godkänner.
+Eftersom godkännanden inte kan ångras är det viktigt att läsa igenom innehållet ordentligt innan du godkänner.
 
 ---
 
@@ -49,10 +45,10 @@ Nej, ett godkännande kan inte ångras efter att det gjorts. Om innehållet reda
 
 ### Vad är skillnaden mellan automatiska och manuella triggers?
 
-| Typ           | Vad händer                                      | Exempel                                          |
-| ------------- | ------------------------------------------------ | ------------------------------------------------ |
-| **Automatisk**| Åtgärden utförs direkt utan din inblandning      | SEO-optimering efter publicerad bloggpost         |
-| **Manuell**   | Triggern hamnar i kön och väntar på ditt OK      | Skapa kampanj baserad på strategidokument         |
+| Typ            | Vad händer                                  | Exempel                                   |
+| -------------- | ------------------------------------------- | ----------------------------------------- |
+| **Automatisk** | Åtgärden utförs direkt utan din inblandning | SEO-optimering efter publicerad bloggpost |
+| **Manuell**    | Triggern hamnar i kön och väntar på ditt OK | Skapa kampanj baserad på strategidokument |
 
 Manuella triggers används för åtgärder som har större påverkan eller kostnad.
 
@@ -88,14 +84,14 @@ Kostnaden varierar beroende på längd och antal omarbetningar, men en typisk bl
 
 Kostnaderna består av:
 
-| Källa                     | Beskrivning                                          |
-| ------------------------- | ---------------------------------------------------- |
-| **LLM-anrop**             | Varje gång en agent ber AI-modellen om hjälp         |
-| **Bildgenerering**        | Bilder som skapas till innehåll                      |
-| **Sökningar**             | Omvärldsbevakning och research via sökmotorer        |
+| Källa              | Beskrivning                                   |
+| ------------------ | --------------------------------------------- |
+| **LLM-anrop**      | Varje gång en agent ber AI-modellen om hjälp  |
+| **Bildgenerering** | Bilder som skapas till innehåll               |
+| **Sökningar**      | Omvärldsbevakning och research via sökmotorer |
 
 !!! info "Inga dolda kostnader"
-    Alla kostnader loggas och visas transparent på **Kostnader**-sidan i dashboarden.
+Alla kostnader loggas och visas transparent på **Kostnader**-sidan i dashboarden.
 
 ### Vad är månadsbudgeten?
 
@@ -109,11 +105,11 @@ Månadsbudgeten sätts i systemets inställningar och övervakas löpande. Du se
 
 Åtkomsten styrs av roller:
 
-| Roll                     | Rättigheter                                           |
-| ------------------------ | ----------------------------------------------------- |
+| Roll                       | Rättigheter                                                |
+| -------------------------- | ---------------------------------------------------------- |
 | **Marketing Orchestrator** | Full tillgång: granska, godkänna, konfigurera, kill switch |
-| **Viewer**               | Läsbehörighet: se dashboarden och rapporter            |
-| **Admin**                | Allt ovan plus systemkonfiguration och trigger-hantering |
+| **Viewer**                 | Läsbehörighet: se dashboarden och rapporter                |
+| **Admin**                  | Allt ovan plus systemkonfiguration och trigger-hantering   |
 
 ### Var lagras data?
 
@@ -124,4 +120,4 @@ All data lagras i **Supabase** (PostgreSQL-databas) i **EU-regionen**. Ingen dat
 Ja, kontakta en administratör för att radera specifik data. Observera att viss data (som granskningsspår och kill switch-logg) sparas av revisionsskäl och kan ha andra regler för radering.
 
 !!! info "GDPR"
-    FIA hanterar inga personuppgifter om slutkunder direkt. Leads och kontaktuppgifter hanteras i HubSpot enligt Forefronts dataskyddspolicy.
+FIA hanterar inga personuppgifter om slutkunder direkt. Leads och kontaktuppgifter hanteras i HubSpot enligt Forefronts dataskyddspolicy.

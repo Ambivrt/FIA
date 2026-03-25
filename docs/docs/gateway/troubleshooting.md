@@ -12,16 +12,16 @@ Gateway startar men Slack-kommandon (`/fia status`) ger inget svar.
 
 ### Orsaker och losningar
 
-| Problem | Losning |
-|---------|---------|
+| Problem                               | Losning                                                                                                                                 |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `SLACK_APP_TOKEN` saknas eller ar fel | Socket Mode kravr ett App-Level Token (borjar med `xapp-`). Generera i Slack-appens **Socket Mode**-sida med scope `connections:write`. |
-| `SLACK_BOT_TOKEN` saknas | Bot User OAuth Token (borjar med `xoxb-`). Installera appen i workspacen under **OAuth & Permissions**. |
-| `SLACK_SIGNING_SECRET` saknas | Finns under **Basic Information** i Slack-appen. |
-| Socket Mode inte aktiverat | Ga till Slack-appens **Socket Mode**-sida och aktivera det. |
-| Bot saknar scopes | Kontrollera att boten har: `chat:write`, `commands`, `channels:history`, `channels:read`, `groups:read`. |
+| `SLACK_BOT_TOKEN` saknas              | Bot User OAuth Token (borjar med `xoxb-`). Installera appen i workspacen under **OAuth & Permissions**.                                 |
+| `SLACK_SIGNING_SECRET` saknas         | Finns under **Basic Information** i Slack-appen.                                                                                        |
+| Socket Mode inte aktiverat            | Ga till Slack-appens **Socket Mode**-sida och aktivera det.                                                                             |
+| Bot saknar scopes                     | Kontrollera att boten har: `chat:write`, `commands`, `channels:history`, `channels:read`, `groups:read`.                                |
 
 !!! tip "Diagnostik"
-    Kontrollera Bolt SDK-loggar i PM2:
+Kontrollera Bolt SDK-loggar i PM2:
 
     ```bash
     pm2 logs fia-gateway --lines 100 | grep -i slack
@@ -39,10 +39,10 @@ Dashboard visar inte uppdateringar i realtid. Tasks och agentstatus uppdateras i
 
 ### Orsaker och losningar
 
-| Problem | Losning |
-|---------|---------|
+| Problem                            | Losning                                                                                         |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `SUPABASE_SERVICE_ROLE_KEY` ar fel | Service Role Key har full atkomst. Kontrollera under **Settings → API** i Supabase-dashboarden. |
-| Publication saknar tabeller | Supabase Realtime kravr att tabellerna ar tillagda i publikationen. Kor i SQL Editor: |
+| Publication saknar tabeller        | Supabase Realtime kravr att tabellerna ar tillagda i publikationen. Kor i SQL Editor:           |
 
 ```sql
 -- Kontrollera vilka tabeller som ar i publikationen
@@ -53,7 +53,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE tasks, agents, activity_log, comma
 ```
 
 !!! note "EU-region"
-    Supabase-projektet maste vara i EU-region. Data far aldrig lamna EU.
+Supabase-projektet maste vara i EU-region. Data far aldrig lamna EU.
 
 ---
 
@@ -66,14 +66,14 @@ GWS-verktyg (Drive, Docs, Sheets) returnerar auth-fel eller tomma resultat.
 ### Orsaker och losningar
 
 !!! bug "Service Account-nycklar fungerar inte"
-    gws CLI v0.4.4 ignorerar tyst SA JSON-nycklar. Inga felmeddelanden visas -- anropen misslyckas bara. **Du maste anvanda OAuth-export fran Cloud Shell.**
+gws CLI v0.4.4 ignorerar tyst SA JSON-nycklar. Inga felmeddelanden visas -- anropen misslyckas bara. **Du maste anvanda OAuth-export fran Cloud Shell.**
 
-| Problem | Losning |
-|---------|---------|
-| SA-nyckel istallet for OAuth | Folj [OAuth-exportflödet](mcp-integrations.md#oauth-exportflow). |
-| Tilde (`~`) i sokvag | Anvand absolut sokvag: `/home/user/creds/credentials.json` (inte `~/creds/credentials.json`). |
-| OAuth-token har gatt ut | Kor `gws auth login` i Cloud Shell och exportera ny `credentials.json`. |
-| `gws analytics` ger fel | `gws analytics` ar inte ett giltigt CLI-kommando. GA4-data via direkt API i Fas 2. |
+| Problem                      | Losning                                                                                       |
+| ---------------------------- | --------------------------------------------------------------------------------------------- |
+| SA-nyckel istallet for OAuth | Folj [OAuth-exportflödet](mcp-integrations.md#oauth-exportflow).                              |
+| Tilde (`~`) i sokvag         | Anvand absolut sokvag: `/home/user/creds/credentials.json` (inte `~/creds/credentials.json`). |
+| OAuth-token har gatt ut      | Kor `gws auth login` i Cloud Shell och exportera ny `credentials.json`.                       |
+| `gws analytics` ger fel      | `gws analytics` ar inte ett giltigt CLI-kommando. GA4-data via direkt API i Fas 2.            |
 
 ---
 
@@ -85,18 +85,18 @@ GWS-verktyg (Drive, Docs, Sheets) returnerar auth-fel eller tomma resultat.
 
 ### Orsaker och losningar
 
-| Problem | Losning |
-|---------|---------|
-| `dist/index.js` saknas | Bygg forst: `npm run build` |
-| Fel Node.js-version | Kontrollera: `node --version` (kravr >= 20). Installera 22 LTS. |
-| `.env` saknas | Gateway kraschar vid startup om `.env` inte finns. Kopiera fran `.env.example`. |
-| Port redan upptagen | Kontrollera om port 3001 anvands: `lsof -i :3001`. Andra `GATEWAY_API_PORT` i `.env`. |
-| Minnesgransen nadd | PM2 startar om vid 512 MB. Kontrollera `pm2 monit` for minnesanvandning. |
+| Problem                | Losning                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------- |
+| `dist/index.js` saknas | Bygg forst: `npm run build`                                                           |
+| Fel Node.js-version    | Kontrollera: `node --version` (kravr >= 20). Installera 22 LTS.                       |
+| `.env` saknas          | Gateway kraschar vid startup om `.env` inte finns. Kopiera fran `.env.example`.       |
+| Port redan upptagen    | Kontrollera om port 3001 anvands: `lsof -i :3001`. Andra `GATEWAY_API_PORT` i `.env`. |
+| Minnesgransen nadd     | PM2 startar om vid 512 MB. Kontrollera `pm2 monit` for minnesanvandning.              |
 
 !!! tip "Diagnostik"
-    ```bash
-    # Visa processens status
-    pm2 status
+
+````bash # Visa processens status
+pm2 status
 
     # Visa senaste loggarna (inklusive crash-loggar)
     pm2 logs fia-gateway --lines 50
@@ -115,14 +115,14 @@ Tasks fastnar i `in_progress` eller misslyckas med timeout-fel.
 
 ### Orsaker och losningar
 
-| Problem | Losning |
-|---------|---------|
-| `ANTHROPIC_API_KEY` ar ogiltig | Kontrollera nyckeln pa [console.anthropic.com](https://console.anthropic.com/). |
-| Rate limit nadd | Claude API har rate limits per organisation. Gateway har exponential backoff retry som hanterar transienta fel automatiskt. |
-| Timeout pa stora prompter | Kontrollera `system_context` och `task_context` i agentens `agent.yaml`. Stora kontextfiler okar latens och kostnad. |
+| Problem                        | Losning                                                                                                                     |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `ANTHROPIC_API_KEY` ar ogiltig | Kontrollera nyckeln pa [console.anthropic.com](https://console.anthropic.com/).                                             |
+| Rate limit nadd                | Claude API har rate limits per organisation. Gateway har exponential backoff retry som hanterar transienta fel automatiskt. |
+| Timeout pa stora prompter      | Kontrollera `system_context` och `task_context` i agentens `agent.yaml`. Stora kontextfiler okar latens och kostnad.        |
 
 !!! info "Exponential backoff"
-    Gateway har inbyggd retry med exponential backoff for transienta LLM-fel (rate limits, timeout, natverksfel). Upp till 3 forsök med okande vantetid. Permanenta fel (401, 403) provas inte om.
+Gateway har inbyggd retry med exponential backoff for transienta LLM-fel (rate limits, timeout, natverksfel). Upp till 3 forsök med okande vantetid. Permanenta fel (401, 403) provas inte om.
 
 ---
 
@@ -142,7 +142,7 @@ SELECT * FROM system_settings WHERE key = 'kill_switch';
 
 -- Inaktivera manuellt
 UPDATE system_settings SET value = 'false', updated_at = NOW() WHERE key = 'kill_switch';
-```
+````
 
 === "CLI"
 
@@ -157,7 +157,7 @@ UPDATE system_settings SET value = 'false', updated_at = NOW() WHERE key = 'kill
     ```
 
 !!! warning "Nödsituation"
-    Om varken Dashboard, CLI eller Slack fungerar, anvand Supabase SQL Editor direkt for att inaktivera kill switch.
+Om varken Dashboard, CLI eller Slack fungerar, anvand Supabase SQL Editor direkt for att inaktivera kill switch.
 
 ---
 
@@ -169,14 +169,14 @@ Tasks har status `in_progress` men ingen agent arbetar pa dem. Vanligt efter en 
 
 ### Orsaker och losningar
 
-| Problem | Losning |
-|---------|---------|
+| Problem                            | Losning                                                                                                                   |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | Gateway kraschade under exekvering | Vid startup gor gateway en recovery-kontroll: alla tasks som ar `in_progress` utan aktiv exekvering markeras som `error`. |
-| Agent ar pausad | Kontrollera agentens status i Dashboard eller via `npx fia agents`. |
-| TaskQueue ar full | `QUEUE_MAX_CONCURRENCY` begransar parallella tasks (standard: 3). Kontrollera kon: `npx fia queue`. |
+| Agent ar pausad                    | Kontrollera agentens status i Dashboard eller via `npx fia agents`.                                                       |
+| TaskQueue ar full                  | `QUEUE_MAX_CONCURRENCY` begransar parallella tasks (standard: 3). Kontrollera kon: `npx fia queue`.                       |
 
 !!! tip "Manuell recovery"
-    Om automatisk recovery inte fungerar, uppdatera statusen manuellt i Supabase:
+Om automatisk recovery inte fungerar, uppdatera statusen manuellt i Supabase:
 
     ```sql
     UPDATE tasks
@@ -195,11 +195,11 @@ CLI-kommandon (`npx fia status`) returnerar `401 Unauthorized`.
 
 ### Orsaker och losningar
 
-| Problem | Losning |
-|---------|---------|
-| `FIA_CLI_TOKEN` saknas i gateway:ns `.env` | Lagg till en token i `.env` pa servern: `FIA_CLI_TOKEN=<din-token>` |
-| Token matchar inte | CLI:ns konfigurerade token maste matcha exakt med gateway:ns `FIA_CLI_TOKEN`. |
-| CLI pekar pa fel host | Kontrollera CLI-konfigurationen: `npx fia config` |
+| Problem                                    | Losning                                                                       |
+| ------------------------------------------ | ----------------------------------------------------------------------------- |
+| `FIA_CLI_TOKEN` saknas i gateway:ns `.env` | Lagg till en token i `.env` pa servern: `FIA_CLI_TOKEN=<din-token>`           |
+| Token matchar inte                         | CLI:ns konfigurerade token maste matcha exakt med gateway:ns `FIA_CLI_TOKEN`. |
+| CLI pekar pa fel host                      | Kontrollera CLI-konfigurationen: `npx fia config`                             |
 
 === "Bash"
 
@@ -219,19 +219,19 @@ CLI-kommandon (`npx fia status`) returnerar `401 Unauthorized`.
     ```
 
 !!! info "Auth-bypass"
-    `FIA_CLI_TOKEN` ar en enkel bearer-token som bypass:ar JWT-validering i gateway:ns auth middleware. Tokenen ger automatiskt admin-roll.
+`FIA_CLI_TOKEN` ar en enkel bearer-token som bypass:ar JWT-validering i gateway:ns auth middleware. Tokenen ger automatiskt admin-roll.
 
 ---
 
 ## Snabbreferens -- diagnostikkommandon
 
-| Kommando | Beskrivning |
-|----------|-------------|
-| `pm2 status` | Processens status |
-| `pm2 logs fia-gateway --lines 50` | Senaste loggarna |
-| `pm2 monit` | CPU/minne i realtid |
-| `npx fia status` | Systemstatus via CLI |
-| `npx fia agents` | Agentstatus |
-| `npx fia queue` | Koade/pagaende tasks |
-| `npx fia logs` | Aktivitetslogg |
-| `npx fia tail` | Live-stream fran Supabase Realtime |
+| Kommando                          | Beskrivning                        |
+| --------------------------------- | ---------------------------------- |
+| `pm2 status`                      | Processens status                  |
+| `pm2 logs fia-gateway --lines 50` | Senaste loggarna                   |
+| `pm2 monit`                       | CPU/minne i realtid                |
+| `npx fia status`                  | Systemstatus via CLI               |
+| `npx fia agents`                  | Agentstatus                        |
+| `npx fia queue`                   | Koade/pagaende tasks               |
+| `npx fia logs`                    | Aktivitetslogg                     |
+| `npx fia tail`                    | Live-stream fran Supabase Realtime |

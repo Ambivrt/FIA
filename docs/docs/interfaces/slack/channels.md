@@ -6,17 +6,17 @@ FIA:s Slack-bot skickar automatiska notiser till dedikerade kanaler baserat på 
 
 ## Kanalstruktur
 
-| Kanal | Syfte | Volym |
-|-------|-------|-------|
-| `#fia-general` | Systemhändelser, kill switch, statusändringar | Låg |
-| `#fia-tasks` | Task-uppdateringar: skapad, slutförd, godkänd | Medel |
-| `#fia-approvals` | Tasks som kräver granskning | Låg |
-| `#fia-triggers` | Väntande triggers, trigger-godkännanden | Låg |
-| `#fia-errors` | Felmeddelanden, heartbeat-timeout, LLM-fel | Låg |
-| `#fia-content` | Färdigt innehåll (publicerat/levererat) | Medel |
+| Kanal            | Syfte                                         | Volym |
+| ---------------- | --------------------------------------------- | ----- |
+| `#fia-general`   | Systemhändelser, kill switch, statusändringar | Låg   |
+| `#fia-tasks`     | Task-uppdateringar: skapad, slutförd, godkänd | Medel |
+| `#fia-approvals` | Tasks som kräver granskning                   | Låg   |
+| `#fia-triggers`  | Väntande triggers, trigger-godkännanden       | Låg   |
+| `#fia-errors`    | Felmeddelanden, heartbeat-timeout, LLM-fel    | Låg   |
+| `#fia-content`   | Färdigt innehåll (publicerat/levererat)       | Medel |
 
 !!! tip "Kanalnamn"
-    Kanalnamn är konfigurerbara via `system_settings` i Supabase. Ovan är standardkonfigurationen.
+Kanalnamn är konfigurerbara via `system_settings` i Supabase. Ovan är standardkonfigurationen.
 
 ---
 
@@ -57,7 +57,7 @@ Dashboard: https://fia.forefront.se/approvals
 ```
 
 !!! note "Actionable notiser"
-    Godkännandenotiser inkluderar direktkommandon så att operatören kan agera direkt från Slack utan att öppna dashboarden.
+Godkännandenotiser inkluderar direktkommandon så att operatören kan agera direkt från Slack utan att öppna dashboarden.
 
 ### Trigger avfyrad
 
@@ -194,27 +194,25 @@ triggers:
     requires_approval: false
 ```
 
-| Fält | Typ | Beskrivning |
-|------|-----|-------------|
-| `type` | `notify_slack` | Åtgärdstyp |
-| `channel` | string | Slack-kanal att skicka till |
-| `message` | string | Meddelandetext (stöder variabler) |
+| Fält      | Typ            | Beskrivning                       |
+| --------- | -------------- | --------------------------------- |
+| `type`    | `notify_slack` | Åtgärdstyp                        |
+| `channel` | string         | Slack-kanal att skicka till       |
+| `message` | string         | Meddelandetext (stöder variabler) |
 
 ### Variabler i meddelanden
 
-| Variabel | Ersätts med |
-|----------|-------------|
-| `{{agent}}` | Agentnamn |
-| `{{trigger_name}}` | Trigger-namn |
-| `{{value}}` | Aktuellt mätvärde (vid `metric_threshold`) |
-| `{{threshold}}` | Tröskelvärde |
-| `{{timestamp}}` | Tidsstämpel |
+| Variabel           | Ersätts med                                |
+| ------------------ | ------------------------------------------ |
+| `{{agent}}`        | Agentnamn                                  |
+| `{{trigger_name}}` | Trigger-namn                               |
+| `{{value}}`        | Aktuellt mätvärde (vid `metric_threshold`) |
+| `{{threshold}}`    | Tröskelvärde                               |
+| `{{timestamp}}`    | Tidsstämpel                                |
 
 !!! example "Variabel-expansion"
-    ```
-    message: "{{agent}}: {{trigger_name}} – värde {{value}} överstiger tröskel {{threshold}}"
-    ```
-    Resulterar i:
-    ```
-    analytics: kpi_alert – värde 5.3 överstiger tröskel 5.0
-    ```
+`     message: "{{agent}}: {{trigger_name}} – värde {{value}} överstiger tröskel {{threshold}}"
+    `
+Resulterar i:
+`     analytics: kpi_alert – värde 5.3 överstiger tröskel 5.0
+    `

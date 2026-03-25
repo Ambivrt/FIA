@@ -15,7 +15,7 @@ När du aktiverar kill switch händer följande:
 - **Inga API-anrop görs** till LLM-tjänster, publiceringsverktyg eller andra externa system.
 
 !!! danger "Nödstoppet påverkar hela systemet"
-    Kill switch stoppar **alla** agenter, inte bara en. Använd det bara när situationen kräver att allt stannar. För enskilda agenter, se avsnittet om att pausa nedan.
+Kill switch stoppar **alla** agenter, inte bara en. Använd det bara när situationen kräver att allt stannar. För enskilda agenter, se avsnittet om att pausa nedan.
 
 ---
 
@@ -23,12 +23,12 @@ När du aktiverar kill switch händer följande:
 
 Aktivera nödstoppet i dessa situationer:
 
-| Situation                                        | Exempel                                                  |
-| ------------------------------------------------ | -------------------------------------------------------- |
-| **Varumärkeskris**                               | Negativ publicitet som kräver att all extern kommunikation stoppas |
-| **Felaktigt innehåll publiceras**                 | Agenter publicerar innehåll med fel information eller olämplig ton |
-| **Systemet beter sig oväntat**                    | Agenter skapar stora mängder oväntade uppgifter          |
-| **Kostnader skenar**                              | LLM-kostnader ökar snabbt utan förklaring                |
+| Situation                         | Exempel                                                            |
+| --------------------------------- | ------------------------------------------------------------------ |
+| **Varumärkeskris**                | Negativ publicitet som kräver att all extern kommunikation stoppas |
+| **Felaktigt innehåll publiceras** | Agenter publicerar innehåll med fel information eller olämplig ton |
+| **Systemet beter sig oväntat**    | Agenter skapar stora mängder oväntade uppgifter                    |
+| **Kostnader skenar**              | LLM-kostnader ökar snabbt utan förklaring                          |
 
 ---
 
@@ -48,7 +48,7 @@ Du kan aktivera kill switch på två sätt:
 Skriv kommandot `/fia kill` i valfri Slack-kanal där FIA-boten finns.
 
 !!! tip "Slack är snabbast"
-    Om du behöver stoppa systemet akut och inte har dashboarden öppen är Slack-kommandot snabbaste vägen.
+Om du behöver stoppa systemet akut och inte har dashboarden öppen är Slack-kommandot snabbaste vägen.
 
 ---
 
@@ -67,7 +67,7 @@ När situationen är under kontroll avaktiverar du kill switch på samma sätt:
 Skriv kommandot `/fia resume` i Slack.
 
 !!! info "Uppgifter som avbröts"
-    Uppgifter som var pågående när nödstoppet aktiverades markeras med en avbryten-status. De kan behöva startas om manuellt.
+Uppgifter som var pågående när nödstoppet aktiverades markeras med en avbryten-status. De kan behöva startas om manuellt.
 
 ---
 
@@ -75,10 +75,10 @@ Skriv kommandot `/fia resume` i Slack.
 
 Om problemet gäller en specifik agent behöver du inte stoppa hela systemet. Du kan istället pausa den enskilda agenten.
 
-| Åtgärd                   | Omfattning    | Övriga agenter             | Lämpligt när                            |
-| ------------------------- | ------------- | -------------------------- | --------------------------------------- |
-| **Pausa en agent**        | En agent      | Fortsätter arbeta normalt  | En agent beter sig konstigt             |
-| **Kill switch**           | Alla agenter  | Allt stoppas               | Systemövergripande problem eller kris   |
+| Åtgärd             | Omfattning   | Övriga agenter            | Lämpligt när                          |
+| ------------------ | ------------ | ------------------------- | ------------------------------------- |
+| **Pausa en agent** | En agent     | Fortsätter arbeta normalt | En agent beter sig konstigt           |
+| **Kill switch**    | Alla agenter | Allt stoppas              | Systemövergripande problem eller kris |
 
 Så pausar du en agent:
 
@@ -101,4 +101,4 @@ Alla aktiveringar och avaktiveringar av nödstoppet loggas automatiskt. I loggen
 Du hittar detta i **Aktivitet** genom att filtrera på systemhändelser.
 
 !!! info "Full spårbarhet"
-    Loggen kan inte redigeras eller raderas. Det ger full spårbarhet för revisioner och uppföljning.
+Loggen kan inte redigeras eller raderas. Det ger full spårbarhet för revisioner och uppföljning.

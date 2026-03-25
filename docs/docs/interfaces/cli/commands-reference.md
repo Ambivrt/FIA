@@ -1,7 +1,7 @@
 # CLI-kommandon (referens)
 
 !!! info "Auto-genererad"
-    Denna sida genereras från `fia --help`. Senast uppdaterad: 2026-03-25
+Denna sida genereras från `fia --help`. Senast uppdaterad: 2026-03-25
 
 ## fia
 
@@ -235,4 +235,3 @@ Commands:
   enable <id>            Enable a scheduled cron job
   disable <id>           Disable a scheduled cron job
 ```
-

@@ -8,12 +8,12 @@ Inställningssidan samlar systemkritiska kontroller, utseendeval och administrat
 
 Kill switch stoppar **alla agenter omedelbart**. Inga nya tasks startas och pågående tasks pausas.
 
-| Egenskap | Värde |
-|----------|-------|
-| Lagringsplats | `system_settings`-tabell i Supabase |
-| Nyckel | `kill_switch` |
-| Typ | Boolean |
-| Dubbel aktivering | Dashboard + Slack (`/fia kill`) |
+| Egenskap          | Värde                               |
+| ----------------- | ----------------------------------- |
+| Lagringsplats     | `system_settings`-tabell i Supabase |
+| Nyckel            | `kill_switch`                       |
+| Typ               | Boolean                             |
+| Dubbel aktivering | Dashboard + Slack (`/fia kill`)     |
 
 ```
 ┌────────────────────────────────────────────┐
@@ -30,17 +30,17 @@ Kill switch stoppar **alla agenter omedelbart**. Inga nya tasks startas och påg
 ```
 
 !!! danger "Dubbel bekräftelse"
-    Aktivering av kill switch kräver en bekräftelsedialog: _"Är du säker? Alla agenter stoppas omedelbart."_ Avaktivering kräver liknande bekräftelse.
+Aktivering av kill switch kräver en bekräftelsedialog: _"Är du säker? Alla agenter stoppas omedelbart."_ Avaktivering kräver liknande bekräftelse.
 
 ### Aktivera / avaktivera
 
-| Åtgärd | Effekt |
-|--------|--------|
-| **Aktivera** | Alla agenters display status → `killed`. Inga tasks körs. |
+| Åtgärd         | Effekt                                                                 |
+| -------------- | ---------------------------------------------------------------------- |
+| **Aktivera**   | Alla agenters display status → `killed`. Inga tasks körs.              |
 | **Avaktivera** | Agenter återgår till sin normala status. Köade tasks börjar bearbetas. |
 
 !!! note "Slack-synk"
-    Kill switch kan aktiveras/avaktiveras från både Dashboard och Slack. Oavsett var ändringen görs synkas statusen i realtid till båda gränssnitten via Supabase Realtime.
+Kill switch kan aktiveras/avaktiveras från både Dashboard och Slack. Oavsett var ändringen görs synkas statusen i realtid till båda gränssnitten via Supabase Realtime.
 
 ---
 
@@ -48,13 +48,13 @@ Kill switch stoppar **alla agenter omedelbart**. Inga nya tasks startas och påg
 
 ### Färgscheman
 
-| Schema | Primärfärg | HSL |
-|--------|-----------|-----|
-| **Earth** | Forefront vinröd | `340 25% 42%` |
-| **Ocean** | Blålila | `230 18% 40%` |
-| **Forest** | Djupgrön | `160 10% 29%` |
-| **Sand** | Varmbrun | `25 15% 40%` |
-| **Slate** | Neutral grå | `260 2% 50%` |
+| Schema     | Primärfärg       | HSL           |
+| ---------- | ---------------- | ------------- |
+| **Earth**  | Forefront vinröd | `340 25% 42%` |
+| **Ocean**  | Blålila          | `230 18% 40%` |
+| **Forest** | Djupgrön         | `160 10% 29%` |
+| **Sand**   | Varmbrun         | `25 15% 40%`  |
+| **Slate**  | Neutral grå      | `260 2% 50%`  |
 
 ### Lägen
 
@@ -77,7 +77,7 @@ Varje schema finns i **ljust** och **mörkt** läge. Totalt 10 kombinationer.
 ```
 
 !!! tip "Sparas lokalt"
-    Temavalet lagras i `localStorage` och tillämpas direkt via CSS-variabler. Ingen serversynk behövs.
+Temavalet lagras i `localStorage` och tillämpas direkt via CSS-variabler. Ingen serversynk behövs.
 
 ---
 
@@ -85,12 +85,12 @@ Varje schema finns i **ljust** och **mörkt** läge. Totalt 10 kombinationer.
 
 Dashboarden stöder **svenska** (standard) och **engelska** via i18next.
 
-| Inställning | Värde |
-|-------------|-------|
-| Standardspråk | `sv` |
-| Fallback-språk | `en` |
+| Inställning        | Värde                                        |
+| ------------------ | -------------------------------------------- |
+| Standardspråk      | `sv`                                         |
+| Fallback-språk     | `en`                                         |
 | Översättningsfiler | `src/locales/sv.json`, `src/locales/en.json` |
-| Antal nycklar | 40+ |
+| Antal nycklar      | 40+                                          |
 
 ```typescript
 // Användning i komponenter
@@ -99,7 +99,7 @@ return <h1>{t('settings.title')}</h1>;
 ```
 
 !!! note "Språkdetektering"
-    Språkvalet sparas i `localStorage`. Vid första besöket används webbläsarens språkinställning.
+Språkvalet sparas i `localStorage`. Vid första besöket används webbläsarens språkinställning.
 
 ---
 
@@ -109,18 +109,18 @@ Administratörer kan populera kunskapsbiblioteket i Supabase från gateway-serve
 
 ### Kunskapstyper
 
-| Typ | Källa | Beskrivning |
-|-----|-------|-------------|
-| `skills` | `SKILL.md` | Agentens roll och guardrails |
-| `system_context` | `knowledge/brand/*.md` | Delad varumärkeskontext |
-| `task_context` | `context/*.md` | Uppgiftsspecifika mallar |
-| `few_shot` | `context/few-shot-*.md` | Exempel-par för LLM |
-| `memory` | `memory/*.md` | Agentens skrivbara minne |
+| Typ              | Källa                   | Beskrivning                  |
+| ---------------- | ----------------------- | ---------------------------- |
+| `skills`         | `SKILL.md`              | Agentens roll och guardrails |
+| `system_context` | `knowledge/brand/*.md`  | Delad varumärkeskontext      |
+| `task_context`   | `context/*.md`          | Uppgiftsspecifika mallar     |
+| `few_shot`       | `context/few-shot-*.md` | Exempel-par för LLM          |
+| `memory`         | `memory/*.md`           | Agentens skrivbara minne     |
 
 ### Populera från server
 
 !!! warning "Endast admin"
-    Knappen "Populera från server" kräver rollen `admin`.
+Knappen "Populera från server" kräver rollen `admin`.
 
 ```
 1. Admin klickar "Populera från server" i Knowledge Library
@@ -131,7 +131,7 @@ Administratörer kan populera kunskapsbiblioteket i Supabase från gateway-serve
 ```
 
 !!! failure "Felhantering"
-    Om reseed misslyckas (t.ex. filsystemfel på servern) returneras ett felmeddelande som visas i dashboarden. `emitCommand` returnerar felstatus så att knappen kan visa relevant information.
+Om reseed misslyckas (t.ex. filsystemfel på servern) returneras ett felmeddelande som visas i dashboarden. `emitCommand` returnerar felstatus så att knappen kan visa relevant information.
 
 ---
 
@@ -139,12 +139,12 @@ Administratörer kan populera kunskapsbiblioteket i Supabase från gateway-serve
 
 FIA använder fyra roller med olika behörighetsnivåer.
 
-| Roll | Beskrivning | Kill switch | Godkänna tasks | Redigera config | Reseed |
-|------|------------|-------------|---------------|-----------------|--------|
-| `orchestrator` | Marketing Orchestrator | ✓ | ✓ | ✓ | ✓ |
-| `admin` | Systemadministratör | ✓ | ✓ | ✓ | ✓ |
-| `operator` | Daglig operatör | ✗ | ✓ | ✗ | ✗ |
-| `viewer` | Skrivskyddad åtkomst | ✗ | ✗ | ✗ | ✗ |
+| Roll           | Beskrivning            | Kill switch | Godkänna tasks | Redigera config | Reseed |
+| -------------- | ---------------------- | ----------- | -------------- | --------------- | ------ |
+| `orchestrator` | Marketing Orchestrator | ✓           | ✓              | ✓               | ✓      |
+| `admin`        | Systemadministratör    | ✓           | ✓              | ✓               | ✓      |
+| `operator`     | Daglig operatör        | ✗           | ✓              | ✗               | ✗      |
+| `viewer`       | Skrivskyddad åtkomst   | ✗           | ✗              | ✗               | ✗      |
 
 !!! info "Rollkälla"
-    Roller tilldelas via Supabase Auth metadata och valideras av RLS-policies på databasnivå. Rollbyten görs direkt i Supabase Dashboard eller via SQL.
+Roller tilldelas via Supabase Auth metadata och valideras av RLS-policies på databasnivå. Rollbyten görs direkt i Supabase Dashboard eller via SQL.

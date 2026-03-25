@@ -41,7 +41,10 @@ const slugs = readdirSync(agentsDir).filter((d) => existsSync(join(agentsDir, d,
 
 let md = "# Agentreferens\n\n";
 md += '!!! info "Auto-genererad"\n';
-md += "    Denna sida genereras automatiskt från `agent.yaml`-filer. Senast uppdaterad: " + new Date().toISOString().split("T")[0] + "\n\n";
+md +=
+  "    Denna sida genereras automatiskt från `agent.yaml`-filer. Senast uppdaterad: " +
+  new Date().toISOString().split("T")[0] +
+  "\n\n";
 
 for (const slug of slugs.sort()) {
   const yamlContent = readFileSync(join(agentsDir, slug, "agent.yaml"), "utf-8");

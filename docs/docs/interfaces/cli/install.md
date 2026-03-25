@@ -6,10 +6,10 @@ FIA CLI är ett terminalverktyg som ger full åtkomst till agenter, tasks, trigg
 
 ## Förutsättningar
 
-| Krav | Version |
-|------|---------|
-| Node.js | ≥ 20 |
-| npm | Medföljer Node.js |
+| Krav        | Version                           |
+| ----------- | --------------------------------- |
+| Node.js     | ≥ 20                              |
+| npm         | Medföljer Node.js                 |
 | FIA Gateway | Körande instans (lokal eller VPS) |
 
 ---
@@ -18,8 +18,8 @@ FIA CLI är ett terminalverktyg som ger full åtkomst till agenter, tasks, trigg
 
 CLI:t autentiserar mot gateway-API:t med en token istället för JWT.
 
-| Variabel | Beskrivning |
-|----------|-------------|
+| Variabel        | Beskrivning                          |
+| --------------- | ------------------------------------ |
 | `FIA_CLI_TOKEN` | Hemlig token som definieras i `.env` |
 
 ```bash
@@ -28,7 +28,7 @@ FIA_CLI_TOKEN=din-hemliga-token-här
 ```
 
 !!! warning "Säkerhet"
-    `FIA_CLI_TOKEN` ger **admin-behörighet** och kringgår JWT-validering. Dela aldrig denna token. Använd en stark, slumpmässig sträng.
+`FIA_CLI_TOKEN` ger **admin-behörighet** och kringgår JWT-validering. Dela aldrig denna token. Använd en stark, slumpmässig sträng.
 
 ### Hur det fungerar
 
@@ -63,7 +63,7 @@ npx ts-node -P tsconfig.cli.json cli/index.ts agents
 ```
 
 !!! tip "Snabbare under utveckling"
-    `ts-node` kräver ingen build-steg men är långsammare vid start. Använd det vid utveckling och `npm run build:cli` i produktion.
+`ts-node` kräver ingen build-steg men är långsammare vid start. Använd det vid utveckling och `npm run build:cli` i produktion.
 
 ---
 
@@ -111,14 +111,14 @@ Vid start kör CLI:t `validateConfig()` som kontrollerar:
 ```typescript
 function validateConfig(): void {
   if (!process.env.FIA_CLI_TOKEN) {
-    console.error('FIA_CLI_TOKEN saknas. Ange den i .env eller som miljövariabel.');
+    console.error("FIA_CLI_TOKEN saknas. Ange den i .env eller som miljövariabel.");
     process.exit(1);
   }
 }
 ```
 
 !!! note "Gateway-URL"
-    Standardadressen är `http://localhost:3000`. Ändra via miljövariabeln `FIA_API_URL` om gatewayen körs på annan adress.
+Standardadressen är `http://localhost:3000`. Ändra via miljövariabeln `FIA_API_URL` om gatewayen körs på annan adress.
 
 ---
 
@@ -126,13 +126,13 @@ function validateConfig(): void {
 
 CLI:t använder Forefronts varumärkesfärger i terminalutskrifter via `chalk`:
 
-| Färg | Hex | Användning |
-|------|-----|-----------|
-| Vinröd | `#7D5365` | Rubriker, primär text |
-| Grön | `#42504E` | Statusindikator (online) |
-| Blålila | `#555977` | Sekundär information |
-| Brun | `#756256` | Detaljer |
-| Grå | `#7E7C83` | Dämpade element |
+| Färg    | Hex       | Användning               |
+| ------- | --------- | ------------------------ |
+| Vinröd  | `#7D5365` | Rubriker, primär text    |
+| Grön    | `#42504E` | Statusindikator (online) |
+| Blålila | `#555977` | Sekundär information     |
+| Brun    | `#756256` | Detaljer                 |
+| Grå     | `#7E7C83` | Dämpade element          |
 
 ### Gradient
 
@@ -151,4 +151,4 @@ Gradienten `#FF6B0B → #FFB7F8 → #79F2FB` används i CLI-headern:
 ```
 
 !!! tip "Terminalkompatibilitet"
-    Färger kräver en terminal som stöder 256-färger eller truecolor (de flesta moderna terminaler). I terminaler utan färgstöd visas text utan formatering.
+Färger kräver en terminal som stöder 256-färger eller truecolor (de flesta moderna terminaler). I terminaler utan färgstöd visas text utan formatering.

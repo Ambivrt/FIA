@@ -3,7 +3,7 @@
 Översikt av alla FIA CLI-kommandon, grupperade efter funktion. Varje kommando beskrivs med syfte och exempelanvändning.
 
 !!! info "Komplett syntax"
-    Se [Kommandoreferens](commands-reference.md) för komplett syntax med alla flaggor och alternativ.
+Se [Kommandoreferens](commands-reference.md) för komplett syntax med alla flaggor och alternativ.
 
 ---
 
@@ -39,7 +39,7 @@ fia kill --reason "Planerat underhåll"
 ```
 
 !!! danger "Produktionspåverkan"
-    Kill switch stoppar **alla** agenter omedelbart. Pågående tasks pausas. Använd med försiktighet.
+Kill switch stoppar **alla** agenter omedelbart. Pågående tasks pausas. Använd med försiktighet.
 
 ### `fia resume`
 
@@ -105,10 +105,10 @@ fia run seo keyword_analysis --priority normal
 fia run analytics daily_report
 ```
 
-| Flagga | Beskrivning | Standard |
-|--------|------------|----------|
+| Flagga       | Beskrivning                         | Standard |
+| ------------ | ----------------------------------- | -------- |
 | `--priority` | `low`, `normal`, `high`, `critical` | `normal` |
-| `--input` | JSON-sträng med extra input | — |
+| `--input`    | JSON-sträng med extra input         | —        |
 
 ### `fia queue`
 
@@ -143,7 +143,7 @@ fia reject abc123 --feedback "Tonen matchar inte varumärket. Se brand guideline
 ```
 
 !!! note "Feedback krävs"
-    `--feedback` är obligatorisk vid reject. Feedbacken skickas tillbaka till agenten som input för nästa revision.
+`--feedback` är obligatorisk vid reject. Feedbacken skickas tillbaka till agenten som input för nästa revision.
 
 ---
 
@@ -245,4 +245,4 @@ fia lineage abc123
 ```
 
 !!! tip "Hierarki"
-    `lineage` visar hela kedjan av relaterade tasks via `parent_task_id`. Användbart för att förstå hur en task har bearbetats genom flera agenter.
+`lineage` visar hela kedjan av relaterade tasks via `parent_task_id`. Användbart för att förstå hur en task har bearbetats genom flera agenter.

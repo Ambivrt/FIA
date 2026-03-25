@@ -65,15 +65,10 @@
                 "type": "string"
               }
             },
-            "required": [
-              "code",
-              "message"
-            ]
+            "required": ["code", "message"]
           }
         },
-        "required": [
-          "error"
-        ]
+        "required": ["error"]
       },
       "PaginationMeta": {
         "type": "object",
@@ -88,11 +83,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "total",
-          "page",
-          "per_page"
-        ]
+        "required": ["total", "page", "per_page"]
       },
       "RoutingConfig": {
         "type": "object",
@@ -138,17 +129,13 @@
                       ]
                     }
                   },
-                  "required": [
-                    "primary"
-                  ]
+                  "required": ["primary"]
                 }
               ]
             }
           }
         },
-        "required": [
-          "routing"
-        ]
+        "required": ["routing"]
       },
       "ToolsConfig": {
         "type": "object",
@@ -160,9 +147,7 @@
             }
           }
         },
-        "required": [
-          "tools"
-        ]
+        "required": ["tools"]
       },
       "TriggersPatch": {
         "type": "object",
@@ -234,12 +219,7 @@
                     },
                     "priority": {
                       "type": "string",
-                      "enum": [
-                        "urgent",
-                        "high",
-                        "normal",
-                        "low"
-                      ]
+                      "enum": ["urgent", "high", "normal", "low"]
                     },
                     "context_fields": {
                       "type": "array",
@@ -253,17 +233,13 @@
                   }
                 }
               },
-              "required": [
-                "name"
-              ]
+              "required": ["name"]
             },
             "minItems": 1,
             "maxItems": 20
           }
         },
-        "required": [
-          "triggers"
-        ]
+        "required": ["triggers"]
       },
       "ReseedRequest": {
         "type": "object",
@@ -287,19 +263,11 @@
           },
           "priority": {
             "type": "string",
-            "enum": [
-              "low",
-              "normal",
-              "high",
-              "urgent"
-            ],
+            "enum": ["low", "normal", "high", "urgent"],
             "default": "normal"
           }
         },
-        "required": [
-          "agent_slug",
-          "type"
-        ]
+        "required": ["agent_slug", "type"]
       },
       "ApproveTask": {
         "type": "object",
@@ -317,9 +285,7 @@
             "minLength": 1
           }
         },
-        "required": [
-          "feedback"
-        ]
+        "required": ["feedback"]
       },
       "RevisionRequest": {
         "type": "object",
@@ -329,9 +295,7 @@
             "minLength": 1
           }
         },
-        "required": [
-          "feedback"
-        ]
+        "required": ["feedback"]
       },
       "StatusChange": {
         "type": "object",
@@ -341,24 +305,17 @@
             "minLength": 1
           }
         },
-        "required": [
-          "status"
-        ]
+        "required": ["status"]
       },
       "KillSwitchAction": {
         "type": "object",
         "properties": {
           "action": {
             "type": "string",
-            "enum": [
-              "activate",
-              "deactivate"
-            ]
+            "enum": ["activate", "deactivate"]
           }
         },
-        "required": [
-          "action"
-        ]
+        "required": ["action"]
       },
       "KnowledgeReseed": {
         "type": "object",
@@ -379,9 +336,7 @@
             "minLength": 1
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       }
     },
     "parameters": {},
@@ -398,9 +353,7 @@
     "/api/health": {
       "get": {
         "summary": "Hälsokontroll",
-        "tags": [
-          "System"
-        ],
+        "tags": ["System"],
         "responses": {
           "200": {
             "description": "Systemet lever"
@@ -412,9 +365,7 @@
       "get": {
         "summary": "Lista alla agenter",
         "description": "Returnerar alla agenter med display_status och tasks_today.",
-        "tags": [
-          "Agenter"
-        ],
+        "tags": ["Agenter"],
         "responses": {
           "200": {
             "description": "Lista av agenter med daglig statistik"
@@ -428,9 +379,7 @@
     "/api/agents/{slug}/pause": {
       "post": {
         "summary": "Pausa en agent",
-        "tags": [
-          "Agenter"
-        ],
+        "tags": ["Agenter"],
         "parameters": [
           {
             "schema": {
@@ -454,9 +403,7 @@
     "/api/agents/{slug}/resume": {
       "post": {
         "summary": "Återuppta en pausad agent",
-        "tags": [
-          "Agenter"
-        ],
+        "tags": ["Agenter"],
         "parameters": [
           {
             "schema": {
@@ -481,9 +428,7 @@
       "patch": {
         "summary": "Uppdatera routing-konfiguration",
         "description": "Ändra modellval per uppgiftstyp. Kräver admin-roll.",
-        "tags": [
-          "Agenter"
-        ],
+        "tags": ["Agenter"],
         "parameters": [
           {
             "schema": {
@@ -517,9 +462,7 @@
       "patch": {
         "summary": "Uppdatera verktyg",
         "description": "Ändra MCP-verktyg för en agent. Kräver admin-roll.",
-        "tags": [
-          "Agenter"
-        ],
+        "tags": ["Agenter"],
         "parameters": [
           {
             "schema": {
@@ -552,9 +495,7 @@
     "/api/agents/{slug}/triggers": {
       "get": {
         "summary": "Hämta triggers för en agent",
-        "tags": [
-          "Agenter"
-        ],
+        "tags": ["Agenter"],
         "parameters": [
           {
             "schema": {
@@ -577,9 +518,7 @@
       "patch": {
         "summary": "Uppdatera trigger-konfiguration",
         "description": "Ändra enabled, requires_approval, condition eller action på triggers.",
-        "tags": [
-          "Agenter"
-        ],
+        "tags": ["Agenter"],
         "parameters": [
           {
             "schema": {
@@ -616,9 +555,7 @@
       "post": {
         "summary": "Reseed triggers från agent.yaml",
         "description": "Skriver över dashboard-konfiguration med YAML-filen. Stöder dry_run (confirm: false).",
-        "tags": [
-          "Agenter"
-        ],
+        "tags": ["Agenter"],
         "parameters": [
           {
             "schema": {
@@ -652,9 +589,7 @@
       "get": {
         "summary": "Lista tasks",
         "description": "Filtrering på status (kommaseparerat), agent_slug, type, priority. Stöder paginering och sortering.",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "parameters": [
           {
             "schema": {
@@ -722,9 +657,7 @@
       "post": {
         "summary": "Skapa ny task",
         "description": "Skapar en task i kön. Kräver orchestrator, admin eller operator.",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -748,9 +681,7 @@
       "get": {
         "summary": "Hämta en task",
         "description": "Returnerar task med tillhörande approvals.",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "parameters": [
           {
             "schema": {
@@ -775,9 +706,7 @@
     "/api/tasks/{id}/approve": {
       "post": {
         "summary": "Godkänn en task",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "parameters": [
           {
             "schema": {
@@ -808,9 +737,7 @@
     "/api/tasks/{id}/reject": {
       "post": {
         "summary": "Avslå en task",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "parameters": [
           {
             "schema": {
@@ -841,9 +768,7 @@
     "/api/tasks/{id}/revision": {
       "post": {
         "summary": "Begär revision av en task",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "parameters": [
           {
             "schema": {
@@ -875,9 +800,7 @@
       "post": {
         "summary": "Ändra taskstatus",
         "description": "Generell statusändring med validering mot statusmaskin.",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "parameters": [
           {
             "schema": {
@@ -914,9 +837,7 @@
     "/api/tasks/{id}/children": {
       "get": {
         "summary": "Hämta child tasks",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "parameters": [
           {
             "schema": {
@@ -939,9 +860,7 @@
       "get": {
         "summary": "Hämta task lineage",
         "description": "Returnerar ancestors och children (max 5 nivåer upp).",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "parameters": [
           {
             "schema": {
@@ -964,9 +883,7 @@
       "get": {
         "summary": "Hämta metrics",
         "description": "Filtrering på category, period, from, to.",
-        "tags": [
-          "Metrics"
-        ],
+        "tags": ["Metrics"],
         "parameters": [
           {
             "schema": {
@@ -1012,9 +929,7 @@
       "get": {
         "summary": "KPI-sammanfattning",
         "description": "Returnerar content_this_week, approval_rate, pending_approvals, cost_mtd_sek, cost_trend.",
-        "tags": [
-          "Metrics"
-        ],
+        "tags": ["Metrics"],
         "responses": {
           "200": {
             "description": "KPI-sammanfattning"
@@ -1026,9 +941,7 @@
       "get": {
         "summary": "Aktivitetslogg",
         "description": "Audit trail med filtrering på agent, action, datum, sökning. Paginerad.",
-        "tags": [
-          "Aktivitet"
-        ],
+        "tags": ["Aktivitet"],
         "parameters": [
           {
             "schema": {
@@ -1097,9 +1010,7 @@
     "/api/kill-switch/status": {
       "get": {
         "summary": "Kill switch-status",
-        "tags": [
-          "Kill Switch"
-        ],
+        "tags": ["Kill Switch"],
         "responses": {
           "200": {
             "description": "Kill switch-status"
@@ -1110,9 +1021,7 @@
     "/api/kill-switch": {
       "post": {
         "summary": "Aktivera/deaktivera kill switch",
-        "tags": [
-          "Kill Switch"
-        ],
+        "tags": ["Kill Switch"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1132,9 +1041,7 @@
     "/api/triggers/pending": {
       "get": {
         "summary": "Lista pending triggers",
-        "tags": [
-          "Triggers"
-        ],
+        "tags": ["Triggers"],
         "responses": {
           "200": {
             "description": "Lista av pending triggers"
@@ -1146,9 +1053,7 @@
       "post": {
         "summary": "Godkänn en pending trigger",
         "description": "Skapar downstream task och uppdaterar trigger-status.",
-        "tags": [
-          "Triggers"
-        ],
+        "tags": ["Triggers"],
         "parameters": [
           {
             "schema": {
@@ -1173,9 +1078,7 @@
     "/api/triggers/{id}/reject": {
       "post": {
         "summary": "Avslå en pending trigger",
-        "tags": [
-          "Triggers"
-        ],
+        "tags": ["Triggers"],
         "parameters": [
           {
             "schema": {
@@ -1210,9 +1113,7 @@
       "post": {
         "summary": "Reseed alla agenters triggers",
         "description": "Skriver över alla agenters trigger-konfiguration från agent.yaml. Stöder dry_run.",
-        "tags": [
-          "Triggers"
-        ],
+        "tags": ["Triggers"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1233,9 +1134,7 @@
       "post": {
         "summary": "Reseed kunskapsbas",
         "description": "Seedar knowledge items från disk till Supabase. Stöder dry_run och enskild agent.",
-        "tags": [
-          "Knowledge"
-        ],
+        "tags": ["Knowledge"],
         "requestBody": {
           "content": {
             "application/json": {

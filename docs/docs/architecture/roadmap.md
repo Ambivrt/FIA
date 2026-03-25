@@ -36,26 +36,26 @@ gantt
 **Datum:** 2026-03-15 | **Tidsåtgång:** 4 arbetsdagar | **Team:** 1 person + Claude Code + Lovable
 
 !!! success "Levererat"
-    Komplett gateway-skelett och fungerande Dashboard PWA med live-data.
+Komplett gateway-skelett och fungerande Dashboard PWA med live-data.
 
-| Leverans | Detalj |
-|----------|--------|
-| Gateway-skelett | Node.js daemon, PM2, TypeScript strict |
-| Slack-integration | Bolt SDK, Socket Mode, kommandon |
-| Supabase-uppsättning | 6 tabeller, RLS, Realtime |
-| LLM-klienter | Anthropic SDK (Claude), Gemini, Serper |
-| Modell-router | Manifest-driven routing via agent.yaml |
-| Kontexthantering | Prompt-builder med system/task-kontext |
-| Content Agent | Full textproduktion med Brand Agent-granskning |
-| Brand Agent | Vetorätt, alltid Opus, granskningskriterier |
-| REST API | Express, intern port 3001 |
-| Schemaläggning | node-cron, DynamicScheduler |
-| Kill switch | Slack + Dashboard, audit trail |
-| Claude API-migration | Migrerat från Gemini som primär LLM |
-| Alla 7 agenter | Strategy, Content, Campaign, SEO, Lead, Analytics, Brand |
-| Testsvit | 13 testfiler: router, brand-agent, agent-loader, m.fl. |
-| Dashboard MVP | Auth, agentpuls, godkännandekö, kill switch, Realtime |
-| Self-eval | Scoring, parallel pre-screening, exponential backoff retry |
+| Leverans             | Detalj                                                     |
+| -------------------- | ---------------------------------------------------------- |
+| Gateway-skelett      | Node.js daemon, PM2, TypeScript strict                     |
+| Slack-integration    | Bolt SDK, Socket Mode, kommandon                           |
+| Supabase-uppsättning | 6 tabeller, RLS, Realtime                                  |
+| LLM-klienter         | Anthropic SDK (Claude), Gemini, Serper                     |
+| Modell-router        | Manifest-driven routing via agent.yaml                     |
+| Kontexthantering     | Prompt-builder med system/task-kontext                     |
+| Content Agent        | Full textproduktion med Brand Agent-granskning             |
+| Brand Agent          | Vetorätt, alltid Opus, granskningskriterier                |
+| REST API             | Express, intern port 3001                                  |
+| Schemaläggning       | node-cron, DynamicScheduler                                |
+| Kill switch          | Slack + Dashboard, audit trail                             |
+| Claude API-migration | Migrerat från Gemini som primär LLM                        |
+| Alla 7 agenter       | Strategy, Content, Campaign, SEO, Lead, Analytics, Brand   |
+| Testsvit             | 13 testfiler: router, brand-agent, agent-loader, m.fl.     |
+| Dashboard MVP        | Auth, agentpuls, godkännandekö, kill switch, Realtime      |
+| Self-eval            | Scoring, parallel pre-screening, exponential backoff retry |
 
 ---
 
@@ -64,21 +64,21 @@ gantt
 **Datum:** 2026-03-22 | **Tidsåtgång:** 4 arbetsdagar
 
 !!! success "Levererat"
-    FIA CLI-klient med 11 kommandon och enhetlig display-status i alla tre gränssnitt.
+FIA CLI-klient med 11 kommandon och enhetlig display-status i alla tre gränssnitt.
 
-| Leverans | Detalj |
-|----------|--------|
-| FIA Display Status | `src/shared/display-status.ts` – 5 statusar med resolve-logik |
-| FIA CLI | 11 kommandon: status, agents, run, queue, approve, reject, kill, resume, logs, tail, watch, config |
-| CLI auth middleware | FIA_CLI_TOKEN-bypass (admin-roll, skippar JWT) |
-| POST /api/tasks | Nytt endpoint för task-skapande från CLI/Dashboard |
-| Status-filter | Kommaseparerade filter i GET /api/tasks |
-| Forefront Earth-palett | Varumärkesfärger i CLI-output |
-| CLI-tester | 3 testfiler, 25 tester |
-| gws MCP | Kopplad till agenter via @alanse/mcp-server-google-workspace |
-| CI/CD | GitHub Actions (`.github/workflows/ci.yml`) |
-| ESLint + Prettier | `eslint.config.mjs`, `.prettierrc` |
-| Teknisk skuld B1–B12 | Alla 12 backend-fixar åtgärdade |
+| Leverans               | Detalj                                                                                             |
+| ---------------------- | -------------------------------------------------------------------------------------------------- |
+| FIA Display Status     | `src/shared/display-status.ts` – 5 statusar med resolve-logik                                      |
+| FIA CLI                | 11 kommandon: status, agents, run, queue, approve, reject, kill, resume, logs, tail, watch, config |
+| CLI auth middleware    | FIA_CLI_TOKEN-bypass (admin-roll, skippar JWT)                                                     |
+| POST /api/tasks        | Nytt endpoint för task-skapande från CLI/Dashboard                                                 |
+| Status-filter          | Kommaseparerade filter i GET /api/tasks                                                            |
+| Forefront Earth-palett | Varumärkesfärger i CLI-output                                                                      |
+| CLI-tester             | 3 testfiler, 25 tester                                                                             |
+| gws MCP                | Kopplad till agenter via @alanse/mcp-server-google-workspace                                       |
+| CI/CD                  | GitHub Actions (`.github/workflows/ci.yml`)                                                        |
+| ESLint + Prettier      | `eslint.config.mjs`, `.prettierrc`                                                                 |
+| Teknisk skuld B1–B12   | Alla 12 backend-fixar åtgärdade                                                                    |
 
 ---
 
@@ -87,15 +87,15 @@ gantt
 **Datum:** 2026-03-23
 
 !!! success "Levererat"
-    Utökad statusmodell med 17 statusar och deklarativ trigger engine.
+Utökad statusmodell med 17 statusar och deklarativ trigger engine.
 
-| Leverans | Detalj |
-|----------|--------|
-| Statusmodell | 17 statusar med statusmaskin och övergångsvalidering |
-| Trigger Engine | Deklarativ, 7 triggers i 4 agenter |
-| pending_triggers | Ny tabell med godkännandekö i Dashboard |
-| Task-relationer | `parent_task_id`, children, lineage |
-| Dashboard-uppdateringar | TaskStatusBadge, TriggersPage, task-relationer |
+| Leverans                | Detalj                                               |
+| ----------------------- | ---------------------------------------------------- |
+| Statusmodell            | 17 statusar med statusmaskin och övergångsvalidering |
+| Trigger Engine          | Deklarativ, 7 triggers i 4 agenter                   |
+| pending_triggers        | Ny tabell med godkännandekö i Dashboard              |
+| Task-relationer         | `parent_task_id`, children, lineage                  |
+| Dashboard-uppdateringar | TaskStatusBadge, TriggersPage, task-relationer       |
 
 ---
 
@@ -104,18 +104,18 @@ gantt
 **Datum:** 2026-03-23
 
 !!! success "Levererat"
-    Trigger-konfiguration flyttad till Dashboard med reseed-möjlighet.
+Trigger-konfiguration flyttad till Dashboard med reseed-möjlighet.
 
-| Leverans | Detalj |
-|----------|--------|
+| Leverans              | Detalj                                                        |
+| --------------------- | ------------------------------------------------------------- |
 | Trigger-konfiguration | Visa, enable/disable, redigera triggers per agent i Dashboard |
-| config_json.triggers | Trigger engine läser från Supabase istället för agent.yaml |
-| Seed-logik | config_json.triggers seedas vid gateway-startup |
-| TriggersConfigPage | Systemövergripande trigger-översikt med filter |
-| Reseed från YAML | Dry-run diff + bekräftelsedialog (admin only) |
-| Nya API-endpoints | 4 nya endpoints för trigger-konfiguration |
-| React-komponenter | 11 nya komponenter |
-| i18n | 40+ nya översättningsnycklar |
+| config_json.triggers  | Trigger engine läser från Supabase istället för agent.yaml    |
+| Seed-logik            | config_json.triggers seedas vid gateway-startup               |
+| TriggersConfigPage    | Systemövergripande trigger-översikt med filter                |
+| Reseed från YAML      | Dry-run diff + bekräftelsedialog (admin only)                 |
+| Nya API-endpoints     | 4 nya endpoints för trigger-konfiguration                     |
+| React-komponenter     | 11 nya komponenter                                            |
+| i18n                  | 40+ nya översättningsnycklar                                  |
 
 ---
 
@@ -124,40 +124,40 @@ gantt
 **Datum:** 2026-03-24
 
 !!! success "Levererat"
-    Knowledge Library med seeder och Dashboard-integration.
+Knowledge Library med seeder och Dashboard-integration.
 
-| Leverans | Detalj |
-|----------|--------|
-| Knowledge Library | Kunskapsseeder: skills, system_context, task_context, few_shot, memory |
-| Brand context | Seedas som delad system_context (`knowledge/brand/*.md`) |
-| Few-shot-kategorisering | Few-shot-filer kategoriseras korrekt (inte task_context) |
-| reseed_knowledge | Command i command-listener (Dashboard → Gateway) |
-| Dashboard-knapp | "Populera från server" (admin only) |
-| Upsert-fix | Funktionellt unikt index → vanligt unikt index |
-| Felhantering | `emitCommand` returnerar fel för Dashboard-visning |
+| Leverans                | Detalj                                                                 |
+| ----------------------- | ---------------------------------------------------------------------- |
+| Knowledge Library       | Kunskapsseeder: skills, system_context, task_context, few_shot, memory |
+| Brand context           | Seedas som delad system_context (`knowledge/brand/*.md`)               |
+| Few-shot-kategorisering | Few-shot-filer kategoriseras korrekt (inte task_context)               |
+| reseed_knowledge        | Command i command-listener (Dashboard → Gateway)                       |
+| Dashboard-knapp         | "Populera från server" (admin only)                                    |
+| Upsert-fix              | Funktionellt unikt index → vanligt unikt index                         |
+| Felhantering            | `emitCommand` returnerar fel för Dashboard-visning                     |
 
 ---
 
 ## Pågår
 
-| Uppgift | Status | Beskrivning |
-|---------|--------|-------------|
+| Uppgift                | Status                          | Beskrivning                                         |
+| ---------------------- | ------------------------------- | --------------------------------------------------- |
 | Gemini context caching | :material-progress-clock: Pågår | Cacha system-kontext för minskad latens och kostnad |
-| GA4 Analytics API | :material-progress-clock: Pågår | Anslut Analytics Agent till Google Analytics 4 |
-| 10 innehållsenheter | :material-progress-clock: Pågår | Producera 10 st publicerbart innehåll |
+| GA4 Analytics API      | :material-progress-clock: Pågår | Anslut Analytics Agent till Google Analytics 4      |
+| 10 innehållsenheter    | :material-progress-clock: Pågår | Producera 10 st publicerbart innehåll               |
 
 ---
 
 ## Fas 2 – MCP-wrappers + Content Staging
 
 !!! abstract "Planerat"
-    Fullständiga MCP-integrationer och validerad content pipeline.
+Fullständiga MCP-integrationer och validerad content pipeline.
 
-| Uppgift | Beskrivning |
-|---------|-------------|
-| HubSpot MCP | CRM-integration: kontakter, deals, pipelines |
-| LinkedIn MCP | Publicering, analytics, company page |
-| Buffer MCP | Social media-schemaläggning och publicering |
+| Uppgift         | Beskrivning                                        |
+| --------------- | -------------------------------------------------- |
+| HubSpot MCP     | CRM-integration: kontakter, deals, pipelines       |
+| LinkedIn MCP    | Publicering, analytics, company page               |
+| Buffer MCP      | Social media-schemaläggning och publicering        |
 | Content staging | Zod-validering av `content_json` innan publicering |
 
 Alla MCP-wrappers implementeras i `src/mcp/` med principen tunn wrapper (50–200 rader) och minsta möjliga rättighet.
@@ -167,11 +167,11 @@ Alla MCP-wrappers implementeras i `src/mcp/` med principen tunn wrapper (50–20
 ## Fas 3 – Feedback Loop + Dynamic Review
 
 !!! abstract "Planerat"
-    Självförbättrande system med dynamisk granskningsfrekvens.
+Självförbättrande system med dynamisk granskningsfrekvens.
 
-| Uppgift | Beskrivning |
-|---------|-------------|
-| Feedback loop | Systematisk insamling och analys av feedback per agent |
-| Dynamic review rate | `sample_review_rate` justeras automatiskt baserat på agent-kvalitet |
-| Few-shot avoid examples | Underkänt innehåll sparas som negativa few-shot-exempel |
-| Agent memory evolution | Agenter uppdaterar sin `memory/learnings.json` baserat på feedback |
+| Uppgift                 | Beskrivning                                                         |
+| ----------------------- | ------------------------------------------------------------------- |
+| Feedback loop           | Systematisk insamling och analys av feedback per agent              |
+| Dynamic review rate     | `sample_review_rate` justeras automatiskt baserat på agent-kvalitet |
+| Few-shot avoid examples | Underkänt innehåll sparas som negativa few-shot-exempel             |
+| Agent memory evolution  | Agenter uppdaterar sin `memory/learnings.json` baserat på feedback  |

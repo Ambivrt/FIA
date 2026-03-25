@@ -166,11 +166,11 @@ CREATE TABLE profiles (
 );
 ```
 
-| Roll | Behörighet |
-|------|-----------|
+| Roll           | Behörighet                                       |
+| -------------- | ------------------------------------------------ |
 | `orchestrator` | Full access – godkänna, konfigurera, kill switch |
-| `admin` | Teknik + konfiguration |
-| `viewer` | Skrivskyddad |
+| `admin`        | Teknik + konfiguration                           |
+| `viewer`       | Skrivskyddad                                     |
 
 ### agents
 
@@ -224,7 +224,7 @@ CREATE TABLE tasks (
 ```
 
 !!! info "Self-referencing"
-    `parent_task_id` möjliggör task-relationer. En trigger kan skapa en child-task som refererar till den task som utlöste den. Detta ger full lineage-spårning.
+`parent_task_id` möjliggör task-relationer. En trigger kan skapa en child-task som refererar till den task som utlöste den. Detta ger full lineage-spårning.
 
 ### approvals
 
@@ -410,49 +410,49 @@ Standardiserat JSON-schema för task-innehåll:
 
 ## Migreringshistorik
 
-| # | Fil | Beskrivning |
-|---|-----|-------------|
-| 001 | `001_initial_schema.sql` | Grundschema: profiles, agents, tasks, approvals, metrics, activity_log + RLS |
-| 002 | `002_remove_task_type_check.sql` | Borttagning av strikt task type-kontroll |
-| 003 | `003_add_error_status.sql` | Lägg till `error` i tasks.status |
-| 004 | `004_add_source_and_metrics_constraint.sql` | source-kolumn + metrics upsert-constraint |
-| 005 | `005_fix_metrics_constraint.sql` | Fix av metrics constraint |
-| 006 | `006_add_update_task_status_fn.sql` | Funktion för statusuppdatering |
-| 007 | `007_drop_cost_ledger_trigger.sql` | Ta bort cost ledger-trigger |
-| 008 | `008_add_commands_table.sql` | Commands-tabell för Dashboard → Gateway |
-| 009 | `009_add_intelligence_agent.sql` | Lägg till Intelligence Agent |
-| 010 | `010_add_operator_role.sql` | Lägg till operator-roll |
-| 011 | `011_backfill_agent_config_json.sql` | Backfill config_json för alla agenter |
-| 012 | `012_nullable_commands_issued_by.sql` | Gör commands.issued_by nullable |
-| 013 | `013_extended_task_status_and_triggers.sql` | 17 statusar + pending_triggers-tabell |
-| 014 | `014_seed_scheduled_jobs.sql` | Schemalagda jobb + seed (10 jobb) |
-| 015 | `015_agent_knowledge.sql` | agent_knowledge-tabell |
-| 016 | `016_fix_agent_knowledge_upsert_index.sql` | Fix upsert-index (funktionellt → vanligt) |
+| #   | Fil                                         | Beskrivning                                                                  |
+| --- | ------------------------------------------- | ---------------------------------------------------------------------------- |
+| 001 | `001_initial_schema.sql`                    | Grundschema: profiles, agents, tasks, approvals, metrics, activity_log + RLS |
+| 002 | `002_remove_task_type_check.sql`            | Borttagning av strikt task type-kontroll                                     |
+| 003 | `003_add_error_status.sql`                  | Lägg till `error` i tasks.status                                             |
+| 004 | `004_add_source_and_metrics_constraint.sql` | source-kolumn + metrics upsert-constraint                                    |
+| 005 | `005_fix_metrics_constraint.sql`            | Fix av metrics constraint                                                    |
+| 006 | `006_add_update_task_status_fn.sql`         | Funktion för statusuppdatering                                               |
+| 007 | `007_drop_cost_ledger_trigger.sql`          | Ta bort cost ledger-trigger                                                  |
+| 008 | `008_add_commands_table.sql`                | Commands-tabell för Dashboard → Gateway                                      |
+| 009 | `009_add_intelligence_agent.sql`            | Lägg till Intelligence Agent                                                 |
+| 010 | `010_add_operator_role.sql`                 | Lägg till operator-roll                                                      |
+| 011 | `011_backfill_agent_config_json.sql`        | Backfill config_json för alla agenter                                        |
+| 012 | `012_nullable_commands_issued_by.sql`       | Gör commands.issued_by nullable                                              |
+| 013 | `013_extended_task_status_and_triggers.sql` | 17 statusar + pending_triggers-tabell                                        |
+| 014 | `014_seed_scheduled_jobs.sql`               | Schemalagda jobb + seed (10 jobb)                                            |
+| 015 | `015_agent_knowledge.sql`                   | agent_knowledge-tabell                                                       |
+| 016 | `016_fix_agent_knowledge_upsert_index.sql`  | Fix upsert-index (funktionellt → vanligt)                                    |
 
 ## RLS-policyer
 
 Row Level Security är aktiverat på **alla** tabeller. Principen:
 
-| Operation | Behörighet |
-|-----------|-----------|
+| Operation  | Behörighet                                              |
+| ---------- | ------------------------------------------------------- |
 | **SELECT** | Alla autentiserade användare (`auth.uid() IS NOT NULL`) |
-| **INSERT** | `orchestrator` och `admin` (via `profiles.role`) |
-| **UPDATE** | `orchestrator` och `admin` |
-| **DELETE** | Ej tillåtet via RLS (hanteras via CASCADE) |
+| **INSERT** | `orchestrator` och `admin` (via `profiles.role`)        |
+| **UPDATE** | `orchestrator` och `admin`                              |
+| **DELETE** | Ej tillåtet via RLS (hanteras via CASCADE)              |
 
 !!! warning "Service Role Key"
-    Gateway använder Supabase service role key som kringgår RLS helt. Detta är nödvändigt för att agenter ska kunna skriva tasks, heartbeats och aktivitetsloggar utan autentisering.
+Gateway använder Supabase service role key som kringgår RLS helt. Detta är nödvändigt för att agenter ska kunna skriva tasks, heartbeats och aktivitetsloggar utan autentisering.
 
 ## Realtime-prenumerationer
 
 Följande tabeller har Realtime aktiverat för live-uppdateringar i Dashboard:
 
-| Tabell | Prenumerant | Syfte |
-|--------|------------|-------|
-| `agents` | Dashboard | Agentstatus, heartbeat |
-| `tasks` | Dashboard, CLI (tail/watch) | Task-status, nya tasks |
-| `activity_log` | Dashboard, CLI (tail) | Live aktivitetslogg |
-| `commands` | Gateway | Dashboard → Gateway-kommandon |
-| `system_settings` | Dashboard, Gateway | Kill switch-status |
-| `feedback` | Dashboard | Ny feedback |
-| `pending_triggers` | Dashboard | Trigger-godkännandekö |
+| Tabell             | Prenumerant                 | Syfte                         |
+| ------------------ | --------------------------- | ----------------------------- |
+| `agents`           | Dashboard                   | Agentstatus, heartbeat        |
+| `tasks`            | Dashboard, CLI (tail/watch) | Task-status, nya tasks        |
+| `activity_log`     | Dashboard, CLI (tail)       | Live aktivitetslogg           |
+| `commands`         | Gateway                     | Dashboard → Gateway-kommandon |
+| `system_settings`  | Dashboard, Gateway          | Kill switch-status            |
+| `feedback`         | Dashboard                   | Ny feedback                   |
+| `pending_triggers` | Dashboard                   | Trigger-godkännandekö         |

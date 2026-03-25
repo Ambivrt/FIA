@@ -10,28 +10,25 @@ Visar kön med **väntande triggers** – triggers som har avfyrats men kräver 
 
 ### Kolumner
 
-| Kolumn | Beskrivning |
-|--------|-------------|
-| Trigger-namn | Namn från trigger-definitionen |
-| Agent | Vilken agent som äger triggern |
-| Event | Händelsen som utlöste triggern |
-| Villkor | Sammanfattning av condition-matchningen |
-| Åtgärd | Vad som händer vid godkännande |
-| Tidsstämpel | När triggern avfyrades |
-| Åtgärder | Godkänn / Avvisa-knappar |
+| Kolumn       | Beskrivning                             |
+| ------------ | --------------------------------------- |
+| Trigger-namn | Namn från trigger-definitionen          |
+| Agent        | Vilken agent som äger triggern          |
+| Event        | Händelsen som utlöste triggern          |
+| Villkor      | Sammanfattning av condition-matchningen |
+| Åtgärd       | Vad som händer vid godkännande          |
+| Tidsstämpel  | När triggern avfyrades                  |
+| Åtgärder     | Godkänn / Avvisa-knappar                |
 
 ### Godkänna / avvisa väntande trigger
 
 ```typescript
 // API-anrop vid godkännande
-await supabase
-  .from('pending_triggers')
-  .update({ status: 'approved', approved_by: user.id })
-  .eq('id', triggerId);
+await supabase.from("pending_triggers").update({ status: "approved", approved_by: user.id }).eq("id", triggerId);
 ```
 
 !!! info "Tabellen `pending_triggers`"
-    Väntande triggers lagras i `pending_triggers`-tabellen i Supabase. Varje rad innehåller trigger-definitionen, matchade villkor och den föreslagna åtgärden. Statusfältet kan vara `pending`, `approved` eller `rejected`.
+Väntande triggers lagras i `pending_triggers`-tabellen i Supabase. Varje rad innehåller trigger-definitionen, matchade villkor och den föreslagna åtgärden. Statusfältet kan vara `pending`, `approved` eller `rejected`.
 
 ---
 
@@ -41,11 +38,11 @@ Systemövergripande översikt och konfiguration av alla triggers i systemet.
 
 ### Filter
 
-| Filter | Alternativ |
-|--------|-----------|
-| Agent | Alla / enskild agent |
+| Filter    | Alternativ                                             |
+| --------- | ------------------------------------------------------ |
+| Agent     | Alla / enskild agent                                   |
 | Event-typ | `cron`, `task_completed`, `metric_threshold`, `manual` |
-| Status | Aktiv / Inaktiv |
+| Status    | Aktiv / Inaktiv                                        |
 
 ### Trigger-lista
 
@@ -85,52 +82,52 @@ Kompakt kort som visar en enskild trigger:
 
 Formulär för att redigera trigger-villkor:
 
-| Fält | Typ | Beskrivning |
-|------|-----|-------------|
-| `field` | Select | Vilken datapunkt som utvärderas |
+| Fält       | Typ    | Beskrivning                                |
+| ---------- | ------ | ------------------------------------------ |
+| `field`    | Select | Vilken datapunkt som utvärderas            |
 | `operator` | Select | `eq`, `gt`, `lt`, `gte`, `lte`, `contains` |
-| `value` | Input | Jämförelsevärde |
-| `logic` | Select | `AND` / `OR` (vid flera villkor) |
+| `value`    | Input  | Jämförelsevärde                            |
+| `logic`    | Select | `AND` / `OR` (vid flera villkor)           |
 
 ### TriggerActionEditor
 
 Formulär för att redigera trigger-åtgärd:
 
-| Fält | Typ | Beskrivning |
-|------|-----|-------------|
-| `type` | Select | `create_task`, `notify_slack`, `update_config`, `escalate` |
-| `agent` | Select | Målagent (vid `create_task`) |
-| `task_type` | Input | Uppgiftstyp (vid `create_task`) |
-| `channel` | Input | Slack-kanal (vid `notify_slack`) |
-| `priority` | Select | `low`, `normal`, `high`, `critical` |
+| Fält        | Typ    | Beskrivning                                                |
+| ----------- | ------ | ---------------------------------------------------------- |
+| `type`      | Select | `create_task`, `notify_slack`, `update_config`, `escalate` |
+| `agent`     | Select | Målagent (vid `create_task`)                               |
+| `task_type` | Input  | Uppgiftstyp (vid `create_task`)                            |
+| `channel`   | Input  | Slack-kanal (vid `notify_slack`)                           |
+| `priority`  | Select | `low`, `normal`, `high`, `critical`                        |
 
 ### TriggerEventBadge
 
 Visar event-typ med färgkodad badge:
 
-| Event-typ | Färg | Exempel |
-|-----------|------|---------|
-| `cron` | Blå | Schemalagd körning |
-| `task_completed` | Grön | Task slutförd |
+| Event-typ          | Färg   | Exempel                 |
+| ------------------ | ------ | ----------------------- |
+| `cron`             | Blå    | Schemalagd körning      |
+| `task_completed`   | Grön   | Task slutförd           |
 | `metric_threshold` | Orange | KPI-tröskel överskriden |
-| `manual` | Grå | Manuellt utlöst |
+| `manual`           | Grå    | Manuellt utlöst         |
 
 ### TriggerApprovalBadge
 
 Visar godkännandestatus för väntande triggers:
 
-| Status | Färg |
-|--------|------|
-| `pending` | Gul |
+| Status     | Färg |
+| ---------- | ---- |
+| `pending`  | Gul  |
 | `approved` | Grön |
-| `rejected` | Röd |
+| `rejected` | Röd  |
 
 ---
 
 ## Reseed från YAML
 
 !!! warning "Endast admin"
-    Reseed-funktionen kräver rollen `admin` eller `orchestrator`.
+Reseed-funktionen kräver rollen `admin` eller `orchestrator`.
 
 Triggers seedas initialt från `agent.yaml` vid gateway-startup. Därefter äger dashboarden konfigurationen via `config_json` i Supabase. Om `agent.yaml` uppdaterats (t.ex. vid deploy) kan admin trigga en **reseed**.
 
@@ -148,10 +145,10 @@ Triggers seedas initialt från `agent.yaml` vid gateway-startup. Därefter äger
 ```
 
 !!! example "Dry-run diff"
-    ```diff
+`diff
     + analytics/weekly_summary (ny trigger)
     ~ strategy/quarterly_review: cron ändrad 0 9 1 */3 * → 0 8 1 */3 *
     - seo/legacy_audit (borttagen i YAML)
-    ```
+    `
 
     Adminen ser exakt vilka ändringar som kommer att göras innan bekräftelse.

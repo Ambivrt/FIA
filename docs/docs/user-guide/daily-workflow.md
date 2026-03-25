@@ -21,7 +21,7 @@ Analytics Agent skickar en morgonpuls varje dag klockan **07:00**. Den innehåll
 - Rekommenderade åtgärder
 
 !!! tip "Var hittar jag morgonpulsen?"
-    Morgonpulsen visas som en uppgift av typen "rapport" i aktivitetsloggen. Den skickas även till Slack-kanalen om du har den konfigurerad.
+Morgonpulsen visas som en uppgift av typen "rapport" i aktivitetsloggen. Den skickas även till Slack-kanalen om du har den konfigurerad.
 
 ### 3. Granska godkännandekön
 
@@ -49,15 +49,15 @@ Gå till **Aktivitet** och skrolla igenom de senaste händelserna. Leta efter:
 
 Ibland eskalerar systemet ärenden till dig. Det händer i dessa situationer:
 
-| Situation                                      | Vad du bör göra                                           |
-| ---------------------------------------------- | --------------------------------------------------------- |
-| Brand Agent har avvisat innehåll **3 gånger**  | Granska innehållet själv och ge tydlig feedback            |
-| En agent visar **error** längre än 15 minuter  | Kontrollera aktivitetsloggen och kontakta teknisk support  |
-| En trigger skapar oväntade uppgifter           | Pausa triggern och utvärdera om den behöver justeras       |
-| Kostnaderna överstiger förväntat                | Kontrollera kostnadssidan och överväg att pausa agenter    |
+| Situation                                     | Vad du bör göra                                           |
+| --------------------------------------------- | --------------------------------------------------------- |
+| Brand Agent har avvisat innehåll **3 gånger** | Granska innehållet själv och ge tydlig feedback           |
+| En agent visar **error** längre än 15 minuter | Kontrollera aktivitetsloggen och kontakta teknisk support |
+| En trigger skapar oväntade uppgifter          | Pausa triggern och utvärdera om den behöver justeras      |
+| Kostnaderna överstiger förväntat              | Kontrollera kostnadssidan och överväg att pausa agenter   |
 
 !!! warning "Eskaleringarna väntar inte"
-    När Brand Agent eskalerar till dig innebär det att automatiken inte klarar att lösa problemet. Ju snabbare du ger feedback, desto snabbare kan arbetet fortsätta.
+När Brand Agent eskalerar till dig innebär det att automatiken inte klarar att lösa problemet. Ju snabbare du ger feedback, desto snabbare kan arbetet fortsätta.
 
 ---
 
@@ -65,13 +65,13 @@ Ibland eskalerar systemet ärenden till dig. Det händer i dessa situationer:
 
 Det finns två sätt att stoppa agentaktivitet. Välj rätt nivå:
 
-| Åtgärd                    | Omfattning       | När du ska använda det                              |
-| ------------------------- | ---------------- | --------------------------------------------------- |
-| **Pausa enskild agent**   | En agent         | Agenten beter sig konstigt eller behöver justeras    |
-| **Kill switch**           | Alla agenter     | Varumärkeskris, systemfel, felaktigt innehåll publiceras |
+| Åtgärd                  | Omfattning   | När du ska använda det                                   |
+| ----------------------- | ------------ | -------------------------------------------------------- |
+| **Pausa enskild agent** | En agent     | Agenten beter sig konstigt eller behöver justeras        |
+| **Kill switch**         | Alla agenter | Varumärkeskris, systemfel, felaktigt innehåll publiceras |
 
 !!! info "Läs mer om nödstopp"
-    Se [Nödstopp](kill-switch.md) för fullständig information om kill switch.
+Se [Nödstopp](kill-switch.md) för fullständig information om kill switch.
 
 ---
 
@@ -86,7 +86,7 @@ Varje fredag klockan 14:00 genererar Analytics Agent en veckorapport. Den samman
 - Rekommendationer inför nästa vecka
 
 !!! tip "Avsätt 20 minuter"
-    Läs fredagsrapporten i lugn och ro. Notera saker du vill justera och ge Strategy Agent eventuell ny riktning inför kommande vecka.
+Läs fredagsrapporten i lugn och ro. Notera saker du vill justera och ge Strategy Agent eventuell ny riktning inför kommande vecka.
 
 ### Kontrollera kostnader
 
@@ -101,9 +101,9 @@ Gå till **Kostnader** i sidomenyn minst en gång per vecka. Kontrollera:
 
 ## Sammanfattning
 
-| Rutin              | Frekvens        | Tid         | Vad                                          |
-| ------------------ | --------------- | ----------- | -------------------------------------------- |
-| Morgonrutin        | Varje dag       | 15 min      | Puls, godkännanden, triggers, aktivitet       |
-| Godkännanden       | Löpande         | 5--10 min   | Granska och godkänn/avslå innehåll            |
-| Fredagsrapport     | Varje fredag    | 20 min      | Läs veckorapport, planera nästa vecka         |
-| Kostnadskontroll   | Varje vecka     | 5 min       | Kontrollera förbrukning                       |
+| Rutin            | Frekvens     | Tid       | Vad                                     |
+| ---------------- | ------------ | --------- | --------------------------------------- |
+| Morgonrutin      | Varje dag    | 15 min    | Puls, godkännanden, triggers, aktivitet |
+| Godkännanden     | Löpande      | 5--10 min | Granska och godkänn/avslå innehåll      |
+| Fredagsrapport   | Varje fredag | 20 min    | Läs veckorapport, planera nästa vecka   |
+| Kostnadskontroll | Varje vecka  | 5 min     | Kontrollera förbrukning                 |

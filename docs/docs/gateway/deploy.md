@@ -6,17 +6,17 @@ FIA Gateway koar pa Google Cloud Platform (GCP) Compute Engine i `europe-north1`
 
 ## GCP-specifikation
 
-| Parameter | Varde |
-|-----------|-------|
-| Maskintyp | `e2-small` (2 vCPU, 2 GB RAM) |
-| Zon | `europe-north1-b` |
-| OS | Ubuntu 24.04 LTS |
-| Disk | 20 GB SSD (pd-balanced) |
-| Kostnad | ~150-250 SEK/manad |
+| Parameter | Varde                                                   |
+| --------- | ------------------------------------------------------- |
+| Maskintyp | `e2-small` (2 vCPU, 2 GB RAM)                           |
+| Zon       | `europe-north1-b`                                       |
+| OS        | Ubuntu 24.04 LTS                                        |
+| Disk      | 20 GB SSD (pd-balanced)                                 |
+| Kostnad   | ~150-250 SEK/manad                                      |
 | Brandvagg | Ingen inkommande trafik (Socket Mode + Supabase-klient) |
 
 !!! info "Ingen inkommande trafik"
-    Gateway behovr inga oppna portar. Slack kommunicerar via Socket Mode (utgaende websocket) och Supabase via klient-SDK. REST API:t lyssnar enbart pa `localhost:3001`.
+Gateway behovr inga oppna portar. Slack kommunicerar via Socket Mode (utgaende websocket) och Supabase via klient-SDK. REST API:t lyssnar enbart pa `localhost:3001`.
 
 ---
 
@@ -37,7 +37,7 @@ Anslut till instansen via Identity-Aware Proxy (IAP) -- kravr inga oppna SSH-por
     ```
 
 !!! tip "Forsta gangen"
-    Om du inte har `gcloud` installerat, folj [Google Cloud SDK-installationen](https://cloud.google.com/sdk/docs/install). Logga in med `gcloud auth login` och satt projekt med `gcloud config set project <projekt-id>`.
+Om du inte har `gcloud` installerat, folj [Google Cloud SDK-installationen](https://cloud.google.com/sdk/docs/install). Logga in med `gcloud auth login` och satt projekt med `gcloud config set project <projekt-id>`.
 
 ---
 
@@ -51,17 +51,17 @@ bash deploy.sh
 
 Scriptet utfor foljande steg:
 
-| Steg | Beskrivning |
-|------|-------------|
-| 1/6 | Kontrollerar systemkrav (Node.js 22, PM2, Git). Installerar vid behov. |
-| 2/6 | Hamtar senaste koden fran `main`-branchen. |
-| 3/6 | Installerar beroenden (`npm ci`). |
-| 4/6 | Bygger TypeScript (`npm run build`). |
-| 5/6 | Validerar `.env` -- stannar om filen saknas eller REQUIRED-variabler ar tomma. |
-| 6/6 | Startar gateway med PM2, sparar konfiguration for auto-restart. |
+| Steg | Beskrivning                                                                    |
+| ---- | ------------------------------------------------------------------------------ |
+| 1/6  | Kontrollerar systemkrav (Node.js 22, PM2, Git). Installerar vid behov.         |
+| 2/6  | Hamtar senaste koden fran `main`-branchen.                                     |
+| 3/6  | Installerar beroenden (`npm ci`).                                              |
+| 4/6  | Bygger TypeScript (`npm run build`).                                           |
+| 5/6  | Validerar `.env` -- stannar om filen saknas eller REQUIRED-variabler ar tomma. |
+| 6/6  | Startar gateway med PM2, sparar konfiguration for auto-restart.                |
 
 !!! warning "Forsta deploy"
-    Vid forsta deploy stannar scriptet vid steg 5 om `.env` saknas. Skapa den manuellt:
+Vid forsta deploy stannar scriptet vid steg 5 om `.env` saknas. Skapa den manuellt:
 
     ```bash
     cp ~/fia-server/.env.example ~/fia-server/.env
@@ -96,19 +96,19 @@ module.exports = {
 
 ### Vanliga PM2-kommandon
 
-| Kommando | Beskrivning |
-|----------|-------------|
-| `pm2 start ecosystem.config.js` | Starta gateway |
-| `pm2 restart fia-gateway` | Starta om gateway |
-| `pm2 stop fia-gateway` | Stoppa gateway |
-| `pm2 logs fia-gateway` | Visa loggar live |
-| `pm2 logs fia-gateway --lines 50` | Visa senaste 50 raderna |
-| `pm2 status` | Visa processens status |
-| `pm2 monit` | Interaktiv overvakning |
-| `pm2 save` | Spara processlist for auto-restart vid reboot |
+| Kommando                          | Beskrivning                                   |
+| --------------------------------- | --------------------------------------------- |
+| `pm2 start ecosystem.config.js`   | Starta gateway                                |
+| `pm2 restart fia-gateway`         | Starta om gateway                             |
+| `pm2 stop fia-gateway`            | Stoppa gateway                                |
+| `pm2 logs fia-gateway`            | Visa loggar live                              |
+| `pm2 logs fia-gateway --lines 50` | Visa senaste 50 raderna                       |
+| `pm2 status`                      | Visa processens status                        |
+| `pm2 monit`                       | Interaktiv overvakning                        |
+| `pm2 save`                        | Spara processlist for auto-restart vid reboot |
 
 !!! tip "Auto-start vid reboot"
-    Kor `pm2 startup` for att generera systemd-konfiguration och `pm2 save` for att spara nuvarande processlista. Gateway startar da automatiskt efter reboot.
+Kor `pm2 startup` for att generera systemd-konfiguration och `pm2 save` for att spara nuvarande processlista. Gateway startar da automatiskt efter reboot.
 
 ---
 
@@ -147,15 +147,15 @@ jobs:
 
 Pipeline-steg:
 
-| Steg | Kommando | Beskrivning |
-|------|----------|-------------|
-| Typecheck | `npx tsc --noEmit` | Validerar TypeScript-typer utan att generera output |
-| Lint | `npm run lint` | ESLint-kontroll |
-| Format | `npm run format:check` | Prettier-kontroll |
-| Test | `npm test` | Kor testsviten (Jest) |
+| Steg      | Kommando               | Beskrivning                                         |
+| --------- | ---------------------- | --------------------------------------------------- |
+| Typecheck | `npx tsc --noEmit`     | Validerar TypeScript-typer utan att generera output |
+| Lint      | `npm run lint`         | ESLint-kontroll                                     |
+| Format    | `npm run format:check` | Prettier-kontroll                                   |
+| Test      | `npm test`             | Kor testsviten (Jest)                               |
 
 !!! note "Ingen automatisk deploy"
-    CI-pipelinen deployer inte automatiskt. Deploy sker manuellt via SSH + `deploy.sh`. Detta ar avsiktligt -- gateway-processen hanterar aktiva agentuppgifter och behover kontrollerad omstart.
+CI-pipelinen deployer inte automatiskt. Deploy sker manuellt via SSH + `deploy.sh`. Detta ar avsiktligt -- gateway-processen hanterar aktiva agentuppgifter och behover kontrollerad omstart.
 
 ---
 
@@ -173,4 +173,4 @@ For manuell deploy, folj denna checklista:
 - [ ] Kontrollera status: `pm2 status`
 
 !!! danger "Kontrollera aktiva tasks"
-    Innan omstart, kontrollera att inga kritiska tasks kors. Anvand `pm2 logs fia-gateway --lines 50` eller Slack-kommandot `/fia status` for att se aktuell aktivitet.
+Innan omstart, kontrollera att inga kritiska tasks kors. Anvand `pm2 logs fia-gateway --lines 50` eller Slack-kommandot `/fia status` for att se aktuell aktivitet.

@@ -15,7 +15,7 @@ Uppgifter med status **awaiting_review** visas i kön. Det gäller framför allt
 - Allt innehåll som Brand Agent har flaggat
 
 !!! info "Inte allt kräver ditt godkännande"
-    Mindre uppgifter som metadata-generering, keyword-analys och interna rapporter hanteras autonomt av agenterna. Bara innehåll som ska publiceras eller skickas externt kommer till dig.
+Mindre uppgifter som metadata-generering, keyword-analys och interna rapporter hanteras autonomt av agenterna. Bara innehåll som ska publiceras eller skickas externt kommer till dig.
 
 ---
 
@@ -23,15 +23,15 @@ Uppgifter med status **awaiting_review** visas i kön. Det gäller framför allt
 
 Klicka på en uppgift i godkännandekön för att öppna detaljvyn. Där ser du:
 
-| Fält                  | Beskrivning                                                  |
-| --------------------- | ------------------------------------------------------------ |
-| **Titel**             | Uppgiftens namn                                              |
-| **Agent**             | Vilken agent som skapat innehållet                            |
-| **Typ**               | Typ av innehåll (bloggpost, social post, email, etc.)        |
-| **Innehåll**          | Själva texten, formaterad för läsning                        |
-| **Brand Agent-omdöme**| Resultat från den automatiska kvalitetsgranskningen           |
-| **Historik**          | Tidigare versioner och feedback om uppgiften arbetats om     |
-| **Relaterade uppgifter** | Eventuella underuppgifter eller föräldrauppgifter         |
+| Fält                     | Beskrivning                                              |
+| ------------------------ | -------------------------------------------------------- |
+| **Titel**                | Uppgiftens namn                                          |
+| **Agent**                | Vilken agent som skapat innehållet                       |
+| **Typ**                  | Typ av innehåll (bloggpost, social post, email, etc.)    |
+| **Innehåll**             | Själva texten, formaterad för läsning                    |
+| **Brand Agent-omdöme**   | Resultat från den automatiska kvalitetsgranskningen      |
+| **Historik**             | Tidigare versioner och feedback om uppgiften arbetats om |
+| **Relaterade uppgifter** | Eventuella underuppgifter eller föräldrauppgifter        |
 
 ---
 
@@ -48,7 +48,7 @@ Innehållet är bra och redo att publiceras eller levereras. Uppgiften går vida
 Innehållet håller inte tillräcklig kvalitet eller passar inte. Du **måste** ange feedback som förklarar varför.
 
 !!! warning "Skriv alltid feedback vid avslag"
-    Feedback är obligatoriskt vid avslag. Utan tydlig feedback kan agenten inte förbättra resultatet. Var specifik -- "inte bra nog" räcker inte.
+Feedback är obligatoriskt vid avslag. Utan tydlig feedback kan agenten inte förbättra resultatet. Var specifik -- "inte bra nog" räcker inte.
 
 ### Begär revision
 
@@ -67,7 +67,7 @@ Innan innehåll når din godkännandekö har det redan granskats automatiskt av 
 Brand Agent har **vetorätt** -- om innehållet inte lever upp till standarden skickas det tillbaka till den skapande agenten för omarbetning.
 
 !!! danger "Eskalering efter tre avslag"
-    Om Brand Agent avvisar samma uppgift **tre gånger** eskaleras den till dig. Det betyder att agenten och Brand Agent inte lyckas enas. Du behöver då:
+Om Brand Agent avvisar samma uppgift **tre gånger** eskaleras den till dig. Det betyder att agenten och Brand Agent inte lyckas enas. Du behöver då:
 
     1. Läsa igenom alla tidigare versioner och Brand Agents feedback.
     2. Ge en tydlig, detaljerad instruktion om vad som krävs.
@@ -89,13 +89,13 @@ När du godkänner en uppgift händer följande:
 
 Bra feedback hjälper agenterna att leverera rätt resultat snabbare.
 
-| Gör                                          | Undvik                                      |
-| --------------------------------------------- | ------------------------------------------- |
-| Var specifik: "Rubriken bör vara kortare"     | Vagt: "Gör om"                              |
-| Ge kontext: "Vi vänder oss till CFO:er"       | Inga förklaringar                           |
-| Peka på delar: "Stycke 3 är för långt"       | Generellt: "Texten funkar inte"             |
-| Föreslå riktning: "Mer fokus på ROI"          | Motsägelser: "Mer formellt men coolare"     |
-| Referera till varumärket: "Mer Forefront-ton" | Personliga preferenser utan motivering       |
+| Gör                                           | Undvik                                  |
+| --------------------------------------------- | --------------------------------------- |
+| Var specifik: "Rubriken bör vara kortare"     | Vagt: "Gör om"                          |
+| Ge kontext: "Vi vänder oss till CFO:er"       | Inga förklaringar                       |
+| Peka på delar: "Stycke 3 är för långt"        | Generellt: "Texten funkar inte"         |
+| Föreslå riktning: "Mer fokus på ROI"          | Motsägelser: "Mer formellt men coolare" |
+| Referera till varumärket: "Mer Forefront-ton" | Personliga preferenser utan motivering  |
 
 !!! success "Tumregel"
-    Tänk på att du ger feedback till en AI-agent. Ju mer konkret och strukturerad din feedback är, desto bättre resultat får du tillbaka.
+Tänk på att du ger feedback till en AI-agent. Ju mer konkret och strukturerad din feedback är, desto bättre resultat får du tillbaka.

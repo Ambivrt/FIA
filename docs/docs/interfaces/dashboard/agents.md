@@ -24,7 +24,7 @@ Visar ett rutnät med agentkort. Varje kort visar:
 ```
 
 !!! note "Realtidsuppdatering"
-    Agentkorten uppdateras i realtid via Supabase Realtime-prenumeration på `agents`-tabellen. Heartbeat-timern räknas upp klientsidigt.
+Agentkorten uppdateras i realtid via Supabase Realtime-prenumeration på `agents`-tabellen. Heartbeat-timern räknas upp klientsidigt.
 
 ---
 
@@ -34,37 +34,37 @@ Detaljvy för en enskild agent med fyra flikar:
 
 ### Flik 1: Översikt
 
-| Fält | Beskrivning |
-|------|-------------|
-| Display status | Aktuell status med färgad badge |
-| Heartbeat | Senaste heartbeat-tidsstämpel + uptime |
+| Fält                | Beskrivning                            |
+| ------------------- | -------------------------------------- |
+| Display status      | Aktuell status med färgad badge        |
+| Heartbeat           | Senaste heartbeat-tidsstämpel + uptime |
 | Tasks (senaste 24h) | Antal slutförda, pågående, misslyckade |
-| Genomsnittlig tid | Medeltid per task-typ |
-| Autonominivå | `autonomous` eller `semi-autonomous` |
-| Senaste aktivitet | De 5 senaste loggraderna |
+| Genomsnittlig tid   | Medeltid per task-typ                  |
+| Autonominivå        | `autonomous` eller `semi-autonomous`   |
+| Senaste aktivitet   | De 5 senaste loggraderna               |
 
 ### Flik 2: Routing
 
 Visar agentens LLM-routing (från `agent.yaml` → `config_json`). Varje uppgiftstyp mappas till en modell.
 
-| Uppgiftstyp | Modell | Redigerbar |
-|-------------|--------|-----------|
-| `blog_post` | `claude-opus-4-6` | Ja |
-| `social_post` | `claude-sonnet-4-6` | Ja |
-| `metadata` | `claude-sonnet-4-6` | Ja |
+| Uppgiftstyp   | Modell              | Redigerbar |
+| ------------- | ------------------- | ---------- |
+| `blog_post`   | `claude-opus-4-6`   | Ja         |
+| `social_post` | `claude-sonnet-4-6` | Ja         |
+| `metadata`    | `claude-sonnet-4-6` | Ja         |
 
 !!! warning "Routing-ändringar"
-    Ändringar i routing sparas till `config_json` i Supabase, inte till `agent.yaml`. Gatewayen läser `config_json` vid nästa task. Ändringar kräver rollen `admin` eller `orchestrator`.
+Ändringar i routing sparas till `config_json` i Supabase, inte till `agent.yaml`. Gatewayen läser `config_json` vid nästa task. Ändringar kräver rollen `admin` eller `orchestrator`.
 
 ### Flik 3: Verktyg (Tools)
 
 Lista över MCP-verktyg som agenten har tillgång till:
 
-| Verktyg | MCP-server | Status |
-|---------|-----------|--------|
-| `google_docs_create` | gws | Aktiv |
-| `google_sheets_read` | gws | Aktiv |
-| `hubspot_contact_search` | hubspot | Inaktiv |
+| Verktyg                  | MCP-server | Status  |
+| ------------------------ | ---------- | ------- |
+| `google_docs_create`     | gws        | Aktiv   |
+| `google_sheets_read`     | gws        | Aktiv   |
+| `hubspot_contact_search` | hubspot    | Inaktiv |
 
 Verktyg kan aktiveras/inaktiveras per agent. Ändringar sparas i `config_json.tools`.
 
@@ -109,14 +109,14 @@ Display status är en gemensam standard som används av Dashboard, CLI och Slack
 
 ### Färgmappning
 
-| Status | Färg | Ikon | CSS-klass |
-|--------|------|------|-----------|
-| `online` | Grön (`#22c55e`) | `●` | `text-green-500` |
-| `working` | Gul (`#eab308`) | `◉` (pulserande) | `text-yellow-500 animate-pulse` |
-| `paused` | Gul (`#eab308`) | `◎` | `text-yellow-500` |
-| `killed` | Röd (`#ef4444`) | `■` | `text-red-500` |
-| `error` | Röd (`#ef4444`) | `✖` | `text-red-500` |
-| `offline` | Grå (`#6b7280`) | `○` | `text-gray-500` |
+| Status    | Färg             | Ikon             | CSS-klass                       |
+| --------- | ---------------- | ---------------- | ------------------------------- |
+| `online`  | Grön (`#22c55e`) | `●`              | `text-green-500`                |
+| `working` | Gul (`#eab308`)  | `◉` (pulserande) | `text-yellow-500 animate-pulse` |
+| `paused`  | Gul (`#eab308`)  | `◎`              | `text-yellow-500`               |
+| `killed`  | Röd (`#ef4444`)  | `■`              | `text-red-500`                  |
+| `error`   | Röd (`#ef4444`)  | `✖`              | `text-red-500`                  |
+| `offline` | Grå (`#6b7280`)  | `○`              | `text-gray-500`                 |
 
 ---
 
@@ -124,12 +124,7 @@ Display status är en gemensam standard som används av Dashboard, CLI och Slack
 
 Orchestrators och admins kan pausa och återuppta enskilda agenter direkt från AgentDetailPage.
 
-!!! example "Pausa en agent"
-    1. Gå till `/agents/content`
-    2. Klicka **Pausa agent** i sidhuvudet
-    3. Bekräfta i dialogen
-    4. Agentens status ändras till `paused`
-    5. Pågående tasks körs klart men inga nya startas
+!!! example "Pausa en agent" 1. Gå till `/agents/content` 2. Klicka **Pausa agent** i sidhuvudet 3. Bekräfta i dialogen 4. Agentens status ändras till `paused` 5. Pågående tasks körs klart men inga nya startas
 
 !!! tip "Skillnad mot kill switch"
-    **Pausa** stoppar en enskild agent. **Kill switch** stoppar alla agenter samtidigt. Kill switch aktiveras via Inställningar eller Slack.
+**Pausa** stoppar en enskild agent. **Kill switch** stoppar alla agenter samtidigt. Kill switch aktiveras via Inställningar eller Slack.

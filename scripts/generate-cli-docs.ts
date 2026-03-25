@@ -24,7 +24,8 @@ mkdirSync(outDir, { recursive: true });
 
 let md = "# CLI-kommandon (referens)\n\n";
 md += '!!! info "Auto-genererad"\n';
-md += "    Denna sida genereras från `fia --help`. Senast uppdaterad: " + new Date().toISOString().split("T")[0] + "\n\n";
+md +=
+  "    Denna sida genereras från `fia --help`. Senast uppdaterad: " + new Date().toISOString().split("T")[0] + "\n\n";
 
 // Main help
 try {

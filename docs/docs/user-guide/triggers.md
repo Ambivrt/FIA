@@ -11,19 +11,19 @@ En trigger är en regel som säger: **"När X händer, gör Y."**
 Triggers kopplar samman agenternas arbete och skapar automatiska flöden. Istället för att du manuellt behöver starta varje uppgift kan systemet reagera på händelser och skapa nya uppgifter på egen hand.
 
 !!! example "Exempel"
-    Intelligence Agent bevakar nyheter och trender. När den hittar en viktig branschnyhet skapas automatiskt en uppgift åt Content Agent att skriva en snabbrespons-artikel.
+Intelligence Agent bevakar nyheter och trender. När den hittar en viktig branschnyhet skapas automatiskt en uppgift åt Content Agent att skriva en snabbrespons-artikel.
 
 ---
 
 ## Två typer av triggers
 
-| Typ                    | Beskrivning                                                  | Kräver godkännande |
-| ---------------------- | ------------------------------------------------------------ | ------------------ |
-| **Automatisk (auto)**  | Utförs direkt utan att du behöver göra något                 | Nej                |
-| **Manuell (manual)**   | Hamnar i kön och väntar på ditt godkännande innan den utförs | Ja                 |
+| Typ                   | Beskrivning                                                  | Kräver godkännande |
+| --------------------- | ------------------------------------------------------------ | ------------------ |
+| **Automatisk (auto)** | Utförs direkt utan att du behöver göra något                 | Nej                |
+| **Manuell (manual)**  | Hamnar i kön och väntar på ditt godkännande innan den utförs | Ja                 |
 
 !!! info "Varför finns manuella triggers?"
-    Vissa åtgärder är för viktiga eller kostsamma för att köras helt automatiskt. Manuella triggers ger dig kontroll utan att du behöver initiera uppgiften själv -- systemet föreslår, du bestämmer.
+Vissa åtgärder är för viktiga eller kostsamma för att köras helt automatiskt. Manuella triggers ger dig kontroll utan att du behöver initiera uppgiften själv -- systemet föreslår, du bestämmer.
 
 ---
 
@@ -33,12 +33,12 @@ Gå till **Triggers** i sidomenyn för att se alla triggers som väntar på ditt
 
 Varje pending trigger visar:
 
-| Fält              | Beskrivning                                              |
-| ----------------- | -------------------------------------------------------- |
-| **Trigger-namn**  | Vilken regel som utlösts                                 |
-| **Källa**         | Vilken agent och uppgift som utlöste triggern            |
-| **Åtgärd**        | Vad som kommer att hända om du godkänner                 |
-| **Tidpunkt**      | När triggern utlöstes                                    |
+| Fält             | Beskrivning                                   |
+| ---------------- | --------------------------------------------- |
+| **Trigger-namn** | Vilken regel som utlösts                      |
+| **Källa**        | Vilken agent och uppgift som utlöste triggern |
+| **Åtgärd**       | Vad som kommer att hända om du godkänner      |
+| **Tidpunkt**     | När triggern utlöstes                         |
 
 ### Godkänn eller avslå
 
@@ -46,7 +46,7 @@ Varje pending trigger visar:
 - **Avslå** -- ingenting händer. Triggern arkiveras.
 
 !!! tip "Granska pending triggers dagligen"
-    Pending triggers kan innehålla tidskänsliga åtgärder. Gör det till en vana att kolla dem under din morgonrutin.
+Pending triggers kan innehålla tidskänsliga åtgärder. Gör det till en vana att kolla dem under din morgonrutin.
 
 ---
 
@@ -60,7 +60,7 @@ Som administratör kan du styra vilka triggers som är aktiva.
 4. Använd reglaget för att aktivera eller inaktivera en specifik trigger.
 
 !!! warning "Tänk på kedjeeffekter"
-    Om du inaktiverar en trigger som ingår i en kedja kan det påverka nedströms-uppgifter. Kontrollera vilka andra triggers som beror på den innan du stänger av den.
+Om du inaktiverar en trigger som ingår i en kedja kan det påverka nedströms-uppgifter. Kontrollera vilka andra triggers som beror på den innan du stänger av den.
 
 ---
 
@@ -91,9 +91,9 @@ Här är några exempel på hur triggers skapar automatiska arbetsflöden:
 
 ## Sammanfattning
 
-| Vad du behöver göra                     | Var i dashboarden                     |
-| --------------------------------------- | ------------------------------------- |
-| Godkänna/avslå pending triggers         | Triggers &#8594; Pending              |
-| Se alla aktiva triggers                 | Triggers &#8594; Konfiguration        |
-| Aktivera/inaktivera en trigger          | Triggers &#8594; Konfiguration        |
-| Se vilka triggers som har körts         | Aktivitet (filtrera på trigger-typ)   |
+| Vad du behöver göra             | Var i dashboarden                   |
+| ------------------------------- | ----------------------------------- |
+| Godkänna/avslå pending triggers | Triggers &#8594; Pending            |
+| Se alla aktiva triggers         | Triggers &#8594; Konfiguration      |
+| Aktivera/inaktivera en trigger  | Triggers &#8594; Konfiguration      |
+| Se vilka triggers som har körts | Aktivitet (filtrera på trigger-typ) |
