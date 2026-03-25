@@ -1,33 +1,44 @@
-# Exempel: Brand Review – GODKÄND
+# Few-shot: Brand Agent review — GODKÄND
 
-## Innehåll som granskades
+## Inkommande text (LinkedIn longform, utdrag av öppning)
 
-**Typ:** LinkedIn-inlägg
-**Källa:** Content Agent
+> Det finns ögonblick i teknikhistorien när allting förändras på riktigt. Inte med ett bang, utan med ett tyst klick någonstans i Wien klockan tre på natten. Peter Steinbergers Mac mini står och surrar på hans skrivbord medan han sover. Datorn skriver hans nyhetsbrev. Svarar på meddelanden. Bygger ibland hela applikationer från grunden. Ingen mänsklig anställd skulle kunna göra detta. Ingen mänsklig anställd skulle vilja.
 
-> "Igår satt jag i ett möte där en projektledare sa: 'Vi har automatiserat allt – utom besluten.'
->
-> Det fick mig att tänka. Hur ofta bygger vi system som gör allt snabbare, men inte bättre?
->
-> Den mest underskattade delen av digitalisering är inte tekniken. Det är att veta vilka frågor man ska ställa innan man börjar bygga.
->
-> Tre saker vi alltid frågar innan vi startar ett projekt:
->
-> 1. Vad händer om vi inte gör något alls?
-> 2. Vem påverkas mest – och har vi pratat med dem?
-> 3. Hur mäter vi framgång om ett år?
->
-> Enkla frågor. Förvånansvärt sällan ställda.
->
-> Vad är din första fråga innan ett nytt projekt? 👇
->
-> #digitalisering #forefront #techleadership"
-
-## Brand Agent-granskning
+## Brand Agents bedömning
 
 ```json
 {
-  "decision": "approved",
-  "feedback": "Texten alignerar väl med varumärket. Personligt tilltal i jag-form, konkret exempel, nyfiken ton. Budskapet speglar 'Sikta högre' och 'Ständigt göra bättre'. CTA bjuder in till dialog. Längd och format passar LinkedIn."
+  "verdict": "approved",
+  "overall_score": 5,
+  "dimensions": {
+    "tonality": {
+      "score": 5,
+      "comment": "Alla tre principer aktiva. Nyfiken genom scenbygget och utforskande ton. Modig genom tesen att arbetsflöden förändras fundamentalt. Lustfylld genom understatement ('Ingen mänsklig anställd skulle vilja')."
+    },
+    "substance": {
+      "score": 5,
+      "comment": "Konkret person, plats, händelse. Tekniska detaljer kontextualiseras med mänskliga konsekvenser. Egen vinkel — inte en produktrecension utan en analys av vad förändringen betyder."
+    },
+    "forbidden_patterns": {
+      "pass": true,
+      "violations": []
+    },
+    "channel_fit": {
+      "score": 4,
+      "comment": "Longform-artikel på LinkedIn. Längden är motiverad av ämnets djup. Metadata komplett."
+    },
+    "brand_consistency": {
+      "score": 5,
+      "comment": "Positionerar Forefront som insiktsfulla och framåtlutade utan att explicit nämna Forefront i varje stycke. CTA implicit genom hela texten — läsaren vill veta mer."
+    }
+  },
+  "summary": "Exemplarisk Forefront-text. Narrativdriven, modig, tekniskt djup utan att tappa tillgänglighet. Inga brott mot förbjudna mönster. Denna text kan användas som referens för framtida content.",
+  "required_changes": [],
+  "strengths": [
+    "Scenbaserad öppning som omedelbart skapar närvaro",
+    "Tekniskt djup balanserat med mänskliga anekdoter",
+    "Understatement-humor som förstärker trovärdigheten",
+    "Byggs lager för lager — tesen levereras inte i första stycket"
+  ]
 }
 ```
