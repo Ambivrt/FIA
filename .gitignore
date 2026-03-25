@@ -3,6 +3,7 @@ dist/
 logs/
 .env
 credentials/
+.gworkspace-credentials.json
 *.js.map
 *.tsbuildinfo
 knowledge/agents/*/memory/*.json
