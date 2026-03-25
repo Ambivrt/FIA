@@ -26,7 +26,7 @@ if (!CLIENT_ID || !CLIENT_SECRET) {
 }
 
 const SCOPES = [
-  "https://www.googleapis.com/auth/drive.readonly",
+  "https://www.googleapis.com/auth/drive",
   "https://www.googleapis.com/auth/spreadsheets",
   "https://www.googleapis.com/auth/documents",
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -85,12 +85,17 @@ rl.question("Paste the authorization code here: ", async (code) => {
       process.exit(1);
     }
 
+    // Compute expiry_date (absolute timestamp) from expires_in (seconds).
+    // The MCP package checks expiry_date for token refresh, not expires_in.
+    const expiryDate = tokens.expires_in ? Date.now() + tokens.expires_in * 1000 : undefined;
+
     // Include client_id and client_secret so gws CLI can refresh tokens
     const fullCredentials = {
       ...tokens,
       client_id: CLIENT_ID,
       client_secret: CLIENT_SECRET,
       token_type: tokens.token_type || "Bearer",
+      ...(expiryDate ? { expiry_date: expiryDate } : {}),
     };
 
     const credsPath = path.join(CREDS_DIR, ".gworkspace-credentials.json");
