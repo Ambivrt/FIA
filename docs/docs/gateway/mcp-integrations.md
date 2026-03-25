@@ -51,10 +51,23 @@ npm install @alanse/mcp-server-google-workspace
 
 #### 2. OAuth-credentials
 
-Satt foljande i `.env`:
+MCP-paketet kraver tre env-variabler i `.env`:
 
 ```bash
 GWORKSPACE_CREDS_DIR=/home/marcus_landstrom/FIA
+CLIENT_ID=ditt-id.apps.googleusercontent.com
+CLIENT_SECRET=GOCSPX-din-secret
+```
+
+Dessutom maste `gcp-oauth.keys.json` finnas i `GWORKSPACE_CREDS_DIR`:
+
+```json
+{
+  "installed": {
+    "client_id": "ditt-id.apps.googleusercontent.com",
+    "client_secret": "GOCSPX-din-secret"
+  }
+}
 ```
 
 !!! danger "Absoluta sokvagar"
