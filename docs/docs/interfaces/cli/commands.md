@@ -228,6 +228,26 @@ fia cron disable <job-id>
 fia cron delete <job-id>
 ```
 
+### `fia drive`
+
+Hantera Google Drive-mappstruktur för agenter.
+
+```bash
+# Visa aktuell mappstruktur och folder-IDs
+fia drive status
+
+# Skapa mappstrukturen på Google Drive
+fia drive setup
+
+# Förhandsvisa utan att skapa
+fia drive setup --dry-run
+```
+
+Setup-kommandot skapar FIA:s standardmappstruktur (Content/Blogg, Analytics/Veckorapporter, etc.) och sparar folder-IDs i Supabase. Varje agents kontext uppdateras automatiskt med en `drive-folders.md`-fil som innehåller relevanta folder-IDs.
+
+!!! info "Idempotent"
+`fia drive setup` hoppar över mappar som redan finns. Det är säkert att köra flera gånger.
+
 ### `fia lineage`
 
 Visa task-relationer (parent/child-träd).

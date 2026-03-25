@@ -18,6 +18,7 @@ routing:
 system_context:
   - context/watch-domains.yaml
   - context/scoring-criteria.yaml
+  - context/drive-folders.md
 
 task_context:
   morning_scan:

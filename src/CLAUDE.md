@@ -12,7 +12,7 @@ index.ts → gateway/gateway.ts (huvudklass)
   ├── slack/        – Bolt SDK app, commands (/fia), handlers, channels
   ├── supabase/     – client, heartbeat, task-writer, metrics-writer, activity-writer, command-listener
   ├── api/          – Express REST API (internt), routes (agents, tasks, metrics, kill-switch), JWT auth
-  ├── mcp/          – Tunna wrappers: gws.ts (Google Workspace), tool-registry.ts, hubspot.ts, linkedin.ts, buffer.ts
+  ├── mcp/          – Tunna wrappers: gws.ts (Google Workspace), drive-setup.ts, drive-structure.ts, tool-registry.ts, hubspot.ts, linkedin.ts, buffer.ts
   ├── context/      – context-manager (läser kunskapsbas), prompt-builder (systemprompt)
   └── utils/        – config (.env), errors, kill-switch
 ```
@@ -88,6 +88,8 @@ Exponeras INTE mot internet. Dashboard kommunicerar via Supabase Edge Functions.
 - `GET /api/metrics` + `GET /api/metrics/summary` – KPI-data
 - `GET /api/activity` – Audit trail
 - `POST /api/kill-switch` – Nödbroms
+- `GET /api/drive/status` – Drive-mappstruktur och folder-IDs
+- `POST /api/drive/setup` – Skapa Drive-mappar (admin, stöder dry_run)
 
 Auth: `Authorization: Bearer <supabase-jwt>`, valideras mot Supabase Auth + profiles.role.
 

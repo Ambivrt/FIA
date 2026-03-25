@@ -15,6 +15,7 @@ import { activityRoutes } from "./routes/activity";
 import { killSwitchRoutes } from "./routes/kill-switch";
 import { triggerRoutes } from "./routes/triggers";
 import { knowledgeRoutes } from "./routes/knowledge";
+import { driveRoutes } from "./routes/drive";
 
 export function createApiServer(
   config: AppConfig,
@@ -73,6 +74,7 @@ export function createApiServer(
   app.use("/api/kill-switch", killSwitchRoutes(killSwitch, supabase));
   app.use("/api/triggers", triggerRoutes(supabase, config));
   app.use("/api/knowledge", knowledgeRoutes(supabase, config));
+  app.use("/api/drive", driveRoutes(supabase, config, logger));
 
   // Global error handler
   app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

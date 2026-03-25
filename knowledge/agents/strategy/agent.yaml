@@ -14,6 +14,7 @@ routing:
   trend_analysis: google-search
 system_context:
   - context/planning-framework.md
+  - context/drive-folders.md
 task_context:
   quarterly_plan:
     - context/templates/quarterly-plan.md
@@ -22,6 +23,7 @@ task_context:
   campaign_brief:
     - context/templates/campaign-brief.md
 tools:
+  - "gws:drive"
   - "gws:analytics"
   - "gws:calendar"
   - "gws:sheets"
