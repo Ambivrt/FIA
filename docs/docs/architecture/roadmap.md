@@ -147,14 +147,14 @@ Knowledge Library med seeder och Dashboard-integration.
 !!! success "Levererat"
 Google Drive-mappstruktur och CLI-verktyg för agenter.
 
-| Leverans                | Detalj                                                                          |
-| ----------------------- | ------------------------------------------------------------------------------- |
-| Drive setup-service     | Idempotent skapande/verifiering av mappar, folder-IDs i Supabase                |
-| CLI-kommando            | `fia drive setup [--dry-run]` + `fia drive status`                              |
-| API-endpoints           | `GET /api/drive/status` + `POST /api/drive/setup`                               |
-| Agent-kontext           | Auto-genererade `drive-folders.md` med folder-IDs per agent                     |
-| Utökade agentverktyg    | `gws:drive` tillagt på Strategy och SEO agenter                                 |
-| Deklarativ mappstruktur | `src/mcp/drive-structure.ts` med trädstruktur och agent→mapp-mapping            |
+| Leverans                | Detalj                                                               |
+| ----------------------- | -------------------------------------------------------------------- |
+| Drive setup-service     | Idempotent skapande/verifiering av mappar, folder-IDs i Supabase     |
+| CLI-kommando            | `fia drive setup [--dry-run]` + `fia drive status`                   |
+| API-endpoints           | `GET /api/drive/status` + `POST /api/drive/setup`                    |
+| Agent-kontext           | Auto-genererade `drive-folders.md` med folder-IDs per agent          |
+| Utökade agentverktyg    | `gws:drive` tillagt på Strategy och SEO agenter                      |
+| Deklarativ mappstruktur | `src/mcp/drive-structure.ts` med trädstruktur och agent→mapp-mapping |
 
 ---
 

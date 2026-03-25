@@ -40,10 +40,7 @@ export interface DriveSetupResult {
  */
 export async function checkDriveAuth(config: AppConfig): Promise<void> {
   try {
-    await handleGwsToolUse(
-      { toolName: "drive_list_files", input: { max_results: 1 } },
-      config,
-    );
+    await handleGwsToolUse({ toolName: "drive_list_files", input: { max_results: 1 } }, config);
   } catch {
     throw new Error(
       "Google Workspace-autentisering saknas eller fungerar inte. " +
@@ -88,11 +85,7 @@ export async function setupDriveFolders(
  * Load the saved folder map from Supabase.
  */
 export async function loadFolderMap(supabase: SupabaseClient): Promise<Record<string, string>> {
-  const { data } = await supabase
-    .from("system_settings")
-    .select("value")
-    .eq("key", "drive_folder_map")
-    .maybeSingle();
+  const { data } = await supabase.from("system_settings").select("value").eq("key", "drive_folder_map").maybeSingle();
 
   if (data?.value && typeof data.value === "object") {
     return data.value as Record<string, string>;
@@ -216,9 +209,7 @@ function generateContextFiles(folderMap: Record<string, string>): void {
     // Only generate if the agent directory exists
     if (!fs.existsSync(contextDir)) continue;
 
-    const rows = folderPaths
-      .filter((p) => folderMap[p])
-      .map((p) => `| ${p} | \`${folderMap[p]}\` |`);
+    const rows = folderPaths.filter((p) => folderMap[p]).map((p) => `| ${p} | \`${folderMap[p]}\` |`);
 
     if (rows.length === 0) continue;
 

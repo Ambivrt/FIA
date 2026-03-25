@@ -166,16 +166,16 @@ Agent manifest (tools: ["gws:drive", "gws:docs"])
 
 Verktyg deklareras i varje agents `agent.yaml` under `tools`:
 
-| Agent        | Verktyg                                                  |
-| ------------ | -------------------------------------------------------- |
-| Content      | `buffer`, `gws:drive`, `gws:docs`                        |
+| Agent        | Verktyg                                                               |
+| ------------ | --------------------------------------------------------------------- |
+| Content      | `buffer`, `gws:drive`, `gws:docs`                                     |
 | Strategy     | `gws:drive`, `gws:analytics`, `gws:calendar`, `gws:sheets`, `hubspot` |
-| Campaign     | `hubspot`, `linkedin`, `buffer`                          |
-| SEO          | `gws:drive`, `gws:analytics`, `gws:sheets`               |
-| Lead         | `hubspot`                                                |
-| Analytics    | `gws:analytics`, `gws:sheets`, `gws:drive`, `hubspot`    |
-| Intelligence | `gws:drive`, `gws:docs`, `gws:sheets`                    |
-| Brand        | _(inga verktyg)_                                         |
+| Campaign     | `hubspot`, `linkedin`, `buffer`                                       |
+| SEO          | `gws:drive`, `gws:analytics`, `gws:sheets`                            |
+| Lead         | `hubspot`                                                             |
+| Analytics    | `gws:analytics`, `gws:sheets`, `gws:drive`, `hubspot`                 |
+| Intelligence | `gws:drive`, `gws:docs`, `gws:sheets`                                 |
+| Brand        | _(inga verktyg)_                                                      |
 
 !!! note "Minsta mojliga rattighet"
 Varje agent far enbart tillgang till de verktyg den behover. Brand Agent har t.ex. inga verktyg alls -- den granskar enbart innehall.
@@ -206,13 +206,13 @@ FIA/
 
 ### Agent → mapp-mapping
 
-| Agent        | Mappar                                                          |
-| ------------ | --------------------------------------------------------------- |
+| Agent        | Mappar                                                                        |
+| ------------ | ----------------------------------------------------------------------------- |
 | Content      | FIA/Content/Blogg, FIA/Content/Sociala medier, FIA/Content/Utkast, FIA/Mallar |
-| Intelligence | FIA/Intelligence, FIA/Content/Utkast                            |
-| Analytics    | FIA/Analytics/Veckorapporter, FIA/Analytics/Manadsrapporter     |
-| Strategy     | FIA/Strategi, FIA/Kampanjer                                     |
-| SEO          | FIA/SEO                                                         |
+| Intelligence | FIA/Intelligence, FIA/Content/Utkast                                          |
+| Analytics    | FIA/Analytics/Veckorapporter, FIA/Analytics/Manadsrapporter                   |
+| Strategy     | FIA/Strategi, FIA/Kampanjer                                                   |
+| SEO          | FIA/SEO                                                                       |
 
 ### Setup
 
@@ -231,9 +231,9 @@ Setup-servicen ar **idempotent** — den hoppar over mappar som redan finns och 
 
 ### Implementation
 
-| Fil                        | Beskrivning                                  |
-| -------------------------- | -------------------------------------------- |
-| `src/mcp/drive-structure.ts` | Deklarativ mapptrad + agent-mapping          |
-| `src/mcp/drive-setup.ts`    | Setup-service: skapa, verifiera, spara       |
-| `src/api/routes/drive.ts`   | API-endpoints: GET /status, POST /setup      |
-| `cli/commands/drive.ts`     | CLI-kommando: `fia drive setup/status`       |
+| Fil                          | Beskrivning                             |
+| ---------------------------- | --------------------------------------- |
+| `src/mcp/drive-structure.ts` | Deklarativ mapptrad + agent-mapping     |
+| `src/mcp/drive-setup.ts`     | Setup-service: skapa, verifiera, spara  |
+| `src/api/routes/drive.ts`    | API-endpoints: GET /status, POST /setup |
+| `cli/commands/drive.ts`      | CLI-kommando: `fia drive setup/status`  |

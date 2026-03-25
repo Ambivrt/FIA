@@ -46,7 +46,9 @@ export function registerDriveCommand(program: Command): void {
         return;
       }
 
-      process.stdout.write(GRADIENT.orange.bold("Drive-mappar") + EARTH.stone(` (${data.folder_count}/${data.expected_count})`) + "\n\n");
+      process.stdout.write(
+        GRADIENT.orange.bold("Drive-mappar") + EARTH.stone(` (${data.folder_count}/${data.expected_count})`) + "\n\n",
+      );
 
       const table = new Table({
         head: [chalk.bold("Mapp"), chalk.bold("Folder ID")],
@@ -89,9 +91,7 @@ export function registerDriveCommand(program: Command): void {
         if (data.created.length > 0) {
           process.stdout.write(GRADIENT.orange.bold("Skapade mappar:") + "\n");
           for (const f of data.created) {
-            process.stdout.write(
-              chalk.green("  + ") + f.path + (dryRun ? "" : EARTH.stone(` (${f.folderId})`)) + "\n",
-            );
+            process.stdout.write(chalk.green("  + ") + f.path + (dryRun ? "" : EARTH.stone(` (${f.folderId})`)) + "\n");
           }
           process.stdout.write("\n");
         }

@@ -614,7 +614,8 @@ registry.registerPath({
   method: "post",
   path: "/api/drive/setup",
   summary: "Skapa Drive-mappstruktur",
-  description: "Skapar FIA:s mappstruktur på Google Drive. Idempotent – hoppar över befintliga mappar. Kräver admin-roll.",
+  description:
+    "Skapar FIA:s mappstruktur på Google Drive. Idempotent – hoppar över befintliga mappar. Kräver admin-roll.",
   tags: ["Drive"],
   request: {
     body: { content: { "application/json": { schema: driveSetupSchema } } },
