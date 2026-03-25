@@ -2,6 +2,7 @@
 paths:
   - "src/gateway/**/*"
 ---
+
 # Gateway-konventioner
 
 - Gateway är orkestreraren — den kör task loop, routing och cron

@@ -12,11 +12,6 @@
       "Write",
       "Edit"
     ],
-    "deny": [
-      "Bash(rm -rf *)",
-      "Bash(curl *)",
-      "Read(./.env)",
-      "Read(./.env.*)"
-    ]
+    "deny": ["Bash(rm -rf *)", "Bash(curl *)", "Read(./.env)", "Read(./.env.*)"]
   }
 }

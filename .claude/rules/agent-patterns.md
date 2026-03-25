@@ -3,6 +3,7 @@ paths:
   - "knowledge/agents/**/*"
   - "src/agents/**/*"
 ---
+
 # Agent-mönster
 
 - Varje agent definieras av sin `agent.yaml` — det är source of truth

@@ -2,6 +2,7 @@
 paths:
   - "src/**/*.ts"
 ---
+
 # Supabase-konventioner
 
 - Supabase-klienten skapas i gateway, inte per agent
