@@ -4,6 +4,7 @@ logs/
 .env
 credentials/
 .gworkspace-credentials.json
+gcp-oauth.keys.json
 *.js.map
 *.tsbuildinfo
 knowledge/agents/*/memory/*.json
