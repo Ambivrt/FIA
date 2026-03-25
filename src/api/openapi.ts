@@ -163,6 +163,15 @@ const knowledgeReseedSchema = registry.register(
   }),
 );
 
+// ── Drive schema ──
+
+const driveSetupSchema = registry.register(
+  "DriveSetup",
+  z.object({
+    dry_run: z.boolean().optional().default(false),
+  }),
+);
+
 // ── Trigger reject schema ──
 
 const triggerRejectSchema = registry.register(
@@ -588,6 +597,34 @@ registry.registerPath({
   },
 });
 
+// ── Drive ──
+
+registry.registerPath({
+  method: "get",
+  path: "/api/drive/status",
+  summary: "Visa Drive-mappstruktur",
+  description: "Returnerar aktuell folder map med folder-IDs och antal konfigurerade mappar.",
+  tags: ["Drive"],
+  responses: {
+    200: { description: "Drive-status med folder map" },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/drive/setup",
+  summary: "Skapa Drive-mappstruktur",
+  description: "Skapar FIA:s mappstruktur på Google Drive. Idempotent – hoppar över befintliga mappar. Kräver admin-roll.",
+  tags: ["Drive"],
+  request: {
+    body: { content: { "application/json": { schema: driveSetupSchema } } },
+  },
+  responses: {
+    200: { description: "Setup-resultat med skapade/befintliga/felaktiga mappar" },
+    500: { description: "Drive auth saknas eller setup misslyckades" },
+  },
+});
+
 // ═══════════════════════════════════════════
 // GENERATE SPEC
 // ═══════════════════════════════════════════
@@ -611,6 +648,7 @@ export const openApiSpec = generator.generateDocument({
     { name: "Kill Switch", description: "Nödbroms" },
     { name: "Triggers", description: "Pending triggers och reseed" },
     { name: "Knowledge", description: "Kunskapsbas" },
+    { name: "Drive", description: "Google Drive-mappstruktur" },
   ],
   security: [{ bearerAuth: [] }],
 });

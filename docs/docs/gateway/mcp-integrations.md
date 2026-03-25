@@ -169,9 +169,9 @@ Verktyg deklareras i varje agents `agent.yaml` under `tools`:
 | Agent        | Verktyg                                                  |
 | ------------ | -------------------------------------------------------- |
 | Content      | `buffer`, `gws:drive`, `gws:docs`                        |
-| Strategy     | `gws:analytics`, `gws:calendar`, `gws:sheets`, `hubspot` |
+| Strategy     | `gws:drive`, `gws:analytics`, `gws:calendar`, `gws:sheets`, `hubspot` |
 | Campaign     | `hubspot`, `linkedin`, `buffer`                          |
-| SEO          | `gws:analytics`, `gws:sheets`                            |
+| SEO          | `gws:drive`, `gws:analytics`, `gws:sheets`               |
 | Lead         | `hubspot`                                                |
 | Analytics    | `gws:analytics`, `gws:sheets`, `gws:drive`, `hubspot`    |
 | Intelligence | `gws:drive`, `gws:docs`, `gws:sheets`                    |
@@ -179,3 +179,61 @@ Verktyg deklareras i varje agents `agent.yaml` under `tools`:
 
 !!! note "Minsta mojliga rattighet"
 Varje agent far enbart tillgang till de verktyg den behover. Brand Agent har t.ex. inga verktyg alls -- den granskar enbart innehall.
+
+---
+
+## Google Drive-organisation
+
+FIA anvander en strukturerad mappstruktur pa Google Drive for att organisera agenternas filer. Strukturen skapas via CLI-kommandot `fia drive setup`.
+
+### Mappstruktur
+
+```
+FIA/
+├── Content/
+│   ├── Blogg/
+│   ├── Sociala medier/
+│   └── Utkast/
+├── Kampanjer/
+├── Strategi/
+├── SEO/
+├── Analytics/
+│   ├── Veckorapporter/
+│   └── Månadsrapporter/
+├── Intelligence/
+└── Mallar/
+```
+
+### Agent → mapp-mapping
+
+| Agent        | Mappar                                                          |
+| ------------ | --------------------------------------------------------------- |
+| Content      | FIA/Content/Blogg, FIA/Content/Sociala medier, FIA/Content/Utkast, FIA/Mallar |
+| Intelligence | FIA/Intelligence, FIA/Content/Utkast                            |
+| Analytics    | FIA/Analytics/Veckorapporter, FIA/Analytics/Manadsrapporter     |
+| Strategy     | FIA/Strategi, FIA/Kampanjer                                     |
+| SEO          | FIA/SEO                                                         |
+
+### Setup
+
+```bash
+# Forhandsvisa utan att skapa
+fia drive setup --dry-run
+
+# Skapa mappstrukturen
+fia drive setup
+
+# Visa aktuell status
+fia drive status
+```
+
+Setup-servicen ar **idempotent** — den hoppar over mappar som redan finns och skapar enbart saknade. Folder-IDs sparas i Supabase `system_settings` (key: `drive_folder_map`) och genererar `context/drive-folders.md` per agent sa att LLM:en vet var filer ska sparas.
+
+### Implementation
+
+| Fil                        | Beskrivning                                  |
+| -------------------------- | -------------------------------------------- |
+| `src/mcp/drive-structure.ts` | Deklarativ mapptrad + agent-mapping          |
+| `src/mcp/drive-setup.ts`    | Setup-service: skapa, verifiera, spara       |
+| `src/api/routes/drive.ts`   | API-endpoints: GET /status, POST /setup      |
+| `cli/commands/drive.ts`     | CLI-kommando: `fia drive setup/status`       |

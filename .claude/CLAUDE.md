@@ -22,6 +22,7 @@ npx ts-node cli/index.ts # FIA CLI
 - src/gateway/ # Task loop, routing, status machine
 - src/agents/ # Base agent + per-agent logic
 - src/slack/ # Slack bot handlers
+- src/mcp/ # MCP-wrappers: gws.ts, drive-setup.ts, drive-structure.ts
 - knowledge/agents/ # agent.yaml, skills, context, memory
 - knowledge/shared/ # Shared skills across agents
 - cli/ # FIA CLI (Commander)
@@ -42,5 +43,7 @@ npx ts-node cli/index.ts # FIA CLI
 
 - gws CLI v0.4.4 har bugg med SA credentials → använd OAuth
 - Kill switch lever i Supabase system_settings
+- Drive folder map lever i Supabase system_settings (key: drive_folder_map)
+- Kör `fia drive setup` för att skapa/verifiera Drive-mappar
 - Triggers seedas från agent.yaml vid startup men dashboarden äger config efter seed
 - ANTHROPIC_API_KEY finns i .env – används av gateway, inte direkt av agents

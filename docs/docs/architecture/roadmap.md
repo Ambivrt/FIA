@@ -19,6 +19,8 @@ gantt
     Deploy 0.5.2 – Trigger Config          :done, d052, 2026-03-23, 2026-03-23
     Deploy 0.5.5 – Knowledge Library       :done, d055, 2026-03-24, 2026-03-24
 
+    Deploy 0.5.6 – Drive Organisation       :done, d056, 2026-03-25, 2026-03-25
+
     section Pågår
     Gemini caching + GA4 + Content         :active, curr, 2026-03-25, 2026-04-05
 
@@ -135,6 +137,24 @@ Knowledge Library med seeder och Dashboard-integration.
 | Dashboard-knapp         | "Populera från server" (admin only)                                    |
 | Upsert-fix              | Funktionellt unikt index → vanligt unikt index                         |
 | Felhantering            | `emitCommand` returnerar fel för Dashboard-visning                     |
+
+---
+
+## Deploy 0.5.6 – Drive Organisation
+
+**Datum:** 2026-03-25
+
+!!! success "Levererat"
+Google Drive-mappstruktur och CLI-verktyg för agenter.
+
+| Leverans                | Detalj                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------- |
+| Drive setup-service     | Idempotent skapande/verifiering av mappar, folder-IDs i Supabase                |
+| CLI-kommando            | `fia drive setup [--dry-run]` + `fia drive status`                              |
+| API-endpoints           | `GET /api/drive/status` + `POST /api/drive/setup`                               |
+| Agent-kontext           | Auto-genererade `drive-folders.md` med folder-IDs per agent                     |
+| Utökade agentverktyg    | `gws:drive` tillagt på Strategy och SEO agenter                                 |
+| Deklarativ mappstruktur | `src/mcp/drive-structure.ts` med trädstruktur och agent→mapp-mapping            |
 
 ---
 

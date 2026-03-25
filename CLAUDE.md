@@ -52,7 +52,7 @@ fia/
 │   └── utils/                   # Config, errors, kill-switch
 ├── cli/                         # FIA CLI-klient
 │   ├── index.ts                 # Entry point, Commander setup
-│   ├── commands/                # Ett kommando per fil (11 st)
+│   ├── commands/                # Ett kommando per fil (16 st)
 │   ├── lib/                     # api-client, formatters, realtime, config
 │   └── types.ts                 # CLI-specifika typer
 ├── knowledge/                   # Kunskapsbas (se knowledge/CLAUDE.md)
@@ -90,6 +90,9 @@ npx fia logs         # Aktivitetslogg
 npx fia tail         # Live-stream (Supabase Realtime)
 npx fia watch        # Mini-dashboard (live)
 npx fia config content --routing
+npx fia drive status   # Visa Drive-mappstruktur
+npx fia drive setup    # Skapa mappar på Google Drive
+npx fia drive setup --dry-run  # Förhandsvisa utan att skapa
 
 # PM2 (produktion, på VPS: ~/fia-server)
 pm2 start ecosystem.config.js
@@ -207,6 +210,14 @@ Se `.env.example` för alla nyckelnamn. Aldrig i kod. Kritiska:
 - [x] "Populera från server"-knapp i Knowledge Library (admin only)
 - [x] Fix: upsert-konflikt – funktionellt unikt index → vanligt unikt index på `agent_knowledge`
 - [x] Fix: `emitCommand` returnerar fel så reseed-knappen visar felmeddelanden
+
+### Klart (Deploy 0.5.6, 2026-03-25)
+
+- [x] Google Drive-organisation: CLI-kommando (`fia drive setup/status`) + API-endpoints
+- [x] Idempotent Drive setup-service: skapa/verifiera mappar, spara folder-IDs i Supabase
+- [x] Auto-genererade `drive-folders.md` kontextfiler per agent med folder-IDs
+- [x] `gws:drive` tillagt på Strategy och SEO agenter
+- [x] Nya filer: `src/mcp/drive-structure.ts`, `src/mcp/drive-setup.ts`, `src/api/routes/drive.ts`, `cli/commands/drive.ts`
 
 ### Pågår
 

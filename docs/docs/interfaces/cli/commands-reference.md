@@ -32,6 +32,7 @@ Commands:
                                 queue
   lineage <task-id>             Show task parent/child relationship tree
   cron [options]                Manage scheduled cron jobs
+  drive                         Manage Google Drive folder structure for agents
 ```
 
 ---
@@ -205,6 +206,35 @@ Commands:
   reseed [options] [agent]        Reseed trigger configuration from agent.yaml
                                   (dry-run by default)
 ```
+
+## fia drive
+
+```
+Usage: fia drive [options] [command]
+
+Manage Google Drive folder structure for agents
+
+Options:
+  -h, --help      display help for command
+
+Commands:
+  status          Show current Drive folder map
+  setup [options] Create Drive folder structure for FIA agents
+```
+
+### fia drive setup
+
+```
+Usage: fia drive setup [options]
+
+Create Drive folder structure for FIA agents
+
+Options:
+  --dry-run   Preview what would be created without making changes
+  -h, --help  display help for command
+```
+
+---
 
 ## fia lineage
 
