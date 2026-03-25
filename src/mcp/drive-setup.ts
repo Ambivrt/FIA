@@ -163,7 +163,7 @@ async function walkAndCreate(
 async function createDriveFolder(name: string, parentId: string | undefined, config: AppConfig): Promise<string> {
   const input: Record<string, unknown> = { name };
   if (parentId) {
-    input.parent_id = parentId;
+    input.parents = [parentId];
   }
 
   const raw = await handleGwsToolUse({ toolName: "drive_create_folder", input }, config);
