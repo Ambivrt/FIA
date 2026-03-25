@@ -19,7 +19,11 @@
     "test:cli": "jest tests/cli/",
     "lint": "eslint src/ tests/ cli/",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "docs:generate": "ts-node scripts/generate-all-docs.ts",
+    "docs:serve": "mkdocs serve -f docs/mkdocs.yml",
+    "docs:build": "npm run docs:generate && mkdocs build -f docs/mkdocs.yml",
+    "docs:deploy": "npm run docs:generate && mkdocs gh-deploy -f docs/mkdocs.yml"
   },
   "dependencies": {
     "@alanse/mcp-server-google-workspace": "^1.0.2",
@@ -41,6 +45,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@asteasolutions/zod-to-openapi": "^8.5.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.0",
     "@types/node": "^22.15.0",
