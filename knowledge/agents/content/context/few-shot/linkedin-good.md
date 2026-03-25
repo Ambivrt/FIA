@@ -1,34 +1,31 @@
-# Exempel: BRA LinkedIn-inlägg
-
-Förra veckan frågade en CTO mig: "Hur vet jag om vi är redo för AI?"
-
-Mitt svar: det är du förmodligen inte. Och det är okej.
-
-De flesta organisationer hoppar direkt till AI-verktyg innan de har koll på grunderna. Datakvalitet. Processer. Kultur.
-
-Vi jobbade med ett bolag som ville implementera prediktivt underhåll. Smart idé. Men deras data låg i tre olika system som inte pratade med varandra.
-
-Så vi började inte med AI. Vi började med att städa.
-
-Sex månader senare hade de:
-
-- En gemensam dataplattform
-- Processer som faktiskt fungerade utan manuella workarounds
-- Och ja – ett AI-system som levererade värde från dag ett
-
-Poängen? AI är inte målet. Det är ett verktyg. Och verktyg fungerar bäst när grunden är stabil.
-
-Hur ser er grund ut? Berätta gärna i kommentarerna.
-
-#digitalisering #AI #forefront #techleadership
-
----
+# Few-shot: LinkedIn longform — GODKÄND
 
 ## Varför detta är bra
 
-- **Hook:** fångar med relevant fråga
-- **Personlig:** jag-form, verklig situation
-- **Konkret:** specifikt exempel, inte abstrakt
-- **Struktur:** korta stycken, lätt att scanna
-- **CTA:** inbjudande fråga, inte säljig
-- **Lagom längd:** ~800 tecken
+- Öppnar med en scen, inte ett påstående
+- Konkret person (Peter Steinberger), konkret plats (Wien), konkret tid (klockan tre)
+- Tekniskt djup som kontextualiseras med vad det gör möjligt, inte bara vad det är
+- Bygger tesen lager för lager: scen → vad det är → varför folk vill ha det → hur det fungerar → vad det betyder
+- Anekdoter från riktiga användare genom hela texten
+- Modig avslutning som inte sammanfattar utan öppnar ett perspektiv
+- Humor genom understatement (“Ingen mänsklig anställd skulle vilja”)
+- Källhänvisningar i botten — visar att vi gjort research
+
+## Utdrag: öppning
+
+Det finns ögonblick i teknikhistorien när allting förändras på riktigt. Inte med ett bang, utan med ett tyst klick någonstans i Wien klockan tre på natten. Peter Steinbergers Mac mini står och surrar på hans skrivbord medan han sover. Datorn skriver hans nyhetsbrev. Svarar på meddelanden. Bygger ibland hela applikationer från grunden. Ingen mänsklig anställd skulle kunna göra detta. Ingen mänsklig anställd skulle vilja.
+
+## Utdrag: tekniskt djup med tillgänglighet
+
+ClawdBot har ett koncept som kallas “skills” — TypeScript/JavaScript-moduler som ger kontrollerad åtkomst till systemresurser. Det fascinerande är att du kan be ClawdBot att skriva sina egna skills. En användare bad sin agent ta en bild av himlen när det är vackert väder — agenten designade färdigheten själv och började använda den.
+
+## Utdrag: modig tes
+
+Det som tidigare var “produktivitet”, att jonglera tio SaaS-prenumerationer, skriva konfig-filer, läsa API-dokumentation, börjar se ut som busywork. Det vi kallade “expertis”, att veta exakt hur man konfigurerar en cron-job eller integrerar två API:er, börjar se ut som onödig friktion.
+
+## Vad Brand Agent ska notera
+
+- Tonalitet: nyfiken, modig, lustfylld — alla tre bärande principer finns
+- Egen vinkel: inte en recension av ClawdBot utan en analys av vad det betyder
+- Inga förbjudna mönster (listor, clickbait, buzzwords, överförenkling)
+- CTA implicit: läsaren vill veta mer om Forefronts syn på AI-agenter
