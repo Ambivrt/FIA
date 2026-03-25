@@ -148,6 +148,17 @@ export async function handleGwsToolUse(toolUse: ToolUseResult, config: AppConfig
   if (tool) {
     try {
       const result = await tool.handler(toolUse.input);
+
+      // MCP tools return { content: [...], isError: true } on failure without throwing
+      if (result && typeof result === "object" && (result as Record<string, unknown>).isError) {
+        const content = (result as Record<string, unknown>).content;
+        const errorText =
+          Array.isArray(content) && content.length > 0 && typeof content[0] === "object" && content[0].text
+            ? String(content[0].text)
+            : JSON.stringify(result);
+        throw new Error(errorText);
+      }
+
       return typeof result === "string" ? result : JSON.stringify(result, null, 2);
     } catch (err) {
       const message = (err as Error).message;
