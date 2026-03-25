@@ -21,7 +21,13 @@ if (fs.existsSync(credsPath)) {
   console.log("Has expiry_date:", !!creds.expiry_date);
 }
 
-// 2. Try loading MCP tools
+// 2. Initialize auth BEFORE calling tools
+console.log("\n=== Auth init ===");
+const auth = await import("@alanse/mcp-server-google-workspace/dist/auth.js");
+const authClient = await auth.loadCredentialsQuietly();
+console.log("Auth client:", authClient ? "OK" : "NULL");
+
+// 3. Try loading MCP tools
 console.log("\n=== MCP tool test ===");
 try {
   const mod = await import("@alanse/mcp-server-google-workspace/dist/tools/index.js");
@@ -31,7 +37,7 @@ try {
   if (driveTool) {
     console.log("drive_list_files found, calling...");
     const result = await driveTool.handler({ max_results: 1 });
-    console.log("Result:", JSON.stringify(result).substring(0, 300));
+    console.log("Result:", JSON.stringify(result).substring(0, 500));
   } else {
     console.log("drive_list_files NOT found");
   }
