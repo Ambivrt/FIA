@@ -2,7 +2,7 @@
 
 Detta dokument ger dig konkreta exempel på hur Forefronts röst låter — och inte låter. Studera dessa noga. De är viktigare än abstrakta regler.
 
------
+---
 
 ## Princip: Visa, berätta inte
 
@@ -20,7 +20,7 @@ Forefront-texter visar genom berättelser och konkreta scenarier. De berättar i
 
 **Varför det inte funkar:** Ingen scen, ingen människa, ingen spänning. “Förändrar hur vi arbetar” är en mening som kunde stå i vilken konsultfirmas content som helst. Listan i slutet signalerar ytlighet.
 
------
+---
 
 ## Princip: Ta ställning, inte temperatur
 
@@ -38,7 +38,7 @@ Forefront har åsikter. Vi säger saker som andra inte vågar eller inte har tä
 
 **Varför det inte funkar:** Säger ingenting. Ingen tes, inget mod, ingen anledning att läsa vidare. “Det är viktigt att ha en strategi” är den ultimata icke-insikten.
 
------
+---
 
 ## Princip: Respektera läsarens verklighet
 
@@ -56,7 +56,7 @@ Vår målgrupp lever under tidspress, begränsade mandat och hög förväntan. D
 
 **Varför det inte funkar:** Överdrivet säljigt. Oprecisa siffror utan källa. “Så enkelt” är respektlöst mot målgruppens verklighet. CTA:n är transaktionell.
 
------
+---
 
 ## Princip: Tekniskt djup utan jargong-mur
 
@@ -74,7 +74,7 @@ Vi kan teknik och vi visar det — men vi bygger inte murar av jargong. Komplexa
 
 **Varför det inte funkar:** Feature-lista utan mänsklig kontext. Säger vad verktyget har, inte vad det gör möjligt. Läsaren måste själv dra slutsatserna.
 
------
+---
 
 ## Princip: CTA genom insikt, inte push
 
@@ -92,24 +92,24 @@ Vi säljer aldrig explicit. Vi visar att vi förstår ämnet så väl att läsar
 
 **Varför det inte funkar:** Transaktionellt. Generiskt. Kunde vara vilken konsultfirma som helst. Ingen koppling till artikelns innehåll.
 
------
+---
 
 ## Ordval — undvik dessa
 
-|Undvik                       |Föredra                                        |
-|-----------------------------|-----------------------------------------------|
-|Synergier                    |(Beskriv den faktiska effekten)                |
-|Holistiskt                   |Samlat / sammanhållet / helheten               |
-|Best practice                |Beprövat / vad vi sett fungera                 |
-|Paradigmskifte               |(Visa förändringen istället för att namnge den)|
-|Leverera värde               |(Beskriv det konkreta värdet)                  |
-|Digitalisering (som buzzword)|(Beskriv vad som faktiskt förändras)           |
-|Kickstarta                   |Starta / sätta igång                           |
-|Game changer                 |(Visa varför det förändrar)                    |
-|Cutting edge                 |I framkant / i frontlinjen                     |
-|Sömlöst                      |(Beskriv upplevelsen konkret)                  |
-|Robust                       |Hållbar / stabil / pålitlig                    |
-|Skalbart                     |(Förklara hur det växer)                       |
+| Undvik                        | Föredra                                         |
+| ----------------------------- | ----------------------------------------------- |
+| Synergier                     | (Beskriv den faktiska effekten)                 |
+| Holistiskt                    | Samlat / sammanhållet / helheten                |
+| Best practice                 | Beprövat / vad vi sett fungera                  |
+| Paradigmskifte                | (Visa förändringen istället för att namnge den) |
+| Leverera värde                | (Beskriv det konkreta värdet)                   |
+| Digitalisering (som buzzword) | (Beskriv vad som faktiskt förändras)            |
+| Kickstarta                    | Starta / sätta igång                            |
+| Game changer                  | (Visa varför det förändrar)                     |
+| Cutting edge                  | I framkant / i frontlinjen                      |
+| Sömlöst                       | (Beskriv upplevelsen konkret)                   |
+| Robust                        | Hållbar / stabil / pålitlig                     |
+| Skalbart                      | (Förklara hur det växer)                        |
 
 ## Formatregler för LinkedIn
 

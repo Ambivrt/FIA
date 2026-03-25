@@ -11,6 +11,8 @@ import { writeMetric } from "../../supabase/metrics-writer";
 import { usdToSek } from "../../llm/pricing";
 import { ToolDefinition } from "../../llm/types";
 import { quickBrandScreen, isHighRiskContent } from "../brand/quick-screen";
+import { loadFile } from "../../context/context-manager";
+import path from "path";
 
 const CONTENT_RESPONSE_TOOL: ToolDefinition = {
   name: "content_response",
@@ -364,23 +366,26 @@ export class ContentAgent extends BaseAgent {
     await updateTaskStatus(this.supabase, taskId, "in_progress");
 
     try {
+      // Feature A: Enrich prompt with visual brand guidelines
+      const visualPath = path.join(this.config.knowledgeDir, "brand", "visual.md");
+      const visualGuidelines = loadFile(visualPath);
+
+      const enrichedPrompt = [
+        "Följ dessa visuella riktlinjer för Forefront:",
+        visualGuidelines,
+        "",
+        "--- BILDBEGÄRAN ---",
+        task.input,
+      ].join("\n");
+
       const response = await routeImageRequest(this.config, this.logger, {
-        prompt: task.input,
+        prompt: enrichedPrompt,
       });
 
-      const imageBase64 = response.imageData.toString("base64");
-
+      let imageBase64 = response.imageData.toString("base64");
       const costSek = usdToSek(response.costUsd, this.config.usdToSek);
 
-      await updateTaskStatus(this.supabase, taskId, "approved", {
-        content_json: {
-          image_base64: imageBase64,
-          mime_type: response.mimeType,
-        },
-        model_used: response.model,
-        cost_sek: costSek,
-      });
-
+      // Write cost metric (non-fatal)
       try {
         await writeMetric(this.supabase, {
           category: "cost",
@@ -404,14 +409,128 @@ export class ContentAgent extends BaseAgent {
         details_json: { task_id: taskId, cost_sek: costSek },
       });
 
+      // Feature B: Brand Agent image review loop
+      await updateTaskStatus(this.supabase, taskId, "awaiting_review", {
+        content_json: {
+          image_base64: imageBase64,
+          mime_type: response.mimeType,
+        },
+        model_used: response.model,
+        cost_sek: costSek,
+      });
+
+      const brandManifest = loadAgentManifest(this.config.knowledgeDir, "brand");
+      const brandAgent = new BrandAgent(this.config, this.logger, this.supabase, brandManifest);
+
+      let attempts = 0;
+      const maxAttempts = this.manifest.escalation_threshold;
+
+      while (attempts < maxAttempts) {
+        this.checkMaxIterations(taskId);
+
+        await task.onProgress?.(
+          "brand_reviewing",
+          `:mag: Brand Agent granskar bild${attempts > 0 ? ` (${attempts + 1}/${maxAttempts})` : ""}...`,
+          { task_id: taskId, attempt: attempts + 1 },
+        );
+
+        const review = await brandAgent.review({
+          taskId,
+          agentSlug: this.slug,
+          content: `Bildbegäran: ${task.input}`,
+          taskType: task.type,
+          imageBase64,
+          imageMimeType: response.mimeType,
+        });
+
+        if (review.decision === "approved") {
+          await task.onProgress?.("brand_approved", `:white_check_mark: Brand Agent godkände bilden`, {
+            task_id: taskId,
+          });
+          this.clearIterations(taskId);
+
+          return {
+            taskId,
+            output: `Image generated and approved (${response.mimeType})`,
+            model: response.model,
+            tokensIn: 0,
+            tokensOut: 0,
+            durationMs: response.durationMs,
+            status: "completed",
+          };
+        }
+
+        if (review.escalated) {
+          await task.onProgress?.("escalated", `:warning: Eskalerar bildgranskning till Orchestrator`, {
+            task_id: taskId,
+            feedback: review.feedback,
+          });
+          this.clearIterations(taskId);
+
+          return {
+            taskId,
+            output: "",
+            model: response.model,
+            tokensIn: 0,
+            tokensOut: 0,
+            durationMs: response.durationMs,
+            status: "escalated",
+          };
+        }
+
+        attempts++;
+        if (attempts >= maxAttempts) break;
+
+        // Re-generate image with brand feedback
+        await task.onProgress?.(
+          "brand_rejected",
+          `:arrows_counterclockwise: Brand Agent underkände bild (${attempts}/${maxAttempts}) — omgenererar...`,
+          { task_id: taskId, feedback: review.feedback },
+        );
+
+        this.logger.info(`Content Agent re-generating image (attempt ${attempts + 1}): ${task.title}`, {
+          agent: this.slug,
+          task_id: taskId,
+          action: "regenerate_image",
+        });
+
+        const retryPrompt = [
+          "Följ dessa visuella riktlinjer för Forefront:",
+          visualGuidelines,
+          "",
+          "--- ORIGINALBEGÄRAN ---",
+          task.input,
+          "",
+          "--- FEEDBACK FRÅN BRAND AGENT ---",
+          review.feedback,
+          "",
+          "Generera en ny bild som adresserar feedbacken ovan.",
+        ].join("\n");
+
+        const retryResponse = await routeImageRequest(this.config, this.logger, {
+          prompt: retryPrompt,
+        });
+
+        imageBase64 = retryResponse.imageData.toString("base64");
+
+        await updateTaskStatus(this.supabase, taskId, "awaiting_review", {
+          content_json: {
+            image_base64: imageBase64,
+            mime_type: retryResponse.mimeType,
+          },
+        });
+      }
+
+      // Exhausted attempts without approval
+      this.clearIterations(taskId);
       return {
         taskId,
-        output: `Image generated (${response.mimeType})`,
+        output: "",
         model: response.model,
         tokensIn: 0,
         tokensOut: 0,
         durationMs: response.durationMs,
-        status: "completed",
+        status: "escalated",
       };
     } catch (err) {
       const message = (err as Error).message;

@@ -118,6 +118,32 @@ export abstract class BaseAgent {
   }
 
   /**
+   * Call LLM with images (multimodal). Used by Brand Agent for visual review.
+   * Passes images through to the Claude API via the router.
+   */
+  protected async callLLMWithImages(
+    taskType: string,
+    userPrompt: string,
+    options: {
+      images: Array<{ data: string; mediaType: string }>;
+      tools?: ToolDefinition[];
+      toolChoice?: { type: "auto" | "any" | "tool"; name?: string };
+    },
+  ): Promise<LLMResponse> {
+    const systemPrompt = await this.getSystemPrompt();
+    const taskContext = await this.getTaskContext(taskType);
+    const fullPrompt = buildTaskPrompt(taskContext, userPrompt);
+
+    return routeRequest(this.config, this.logger, this.manifest.routing as AgentRouting, taskType, {
+      systemPrompt,
+      userPrompt: fullPrompt,
+      images: options.images,
+      tools: options.tools,
+      toolChoice: options.toolChoice,
+    });
+  }
+
+  /**
    * Call LLM with manifest-defined tools (GWS, etc.) and handle tool_use loop.
    * If the LLM requests a tool, executes it and feeds the result back for a final response.
    */

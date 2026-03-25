@@ -27,8 +27,12 @@ task_context:
     - context/few-shot/linkedin-bad.md
   newsletter:
     - context/templates/newsletter.md
+    - context/few-shot/newsletter-good.md
+    - context/few-shot/newsletter-bad.md
   case_study:
     - context/templates/case-study.md
+    - context/few-shot/case-study-good.md
+    - context/few-shot/case-study-bad.md
   whitepaper:
     - context/templates/whitepaper.md
 tools:

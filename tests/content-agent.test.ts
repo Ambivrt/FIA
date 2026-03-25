@@ -29,6 +29,7 @@ jest.mock("../src/slack/handlers", () => ({
 }));
 jest.mock("../src/context/context-manager", () => ({
   loadBrandContext: jest.fn().mockReturnValue("brand context"),
+  loadFile: jest.fn().mockReturnValue("# Visual guidelines mock"),
 }));
 jest.mock("../src/context/prompt-builder", () => ({
   buildSystemPrompt: jest.fn().mockReturnValue("system prompt"),
@@ -267,7 +268,7 @@ describe("ContentAgent", () => {
   });
 
   describe("image generation", () => {
-    it("generates image without brand review", async () => {
+    it("generates image and passes brand review", async () => {
       mockRouteImageRequest.mockResolvedValueOnce({
         imageData: Buffer.from("fake-image-data"),
         mimeType: "image/png",
@@ -276,12 +277,49 @@ describe("ContentAgent", () => {
         costUsd: 0.04,
       });
 
+      // Brand Agent reviews the image and approves
+      mockRouteRequest.mockResolvedValueOnce(makeBrandApproval());
+
       const agent = createContentAgent();
       const result = await agent.execute(makeTask({ type: "images", title: "Test image", input: "A futuristic city" }));
 
       expect(result.status).toBe("completed");
       expect(result.model).toBe("gemini-2.5-flash-image");
       expect(mockRouteImageRequest).toHaveBeenCalled();
+      // Verify brand review was called
+      expect(mockRouteRequest).toHaveBeenCalled();
+    });
+
+    it("re-generates image on brand rejection then approves", async () => {
+      // First image generation
+      mockRouteImageRequest
+        .mockResolvedValueOnce({
+          imageData: Buffer.from("bad-image"),
+          mimeType: "image/png",
+          model: "gemini-2.5-flash-image",
+          durationMs: 3000,
+          costUsd: 0.04,
+        })
+        // Second image generation (after rejection)
+        .mockResolvedValueOnce({
+          imageData: Buffer.from("good-image"),
+          mimeType: "image/png",
+          model: "gemini-2.5-flash-image",
+          durationMs: 3000,
+          costUsd: 0.04,
+        });
+
+      // First brand review: reject, second: approve
+      mockRouteRequest
+        .mockResolvedValueOnce(makeBrandRejection("Färgerna matchar inte varumärket."))
+        .mockResolvedValueOnce(makeBrandApproval());
+
+      const agent = createContentAgent();
+      const result = await agent.execute(makeTask({ type: "images", title: "Test image", input: "A futuristic city" }));
+
+      expect(result.status).toBe("completed");
+      expect(mockRouteImageRequest).toHaveBeenCalledTimes(2);
+      expect(mockRouteRequest).toHaveBeenCalledTimes(2);
     });
   });
 });

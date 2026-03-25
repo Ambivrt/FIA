@@ -42,6 +42,7 @@ export interface LLMRequest {
   timeoutMs?: number;
   tools?: ToolDefinition[];
   toolChoice?: { type: "auto" | "any" | "tool"; name?: string };
+  images?: Array<{ data: string; mediaType: string }>;
 }
 
 export interface LLMResponse {
