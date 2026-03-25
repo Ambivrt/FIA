@@ -25,11 +25,27 @@ export async function callClaude(config: AppConfig, model: string, request: LLMR
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
+      // Build user message content (multimodal when images are present)
+      const userContent: Anthropic.ContentBlockParam[] = [];
+      if (request.images && request.images.length > 0) {
+        for (const img of request.images) {
+          userContent.push({
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: img.mediaType as "image/png" | "image/jpeg" | "image/gif" | "image/webp",
+              data: img.data,
+            },
+          });
+        }
+      }
+      userContent.push({ type: "text", text: request.userPrompt });
+
       const createParams: Anthropic.MessageCreateParamsNonStreaming = {
         model,
         max_tokens: request.maxTokens ?? 4096,
         system: request.systemPrompt ?? "",
-        messages: [{ role: "user", content: request.userPrompt }],
+        messages: [{ role: "user", content: userContent }],
         temperature: request.temperature ?? 0.7,
       };
 

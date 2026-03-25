@@ -36,6 +36,8 @@ export interface ReviewRequest {
   content: string;
   taskType: string;
   correlationId?: string;
+  imageBase64?: string;
+  imageMimeType?: string;
 }
 
 export interface ReviewResult {
@@ -67,22 +69,52 @@ export class BrandAgent extends BaseAgent {
   async review(request: ReviewRequest): Promise<ReviewResult> {
     this.cleanupStaleEntries();
 
-    const prompt = [
-      "Granska följande innehåll för varumärkesöverensstämmelse.",
-      "Kontrollera: tonalitet, budskapshierarki, visuella riktlinjer och Forefronts varumärkesvärden.",
-      "Använd verktyget brand_review_decision för att lämna ditt beslut.",
-      "",
-      `Innehållstyp: ${request.taskType}`,
-      `Källagent: ${request.agentSlug}`,
-      "",
-      "--- INNEHÅLL ATT GRANSKA ---",
-      request.content,
-    ].join("\n");
+    let response;
 
-    const response = await this.callLLM("default", prompt, {
-      tools: [BRAND_REVIEW_TOOL],
-      toolChoice: { type: "tool", name: "brand_review_decision" },
-    });
+    if (request.imageBase64) {
+      // Visual brand review — multimodal (image + text → Claude Vision)
+      const prompt = [
+        "Granska följande bild för visuell varumärkesöverensstämmelse med Forefronts visuella identitet.",
+        "",
+        "## Granska mot dessa kriterier:",
+        "1. **Färgpalett** — Harmonierar med Forefronts organiska färger (#7D5365, #42504E, #555977, #756256, #7E7C83) eller gradient (#FF6B0B → #FFB7F8 → #79F2FB)? Inga klashande eller off-brand färger?",
+        "2. **Bildspråk** — Autentisk känsla (inte stockfoto)? Människor i teknikkontext om relevant?",
+        "3. **Komposition** — Ljus, luftig komposition? Organiska former som komplement till tech?",
+        "4. **Varumärkespassning** — Speglar Forefronts karaktär: Modiga, Hängivna, Lustfyllda?",
+        "5. **Typografi** — Om text förekommer i bilden: följer Manrope-standarden?",
+        "",
+        `Bildbegäran: ${request.content}`,
+        `Innehållstyp: ${request.taskType}`,
+        `Källagent: ${request.agentSlug}`,
+        "",
+        "Använd verktyget brand_review_decision för att lämna ditt beslut.",
+        "Vid avslag, var specifik om vilka visuella element som behöver ändras.",
+      ].join("\n");
+
+      response = await this.callLLMWithImages("default", prompt, {
+        images: [{ data: request.imageBase64, mediaType: request.imageMimeType || "image/png" }],
+        tools: [BRAND_REVIEW_TOOL],
+        toolChoice: { type: "tool", name: "brand_review_decision" },
+      });
+    } else {
+      // Text brand review (unchanged)
+      const prompt = [
+        "Granska följande innehåll för varumärkesöverensstämmelse.",
+        "Kontrollera: tonalitet, budskapshierarki, visuella riktlinjer och Forefronts varumärkesvärden.",
+        "Använd verktyget brand_review_decision för att lämna ditt beslut.",
+        "",
+        `Innehållstyp: ${request.taskType}`,
+        `Källagent: ${request.agentSlug}`,
+        "",
+        "--- INNEHÅLL ATT GRANSKA ---",
+        request.content,
+      ].join("\n");
+
+      response = await this.callLLM("default", prompt, {
+        tools: [BRAND_REVIEW_TOOL],
+        toolChoice: { type: "tool", name: "brand_review_decision" },
+      });
+    }
 
     let decision: ReviewResult["decision"];
     let feedback: string;
