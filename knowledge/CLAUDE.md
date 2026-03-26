@@ -12,78 +12,128 @@ knowledge/
 │   ├── visual.md            # Visuell identitet
 │   └── messages.md          # Budskapshierarki nivå 1–3
 │
-└── agents/<slug>/           # Per agent (7 st)
+├── skills/                  # Delade skills (shared:)
+│   ├── forefront-identity/  # Alla agenter
+│   ├── brand-compliance/    # Content, Brand, Campaign, Lead, Strategy
+│   ├── swedish-tone/        # Content, Campaign
+│   ├── data-driven-reasoning/ # Strategy, Campaign, SEO, Analytics, Intelligence
+│   ├── escalation-protocol/ # Alla agenter
+│   └── gdpr-compliance/     # Lead, Analytics
+│
+└── agents/<slug>/           # Per agent (8 st)
     ├── agent.yaml           # Manifest (KRITISK – styr allt)
-    ├── SKILL.md             # Roll, mål, guardrails
+    ├── SKILL.md             # Legacy – ersätts av skills/-fältet
+    ├── skills/              # Agentspecifika skills (agent:)
+    │   └── <skill>/SKILL.md
     ├── context/             # Mallar, few-shot, riktlinjer (read-only)
     │   ├── templates/       # Strukturerade mallar per uppgiftstyp
     │   └── few-shot/        # Bra/dåliga exempel
     └── memory/              # Ackumulerat minne (skrivbart av agenten)
 ```
 
-## agent.yaml – manifestformat
+## agent.yaml – manifestformat (v1.1.0)
 
 Manifestet är centralt. Det styr modellval, kontextladdning, verktyg och autonomi.
 
 ```yaml
 name: Content Agent
 slug: content
-version: 1.0.0
+version: 1.1.0
 
-# Modellval per uppgiftstyp → styr routern
+skills:                       # Modulärt skill-system
+  - shared:forefront-identity # Prefix shared: eller agent:
+  - agent:content-production
+
 routing:
-  default: claude-opus
-  metadata: claude-sonnet
-  images: nano-banana-2
+  default: claude-opus        # Enkel sträng (legacy)
+  deep_analysis:              # Objekt med fallback
+    primary: claude-opus
+    fallback: claude-sonnet
 
-# Alltid i systemprompt (ordning spelar roll)
-system_context:
-  - SKILL.md
+system_context:               # Alltid i systemprompt (ordning spelar roll)
   - context/tone-examples.md
 
-# Laddas on-demand baserat på uppgiftstyp
-task_context:
+task_context:                 # On-demand baserat på uppgiftstyp
   blog_post:
     - context/templates/blog-post.md
     - context/few-shot/blog-good.md
 
-# MCP-verktyg (minsta möjliga rättighet)
-tools:
+tools:                        # MCP-verktyg (minsta möjliga rättighet)
   - gws:docs
 
-# Guardrails
-autonomy: autonomous # autonomous | semi-autonomous | manual
-escalation_threshold: 3 # Avslag innan eskalering
-sample_review_rate: 0.2 # Stickprovsgranskning av Orchestrator
+autonomy: autonomous          # autonomous | semi-autonomous | manual
+escalation_threshold: 3       # Avslag innan eskalering
+sample_review_rate: 0.2       # Stickprovsgranskning
 
-# Skrivbara filer (allt annat read-only)
-writable:
+writable:                     # Enbart listade filer kan skrivas av agenten
   - memory/learnings.json
+
+triggers:                     # Deklarativa triggers (seedas till Supabase)
+  - name: example_trigger
+    on: task_completed
+    condition: { task_type: [blog_post] }
+    action: { type: create_task, target_agent: content, task_type: seo_optimization }
+    requires_approval: true
+    enabled: true
 ```
 
 ### Nyckelregler
 
-- **routing** – Aldrig hårdkodas i TypeScript. Routern läser detta fält.
+- **routing** – Aldrig hårdkodas i TypeScript. Routern läser detta fält. Stöder `{ primary, fallback }`.
+- **skills** – Prefix `shared:` för delade, `agent:` för agentspecifika. Resolvas från `knowledge/skills/` resp `knowledge/agents/<slug>/skills/`.
 - **system_context** – Hålls kompakt. Prompt-cachas.
 - **task_context** – Laddas enbart vid matchande uppgiftstyp (sparar tokens).
 - **writable** – Enbart listade filer kan skrivas av agenten.
 - **tools** – `gws:<tjänst>` refererar till specifika Google Workspace-tjänster.
+- **triggers** – Seedas till `config_json.triggers` i Supabase vid startup. Dashboarden äger efter seed.
 
-## Agentöversikt
+## Agenter
 
-| Slug      | Routing default | Speciellt                                                          |
-| --------- | --------------- | ------------------------------------------------------------------ |
-| strategy  | claude-opus     | `sample_review_rate: 1.0` (alla planer kräver godkännande)         |
-| content   | claude-opus     | Few-shot (bra/dåligt), metadata via Sonnet, bilder via Nano Banana |
-| campaign  | claude-opus     | `budget_limit_sek: 10000` per kampanj                              |
-| seo       | perplexity      | Keyword-rankings ackumuleras i memory                              |
-| lead      | claude-sonnet   | `score_threshold_mql: 75`                                          |
-| analytics | claude-sonnet   | Skriver KPI-data till Supabase                                     |
-| brand     | claude-opus     | `has_veto: true`, använder alltid Opus                             |
+Åtta agenter under `knowledge/agents/<slug>/`.
+
+| Slug         | Namn               | Routing default | Autonomi        | Speciellt                                             |
+| ------------ | ------------------ | --------------- | --------------- | ----------------------------------------------------- |
+| strategy     | Strategy Agent     | claude-opus     | semi-autonomous | `sample_review_rate: 1.0` (alla planer godkänns)     |
+| content      | Content Agent      | claude-opus     | autonomous      | Few-shot, metadata via Sonnet, bilder via Nano Banana |
+| campaign     | Campaign Agent     | claude-opus     | autonomous      | `budget_limit_sek: 10000` per kampanj                 |
+| seo          | SEO Agent          | google-search   | autonomous      | Keyword-rankings i memory                             |
+| lead         | Lead Agent         | claude-sonnet   | autonomous      | `score_threshold_mql: 75`                             |
+| analytics    | Analytics Agent    | claude-sonnet   | autonomous      | Skriver KPI-data till Supabase                        |
+| brand        | Brand Agent        | claude-opus     | autonomous      | `has_veto: true`, granskar allt content               |
+| intelligence | Intelligence Agent | claude-sonnet   | autonomous      | Multi-steg pipeline, self-eval, bevakningsdomäner     |
+
+## Agentflöde
+
+```
+Trigger (cron/Slack/agent/CLI) → Gateway → agent-loader → router → LLM-anrop
+  → Brand Agent granskar (vid publicering)
+  → Godkänt → Publicera via MCP
+  → Underkänt → Tillbaka med feedback (3x → eskalera till Orchestrator)
+```
+
+### Intelligence Agent pipeline
+
+1. **Gather** – Söker bevakningsdomäner via Serper. Dedup mot `source-history.json` (72h fönster).
+2. **Signal scoring** – Sonnet bedömer fynd på 4 dimensioner via `signal_scoring` tool_use.
+3. **Deep analysis** – Opus djupanalyserar fynd med score ≥ 0.7 via `deep_analysis` tool_use.
+4. **Rapid response** – `suggested_action: rapid_response` → high-priority task åt Content Agent.
+5. **Briefing** – Opus genererar strukturerad rapport med toppfynd och statistik.
+
+### Aktiva triggers (7 st)
+
+| Agent        | Trigger                        | Event          | Auto? |
+| ------------ | ------------------------------ | -------------- | ----- |
+| Intelligence | rapid_response_to_content      | task_completed | Ja    |
+| Intelligence | strategy_input_to_strategy     | task_completed | Nej   |
+| Intelligence | escalate_critical              | task_completed | Ja    |
+| Strategy     | brief_to_content               | task_activated | Ja    |
+| Strategy     | brief_to_campaign              | task_activated | Nej   |
+| Analytics    | anomaly_escalation             | task_completed | Ja    |
+| SEO          | seo_recommendations_to_content | task_approved  | Nej   |
 
 ## Varumärkeskontext (brand/)
 
-Laddas av alla innehållsagenter via prompt-builder. Filer i `brand/` ändras sällan – behandla som referensmaterial.
+Laddas av alla innehållsagenter via prompt-builder. Filer i `brand/` ändras sällan.
 
 - **platform.md** – Varför Forefront finns, löfte, övertygelser
 - **tonality.md** – Tonregler, exempel på bra/dålig ton
