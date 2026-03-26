@@ -26,21 +26,14 @@ const cache = new Map<string, CacheEntry>();
  * Resolve a Slack user ID to a FIA profile.
  * Returns null if the Slack user is not mapped to any profile.
  */
-export async function resolveSlackUser(
-  supabase: SupabaseClient,
-  slackUserId: string,
-): Promise<SlackProfile | null> {
+export async function resolveSlackUser(supabase: SupabaseClient, slackUserId: string): Promise<SlackProfile | null> {
   const now = Date.now();
   const cached = cache.get(slackUserId);
   if (cached && cached.expiresAt > now) {
     return cached.profile;
   }
 
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, name, role")
-    .eq("slack_user_id", slackUserId)
-    .single();
+  const { data } = await supabase.from("profiles").select("id, name, role").eq("slack_user_id", slackUserId).single();
 
   const profile: SlackProfile | null = data ? { id: data.id, name: data.name, role: data.role as UserRole } : null;
 

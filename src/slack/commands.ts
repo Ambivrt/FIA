@@ -125,9 +125,10 @@ export function registerCommands(
             const folderMap = await loadFolderMap(supabase);
             const allPaths = getAllFolderPaths();
             const configured = Object.keys(folderMap).length;
-            statusText += configured > 0
-              ? `\n:file_folder: Google Drive: *${configured}/${allPaths.length}* mappar konfigurerade`
-              : "\n:warning: Google Drive: _Ej konfigurerad_ (`/fia drive setup`)";
+            statusText +=
+              configured > 0
+                ? `\n:file_folder: Google Drive: *${configured}/${allPaths.length}* mappar konfigurerade`
+                : "\n:warning: Google Drive: _Ej konfigurerad_ (`/fia drive setup`)";
           } catch {
             statusText += "\n:warning: Google Drive: _Kunde inte hämta status_";
           }
@@ -946,9 +947,7 @@ export function registerCommands(
               .join(", ");
 
             const lines = [
-              dryRun
-                ? `:eyes: *Drive setup dry-run:* ${summary}`
-                : `:white_check_mark: *Drive setup klar:* ${summary}`,
+              dryRun ? `:eyes: *Drive setup dry-run:* ${summary}` : `:white_check_mark: *Drive setup klar:* ${summary}`,
             ];
 
             if (result.created.length > 0) {
@@ -1039,7 +1038,8 @@ export function registerCommands(
           );
           const contentCount = contentResult.count ?? 0;
           const totalApprovals = approvalResult.data?.length ?? 0;
-          const approvedCount = approvalResult.data?.filter((a: { decision: string }) => a.decision === "approved").length ?? 0;
+          const approvedCount =
+            approvalResult.data?.filter((a: { decision: string }) => a.decision === "approved").length ?? 0;
           const approvalRate = totalApprovals > 0 ? Math.round((approvedCount / totalApprovals) * 100) : 0;
           const pendingCount = pendingResult.count ?? 0;
 

@@ -64,9 +64,7 @@ export function registerKnowledgeCommand(program: Command): void {
         ]);
       }
 
-      process.stdout.write(
-        GRADIENT.orange.bold(`Knowledge Base`) + EARTH.stone(` (${items.length} items)`) + "\n\n",
-      );
+      process.stdout.write(GRADIENT.orange.bold(`Knowledge Base`) + EARTH.stone(` (${items.length} items)`) + "\n\n");
       process.stdout.write(table.toString() + "\n");
     });
 

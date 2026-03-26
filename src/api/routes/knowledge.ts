@@ -17,7 +17,9 @@ export function knowledgeRoutes(supabase: SupabaseClient, config: AppConfig): Ro
 
       let query = supabase
         .from("agent_knowledge")
-        .select("id, agent_slug, category, task_type, slug, title, description, enabled, source, version, sort_order, created_at, updated_at")
+        .select(
+          "id, agent_slug, category, task_type, slug, title, description, enabled, source, version, sort_order, created_at, updated_at",
+        )
         .order("agent_slug")
         .order("sort_order");
 
