@@ -1232,13 +1232,23 @@ export class IntelligenceAgent extends BaseAgent {
 
       const findings = await this.gatherResearchFindings(task.input, task.type, depth, existingProfile);
 
-      this.logger.info(`Research gathered ${findings.length} findings`, {
-        agent: this.slug,
-        action: "research_gathered",
-        task_id: taskId,
-        findings_count: findings.length,
-        depth,
-      });
+      if (findings.length === 0) {
+        this.logger.warn("Research gathering returned 0 findings – check SERPER_API_KEY and network", {
+          agent: this.slug,
+          action: "research_no_findings",
+          task_id: taskId,
+          task_type: task.type,
+          topic: task.input,
+        });
+      } else {
+        this.logger.info(`Research gathered ${findings.length} findings`, {
+          agent: this.slug,
+          action: "research_gathered",
+          task_id: taskId,
+          findings_count: findings.length,
+          depth,
+        });
+      }
 
       // Step 4: Checkpoint for deep research
       if (depth === "deep") {
