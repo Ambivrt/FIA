@@ -46,6 +46,8 @@ task_context:
     - context/templates/ads-strategy.md
   budget_allocation:
     - context/templates/budget-allocation.md
+  strategic_research:
+    - context/templates/strategic-research.md
   competitive_response:
     - context/templates/competitive-response.md
   audience_strategy:
