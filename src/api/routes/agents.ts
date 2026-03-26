@@ -158,82 +158,92 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch, co
   });
 
   // PATCH /api/agents/:slug/routing – admin only
-  router.patch("/:slug/routing", requirePermission("agent_routing_tools"), validateBody(routingSchema), async (req, res) => {
-    try {
-      const { slug } = req.params;
-      const { routing } = req.body;
+  router.patch(
+    "/:slug/routing",
+    requirePermission("agent_routing_tools"),
+    validateBody(routingSchema),
+    async (req, res) => {
+      try {
+        const { slug } = req.params;
+        const { routing } = req.body;
 
-      const { data: agent, error: fetchErr } = await supabase
-        .from("agents")
-        .select("id, config_json")
-        .eq("slug", slug)
-        .single();
+        const { data: agent, error: fetchErr } = await supabase
+          .from("agents")
+          .select("id, config_json")
+          .eq("slug", slug)
+          .single();
 
-      if (fetchErr || !agent) {
-        res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
-        return;
+        if (fetchErr || !agent) {
+          res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
+          return;
+        }
+
+        const current = (agent.config_json as Record<string, unknown>) ?? {};
+        const adminOverrides = new Set((current._admin_overrides as string[]) ?? []);
+        adminOverrides.add("routing");
+        const merged = { ...current, routing, _admin_overrides: [...adminOverrides] };
+
+        const { error } = await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
+
+        if (error) throw error;
+
+        await logActivity(supabase, {
+          agent_id: agent.id,
+          user_id: getDbUserId(req),
+          action: "routing_updated",
+          details_json: { slug, routing },
+        });
+
+        res.json({ data: { slug, routing } });
+      } catch (err) {
+        res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
       }
-
-      const current = (agent.config_json as Record<string, unknown>) ?? {};
-      const adminOverrides = new Set((current._admin_overrides as string[]) ?? []);
-      adminOverrides.add("routing");
-      const merged = { ...current, routing, _admin_overrides: [...adminOverrides] };
-
-      const { error } = await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
-
-      if (error) throw error;
-
-      await logActivity(supabase, {
-        agent_id: agent.id,
-        user_id: getDbUserId(req),
-        action: "routing_updated",
-        details_json: { slug, routing },
-      });
-
-      res.json({ data: { slug, routing } });
-    } catch (err) {
-      res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
-    }
-  });
+    },
+  );
 
   // PATCH /api/agents/:slug/tools – admin only
-  router.patch("/:slug/tools", requirePermission("agent_routing_tools"), validateBody(toolsSchema), async (req, res) => {
-    try {
-      const { slug } = req.params;
-      const { tools } = req.body;
+  router.patch(
+    "/:slug/tools",
+    requirePermission("agent_routing_tools"),
+    validateBody(toolsSchema),
+    async (req, res) => {
+      try {
+        const { slug } = req.params;
+        const { tools } = req.body;
 
-      const { data: agent, error: fetchErr } = await supabase
-        .from("agents")
-        .select("id, config_json")
-        .eq("slug", slug)
-        .single();
+        const { data: agent, error: fetchErr } = await supabase
+          .from("agents")
+          .select("id, config_json")
+          .eq("slug", slug)
+          .single();
 
-      if (fetchErr || !agent) {
-        res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
-        return;
+        if (fetchErr || !agent) {
+          res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
+          return;
+        }
+
+        const current = (agent.config_json as Record<string, unknown>) ?? {};
+        const adminOverrides = new Set((current._admin_overrides as string[]) ?? []);
+        adminOverrides.add("tools");
+        const merged = { ...current, tools, _admin_overrides: [...adminOverrides] };
+
+        const { error } = await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
+
+        if (error) throw error;
+
+        await logActivity(supabase, {
+          agent_id: agent.id,
+          user_id: getDbUserId(req),
+          action: "tools_updated",
+          details_json: { slug, tools },
+        });
+
+        res.json({ data: { slug, tools } });
+      } catch (err) {
+        res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
       }
-
-      const current = (agent.config_json as Record<string, unknown>) ?? {};
-      const adminOverrides = new Set((current._admin_overrides as string[]) ?? []);
-      adminOverrides.add("tools");
-      const merged = { ...current, tools, _admin_overrides: [...adminOverrides] };
-
-      const { error } = await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
-
-      if (error) throw error;
-
-      await logActivity(supabase, {
-        agent_id: agent.id,
-        user_id: getDbUserId(req),
-        action: "tools_updated",
-        details_json: { slug, tools },
-      });
-
-      res.json({ data: { slug, tools } });
-    } catch (err) {
-      res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
-    }
-  });
+    },
+  );
 
   // GET /api/agents/:slug/triggers – all authenticated users
   router.get("/:slug/triggers", async (req, res) => {
@@ -400,108 +410,113 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch, co
   );
 
   // POST /api/agents/:slug/triggers/reseed – admin only
-  router.post("/:slug/triggers/reseed", requirePermission("knowledge_reseed"), validateBody(reseedSchema), async (req, res) => {
-    try {
-      const slug = req.params.slug as string;
-      const confirm = req.body?.confirm === true;
+  router.post(
+    "/:slug/triggers/reseed",
+    requirePermission("knowledge_reseed"),
+    validateBody(reseedSchema),
+    async (req, res) => {
+      try {
+        const slug = req.params.slug as string;
+        const confirm = req.body?.confirm === true;
 
-      const { data: agent, error: fetchErr } = await supabase
-        .from("agents")
-        .select("id, config_json")
-        .eq("slug", slug)
-        .single();
+        const { data: agent, error: fetchErr } = await supabase
+          .from("agents")
+          .select("id, config_json")
+          .eq("slug", slug)
+          .single();
 
-      if (fetchErr || !agent) {
-        res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
-        return;
-      }
-
-      const current = (agent.config_json as Record<string, unknown>) ?? {};
-      const currentTriggers = (current.triggers as TriggerConfig[]) ?? [];
-
-      // Load YAML triggers
-      let yamlTriggers: TriggerConfig[] = [];
-      if (config) {
-        try {
-          const manifest = loadAgentManifest(config.knowledgeDir, slug);
-          yamlTriggers = manifest.triggers ?? [];
-        } catch {
-          // No manifest or invalid
+        if (fetchErr || !agent) {
+          res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
+          return;
         }
-      }
 
-      // Compute diff
-      const changes: Array<{ trigger: string; diff: string }> = [];
-      for (const yt of yamlTriggers) {
-        const ct = currentTriggers.find((t) => t.name === yt.name);
-        if (!ct) {
-          changes.push({ trigger: yt.name, diff: "Ny i YAML (läggs till)" });
-        } else if (JSON.stringify(ct) !== JSON.stringify(yt)) {
-          const diffs: string[] = [];
-          if (ct.enabled !== yt.enabled) diffs.push(`enabled: ${ct.enabled} → ${yt.enabled}`);
-          if (ct.requires_approval !== yt.requires_approval)
-            diffs.push(`requires_approval: ${ct.requires_approval} → ${yt.requires_approval}`);
-          if (JSON.stringify(ct.condition) !== JSON.stringify(yt.condition)) diffs.push("condition changed");
-          if (JSON.stringify(ct.action) !== JSON.stringify(yt.action)) diffs.push("action changed");
-          changes.push({ trigger: yt.name, diff: diffs.join(", ") || "minor changes" });
-        }
-      }
-      for (const ct of currentTriggers) {
-        if (!yamlTriggers.find((yt) => yt.name === ct.name)) {
-          changes.push({ trigger: ct.name, diff: "Finns bara i dashboard (tas bort)" });
-        }
-      }
+        const current = (agent.config_json as Record<string, unknown>) ?? {};
+        const currentTriggers = (current.triggers as TriggerConfig[]) ?? [];
 
-      if (!confirm) {
-        res.json({
-          dry_run: true,
-          agents: [
-            {
-              slug,
-              current_trigger_count: currentTriggers.length,
-              yaml_trigger_count: yamlTriggers.length,
-              changes,
-            },
-          ],
+        // Load YAML triggers
+        let yamlTriggers: TriggerConfig[] = [];
+        if (config) {
+          try {
+            const manifest = loadAgentManifest(config.knowledgeDir, slug);
+            yamlTriggers = manifest.triggers ?? [];
+          } catch {
+            // No manifest or invalid
+          }
+        }
+
+        // Compute diff
+        const changes: Array<{ trigger: string; diff: string }> = [];
+        for (const yt of yamlTriggers) {
+          const ct = currentTriggers.find((t) => t.name === yt.name);
+          if (!ct) {
+            changes.push({ trigger: yt.name, diff: "Ny i YAML (läggs till)" });
+          } else if (JSON.stringify(ct) !== JSON.stringify(yt)) {
+            const diffs: string[] = [];
+            if (ct.enabled !== yt.enabled) diffs.push(`enabled: ${ct.enabled} → ${yt.enabled}`);
+            if (ct.requires_approval !== yt.requires_approval)
+              diffs.push(`requires_approval: ${ct.requires_approval} → ${yt.requires_approval}`);
+            if (JSON.stringify(ct.condition) !== JSON.stringify(yt.condition)) diffs.push("condition changed");
+            if (JSON.stringify(ct.action) !== JSON.stringify(yt.action)) diffs.push("action changed");
+            changes.push({ trigger: yt.name, diff: diffs.join(", ") || "minor changes" });
+          }
+        }
+        for (const ct of currentTriggers) {
+          if (!yamlTriggers.find((yt) => yt.name === ct.name)) {
+            changes.push({ trigger: ct.name, diff: "Finns bara i dashboard (tas bort)" });
+          }
+        }
+
+        if (!confirm) {
+          res.json({
+            dry_run: true,
+            agents: [
+              {
+                slug,
+                current_trigger_count: currentTriggers.length,
+                yaml_trigger_count: yamlTriggers.length,
+                changes,
+              },
+            ],
+          });
+          return;
+        }
+
+        // Perform reseed
+        const previousTriggers = currentTriggers;
+        const adminOverrides = new Set((current._admin_overrides as string[]) ?? []);
+        adminOverrides.delete("triggers");
+        const merged = {
+          ...current,
+          triggers: yamlTriggers,
+          _yaml_triggers: yamlTriggers,
+          _admin_overrides: [...adminOverrides],
+        };
+
+        const { error } = await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
+        if (error) throw error;
+
+        await logActivity(supabase, {
+          agent_id: agent.id,
+          user_id: getDbUserId(req),
+          action: "trigger_config_reseeded",
+          details_json: {
+            scope: "single",
+            agents_reseeded: [slug],
+            previous_triggers: previousTriggers,
+          },
         });
-        return;
+
+        res.json({
+          dry_run: false,
+          reseeded: [slug],
+          unchanged: [],
+          message: `Agent '${slug}' reseedad från agent.yaml.`,
+        });
+      } catch (err) {
+        res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
       }
-
-      // Perform reseed
-      const previousTriggers = currentTriggers;
-      const adminOverrides = new Set((current._admin_overrides as string[]) ?? []);
-      adminOverrides.delete("triggers");
-      const merged = {
-        ...current,
-        triggers: yamlTriggers,
-        _yaml_triggers: yamlTriggers,
-        _admin_overrides: [...adminOverrides],
-      };
-
-      const { error } = await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
-      if (error) throw error;
-
-      await logActivity(supabase, {
-        agent_id: agent.id,
-        user_id: getDbUserId(req),
-        action: "trigger_config_reseeded",
-        details_json: {
-          scope: "single",
-          agents_reseeded: [slug],
-          previous_triggers: previousTriggers,
-        },
-      });
-
-      res.json({
-        dry_run: false,
-        reseeded: [slug],
-        unchanged: [],
-        message: `Agent '${slug}' reseedad från agent.yaml.`,
-      });
-    } catch (err) {
-      res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
-    }
-  });
+    },
+  );
 
   return router;
 }
