@@ -21,14 +21,16 @@ export class CampaignAgent extends BaseAgent {
       if (spent >= this.manifest.budget_limit_sek) {
         await this.pauseWithBudgetWarning(spent);
         const agentRow = await this.getAgentId();
-        const { createTask } = await import("../../supabase/task-writer");
-        const taskId = await createTask(this.supabase, {
-          agent_id: agentRow,
-          type: task.type,
-          title: task.title,
-          priority: task.priority ?? "normal",
-        });
-        const { updateTaskStatus } = await import("../../supabase/task-writer");
+        const { createTask, updateTaskStatus } = await import("../../supabase/task-writer");
+        const taskId = task.existingTaskId
+          ? task.existingTaskId
+          : await createTask(this.supabase, {
+              agent_id: agentRow,
+              type: task.type,
+              title: task.title,
+              priority: task.priority ?? "normal",
+              source: "gateway",
+            });
         await updateTaskStatus(this.supabase, taskId, "error", {
           content_json: { error: `Budget exceeded: ${spent.toFixed(2)} / ${this.manifest.budget_limit_sek} SEK` },
         });

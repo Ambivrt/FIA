@@ -3,7 +3,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { apiGet } from "../lib/api-client";
-import { subscribeToActivityLog, unsubscribe } from "../lib/realtime";
+import { subscribeToActivityLog, subscribeToTaskChanges, unsubscribe } from "../lib/realtime";
 import { statusBadge, relativeTime, progressBar, EARTH, GRADIENT, agentLabel } from "../lib/formatters";
 import type {
   AgentResponse,
@@ -14,10 +14,34 @@ import type {
   PendingTrigger,
 } from "../types";
 import type { DisplayStatusResult } from "../types";
+import type { TaskChange } from "../lib/realtime";
 
 // Buffra senaste aktivitetshändelserna
 const recentActivity: ActivityLogEntry[] = [];
 const MAX_RECENT = 5;
+
+// Live task status cache (updated via Supabase Realtime)
+const taskStatusCache = new Map<string, { status: string; sub_status: string | null }>();
+
+// Map sub_status to approximate progress ratio
+const SUB_STATUS_PROGRESS: Record<string, number> = {
+  researching: 0.2,
+  gathering: 0.2,
+  analyzing: 0.4,
+  compiling: 0.4,
+  drafting: 0.6,
+  generating: 0.3,
+  screening: 0.5,
+  revising: 0.6,
+  brand_reviewing: 0.7,
+  text_review: 0.7,
+  visual_review: 0.7,
+  aligning: 0.8,
+  awaiting_input: 0.5,
+};
+
+// Flag to trigger immediate re-render on realtime events
+let needsRerender = false;
 
 export function registerWatchCommand(program: Command): void {
   program
@@ -30,6 +54,16 @@ export function registerWatchCommand(program: Command): void {
       subscribeToActivityLog((entry: ActivityLogEntry) => {
         recentActivity.unshift(entry);
         if (recentActivity.length > MAX_RECENT) recentActivity.pop();
+        needsRerender = true;
+      });
+
+      // Prenumerera på task-statusändringar för snabbare uppdatering
+      subscribeToTaskChanges((task: TaskChange) => {
+        taskStatusCache.set(task.id, {
+          status: task.status,
+          sub_status: task.sub_status,
+        });
+        needsRerender = true;
       });
 
       const cleanup = (): void => {
@@ -53,7 +87,16 @@ export function registerWatchCommand(program: Command): void {
         } catch {
           // Ignorera tillfälliga fel
         }
-        await sleep(2000);
+
+        // Wait up to 3s, but re-render immediately on realtime events
+        const deadline = Date.now() + 3000;
+        while (Date.now() < deadline && running) {
+          if (needsRerender) {
+            needsRerender = false;
+            break;
+          }
+          await sleep(200);
+        }
       }
     });
 }
@@ -72,6 +115,15 @@ async function render(): Promise<void> {
   const killSwitch = killRes.data;
   const runningTasks = tasksRes.data;
   const pendingTriggerCount = (triggersRes as { data: PendingTrigger[] }).data.length;
+
+  // Merge realtime cache into polled tasks for fresher sub_status
+  for (const task of runningTasks) {
+    const cached = taskStatusCache.get(task.id);
+    if (cached) {
+      task.status = cached.status;
+      task.sub_status = cached.sub_status;
+    }
+  }
 
   const now = new Date().toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   const runningCount = runningTasks.filter((t) => t.status === "in_progress").length;
@@ -117,7 +169,11 @@ async function render(): Promise<void> {
 
     let taskInfo = chalk.dim("idle");
     if (agentTask) {
-      taskInfo = progressBar(0.5) + " " + agentTask.type;
+      const subStatus = agentTask.sub_status;
+      const progressRatio = subStatus ? (SUB_STATUS_PROGRESS[subStatus] ?? 0.5) : 0.5;
+      const bar = progressBar(progressRatio);
+      const subLabel = subStatus ? chalk.dim(` [${subStatus}]`) : "";
+      taskInfo = bar + " " + agentTask.type + subLabel;
     } else if (ds.status === "paused") {
       taskInfo = chalk.dim("\u2014");
     }

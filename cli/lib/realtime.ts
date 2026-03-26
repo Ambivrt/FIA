@@ -1,20 +1,27 @@
 // Supabase Realtime-prenumeration för tail/watch-kommandon
 
-import { createClient, RealtimeChannel } from "@supabase/supabase-js";
+import { createClient, RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { CLI_CONFIG, validateRealtimeConfig } from "./config";
 import type { ActivityLogEntry } from "../types";
 
-let channel: RealtimeChannel | null = null;
+let supabaseInstance: SupabaseClient | null = null;
+let channels: RealtimeChannel[] = [];
+
+function getSupabase(): SupabaseClient {
+  if (!supabaseInstance) {
+    validateRealtimeConfig();
+    supabaseInstance = createClient(CLI_CONFIG.supabaseUrl, CLI_CONFIG.supabaseServiceRoleKey);
+  }
+  return supabaseInstance;
+}
 
 export function subscribeToActivityLog(
   callback: (entry: ActivityLogEntry) => void,
   filter?: { agent_slug?: string },
 ): RealtimeChannel {
-  validateRealtimeConfig();
+  const supabase = getSupabase();
 
-  const supabase = createClient(CLI_CONFIG.supabaseUrl, CLI_CONFIG.supabaseServiceRoleKey);
-
-  channel = supabase
+  const channel = supabase
     .channel("cli-activity-log")
     .on(
       "postgres_changes",
@@ -43,12 +50,45 @@ export function subscribeToActivityLog(
     )
     .subscribe();
 
+  channels.push(channel);
+  return channel;
+}
+
+export interface TaskChange {
+  id: string;
+  status: string;
+  sub_status: string | null;
+  agent_id: string;
+  type: string;
+}
+
+/** Subscribe to task status/sub_status changes for the watch dashboard. */
+export function subscribeToTaskChanges(callback: (task: TaskChange) => void): RealtimeChannel {
+  const supabase = getSupabase();
+
+  const channel = supabase
+    .channel("cli-task-changes")
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "tasks",
+      },
+      (payload) => {
+        const row = payload.new as TaskChange;
+        callback(row);
+      },
+    )
+    .subscribe();
+
+  channels.push(channel);
   return channel;
 }
 
 export function unsubscribe(): void {
-  if (channel) {
-    channel.unsubscribe();
-    channel = null;
+  for (const ch of channels) {
+    ch.unsubscribe();
   }
+  channels = [];
 }
