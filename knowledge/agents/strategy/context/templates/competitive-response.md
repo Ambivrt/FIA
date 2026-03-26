@@ -21,6 +21,11 @@
 - Direkt påverkan (kunder, pipeline, positionering)
 - Indirekt påverkan (marknad, branschperception)
 - Allvarlighetsgrad: Låg / Medium / Hög / Kritisk
+- **severity_score:** 0.0-1.0 (KRITISKT: detta fält krävs för trigger `competitive_alert`)
+  - 0.0-0.3: Låg — informativ, ingen omedelbar åtgärd
+  - 0.4-0.6: Medium — bevaka och planera
+  - 0.7-0.8: Hög — kräver respons, eskaleras automatiskt via Slack
+  - 0.9-1.0: Kritisk — omedelbar eskalering till Orchestrator
 - Tidskänslighet: Akut / Kort sikt / Lång sikt
 
 ### 3. Rekommenderad respons
