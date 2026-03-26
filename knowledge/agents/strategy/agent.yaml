@@ -1,6 +1,7 @@
 name: Strategy Agent
 slug: strategy
-version: 1.1.0
+version: 2.0.0
+
 skills:
   - shared:forefront-identity
   - shared:brand-compliance
@@ -8,13 +9,29 @@ skills:
   - shared:escalation-protocol
   - agent:strategic-planning
   - agent:market-analysis
+  - agent:channel-expertise
+  - agent:budget-optimization
+  - agent:audience-insights
+  - agent:competitive-strategy
+
 routing:
   default: claude-opus
   research: google-search
   trend_analysis: google-search
+  channel_strategy: claude-opus
+  some_strategy: claude-opus
+  ads_strategy: claude-opus
+  budget_allocation: claude-opus
+  competitive_response:
+    primary: google-search
+    fallback: claude-opus
+  audience_strategy: claude-opus
+
 system_context:
   - context/planning-framework.md
+  - context/channel-overview.md
   - context/drive-folders.md
+
 task_context:
   quarterly_plan:
     - context/templates/quarterly-plan.md
@@ -22,18 +39,90 @@ task_context:
     - context/templates/monthly-plan.md
   campaign_brief:
     - context/templates/campaign-brief.md
+  channel_strategy:
+    - context/templates/channel-strategy.md
+  some_strategy:
+    - context/templates/some-strategy.md
+  ads_strategy:
+    - context/templates/ads-strategy.md
+  budget_allocation:
+    - context/templates/budget-allocation.md
+  competitive_response:
+    - context/templates/competitive-response.md
+  audience_strategy:
+    - context/templates/audience-strategy.md
+
 tools:
   - "gws:drive"
   - "gws:analytics"
   - "gws:calendar"
   - "gws:sheets"
   - hubspot
+  - linkedin-analytics
+  - google-ads
+
 autonomy: semi-autonomous
-escalation_threshold: 1
+escalation_threshold: 3
 sample_review_rate: 1.0
 max_iterations: 5
+
+# Differentiated review: plans/briefs/strategies = 100%, research/analysis = 50%
+review_config:
+  full_review:
+    - quarterly_plan
+    - monthly_plan
+    - campaign_brief
+    - channel_strategy
+    - some_strategy
+    - ads_strategy
+    - budget_allocation
+    - audience_strategy
+  sampled_review:
+    rate: 0.5
+    task_types:
+      - research
+      - trend_analysis
+      - competitive_response
+
+self_eval:
+  enabled: true
+  model: claude-sonnet
+  criteria:
+    - "Är strategin alignerad med Forefronts kvartalsplan och affärsmål?"
+    - "Är rekommendationerna datadrivna med tydliga KPI:er?"
+    - "Är budgeten inom gränser och motiverad av historisk ROI?"
+    - "Är kanalvalet relevant för målgruppen?"
+    - "Är planen tillräckligt konkret för att exekveras av andra agenter?"
+  threshold: 0.7
+
+escalation_rules:
+  - name: budget_threshold
+    description: "Eskalera vid budget > 50 000 SEK"
+    condition:
+      field: content_json.total_budget_sek
+      operator: gt
+      value: 50000
+    action: escalate
+
+  - name: strategic_pivot
+    description: "Eskalera vid behov av strategisk pivot"
+    condition:
+      field: content_json.strategic_shift
+      operator: eq
+      value: true
+    action: escalate
+
+  - name: channel_conflict
+    description: "Eskalera vid kanalkonflikt"
+    condition:
+      field: content_json.channel_conflicts
+      operator: not_empty
+    action: escalate
+
 writable:
   - memory/campaign-history.json
+  - memory/budget-history.json
+  - memory/competitive-log.json
 
 triggers:
   - name: brief_to_content
@@ -62,4 +151,61 @@ triggers:
       priority: normal
       context_fields: [title, content_json]
     requires_approval: true
+    enabled: true
+
+  - name: strategy_to_seo
+    description: "Godkänd kanalstrategi triggar SEO keyword research"
+    on: task_approved
+    condition:
+      task_type: [channel_strategy, some_strategy]
+      output_field: "content_json.seo_relevant"
+      output_value: "true"
+    action:
+      type: create_task
+      target_agent: seo
+      task_type: keyword_research
+      priority: normal
+      context_fields: [title, content_json.channel, content_json.keywords, content_json.target_audience]
+    requires_approval: true
+    enabled: true
+
+  - name: strategy_to_analytics
+    description: "Ny strategi triggar Analytics KPI-tracking"
+    on: task_approved
+    condition:
+      task_type: [quarterly_plan, monthly_plan, channel_strategy, ads_strategy, budget_allocation]
+    action:
+      type: create_task
+      target_agent: analytics
+      task_type: anomaly_detection
+      priority: normal
+      context_fields: [title, content_json.kpis, content_json.targets]
+    requires_approval: false
+    enabled: true
+
+  - name: quarterly_to_monthly
+    description: "Godkänd kvartalsplan genererar månadsplaner"
+    on: task_approved
+    condition:
+      task_type: [quarterly_plan]
+    action:
+      type: create_task
+      target_agent: strategy
+      task_type: monthly_plan
+      priority: normal
+      context_fields: [title, content_json.focus_areas, content_json.kpis, content_json.budget]
+    requires_approval: true
+    enabled: true
+
+  - name: competitive_alert
+    description: "Konkurrentinsikt triggar snabbrespons"
+    on: task_completed
+    condition:
+      task_type: [competitive_response]
+      score_field: "content_json.severity_score"
+      score_above: 0.7
+    action:
+      type: notify_slack
+      channel: "#fia-orchestrator"
+    requires_approval: false
     enabled: true

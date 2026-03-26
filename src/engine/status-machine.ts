@@ -80,6 +80,10 @@ export type TaskSubStatus =
   // Brand
   | "text_review"
   | "visual_review"
+  // Strategy
+  | "researching"
+  | "drafting"
+  | "aligning"
   | null;
 
 export const VALID_SUB_STATUSES: Record<string, TaskSubStatus[]> = {
@@ -94,6 +98,9 @@ export const VALID_SUB_STATUSES: Record<string, TaskSubStatus[]> = {
     "brand_reviewing",
     "text_review",
     "visual_review",
+    "researching",
+    "drafting",
+    "aligning",
   ],
 };
 
