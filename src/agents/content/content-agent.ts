@@ -11,8 +11,6 @@ import { writeMetric } from "../../supabase/metrics-writer";
 import { usdToSek } from "../../llm/pricing";
 import { ToolDefinition } from "../../llm/types";
 import { quickBrandScreen, isHighRiskContent } from "../brand/quick-screen";
-import { loadFile } from "../../context/context-manager";
-import path from "path";
 
 const CONTENT_RESPONSE_TOOL: ToolDefinition = {
   name: "content_response",
@@ -366,20 +364,8 @@ export class ContentAgent extends BaseAgent {
     await updateTaskStatus(this.supabase, taskId, "in_progress");
 
     try {
-      // Feature A: Enrich prompt with visual brand guidelines
-      const visualPath = path.join(this.config.knowledgeDir, "brand", "visual.md");
-      const visualGuidelines = loadFile(visualPath);
-
-      const enrichedPrompt = [
-        "Följ dessa visuella riktlinjer för Forefront:",
-        visualGuidelines,
-        "",
-        "--- BILDBEGÄRAN ---",
-        task.input,
-      ].join("\n");
-
       const response = await routeImageRequest(this.config, this.logger, {
-        prompt: enrichedPrompt,
+        prompt: task.input,
       });
 
       let imageBase64 = response.imageData.toString("base64");
@@ -495,9 +481,6 @@ export class ContentAgent extends BaseAgent {
         });
 
         const retryPrompt = [
-          "Följ dessa visuella riktlinjer för Forefront:",
-          visualGuidelines,
-          "",
           "--- ORIGINALBEGÄRAN ---",
           task.input,
           "",

@@ -29,7 +29,6 @@ jest.mock("../src/slack/handlers", () => ({
 }));
 jest.mock("../src/context/context-manager", () => ({
   loadBrandContext: jest.fn().mockReturnValue("brand context"),
-  loadFile: jest.fn().mockReturnValue("# Visual guidelines mock"),
 }));
 jest.mock("../src/context/prompt-builder", () => ({
   buildSystemPrompt: jest.fn().mockReturnValue("system prompt"),
