@@ -7,7 +7,7 @@ import { TaskSubStatus } from "../../engine/status-machine";
 import { runSelfEval } from "../self-eval";
 
 /** Task types that use the research pipeline (search → analyze). */
-const RESEARCH_TASK_TYPES = ["research", "trend_analysis", "competitive_response"];
+const RESEARCH_TASK_TYPES = ["strategic_research", "competitive_response"];
 
 /** Task types that require full (100%) review. */
 const FULL_REVIEW_TASK_TYPES = [
@@ -22,7 +22,7 @@ const FULL_REVIEW_TASK_TYPES = [
 ];
 
 /** Task types with sampled (50%) review. */
-const SAMPLED_REVIEW_TASK_TYPES = ["research", "trend_analysis", "competitive_response"];
+const SAMPLED_REVIEW_TASK_TYPES = ["strategic_research", "competitive_response"];
 const SAMPLED_REVIEW_RATE = 0.5;
 
 interface EscalationRule {
