@@ -101,6 +101,7 @@ export function startTaskListener(
               input: taskInput,
               priority: task.priority || "normal",
               existingTaskId: task.id,
+              content_json: task.content_json ?? undefined,
               onProgress,
             },
             task.priority || "normal",
@@ -128,6 +129,7 @@ export function startTaskListener(
               input: taskInput,
               priority: task.priority || "normal",
               existingTaskId: task.id,
+              content_json: task.content_json ?? undefined,
               onProgress,
             });
           } catch (err) {

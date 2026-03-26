@@ -374,6 +374,8 @@ const DEPTH_LIMITS: Record<ResearchDepth, number> = {
   deep: 40,
 };
 
+type RelevanceMode = "strict" | "balanced" | "open";
+
 export class IntelligenceAgent extends BaseAgent {
   readonly name = "Intelligence Agent";
   readonly slug = "intelligence";
@@ -534,7 +536,12 @@ export class IntelligenceAgent extends BaseAgent {
 
   private static readonly SCORING_BATCH_SIZE = 50;
 
-  private async scoreFindings(findings: RawFinding[], watchConfig: WatchDomainsConfig): Promise<ScoredFinding[]> {
+  private async scoreFindings(
+    findings: RawFinding[],
+    watchConfig: WatchDomainsConfig,
+    mode: RelevanceMode = "strict",
+    topic?: string,
+  ): Promise<ScoredFinding[]> {
     if (findings.length === 0) return [];
 
     const scored: ScoredFinding[] = [];
@@ -542,31 +549,24 @@ export class IntelligenceAgent extends BaseAgent {
     // Batch findings to avoid overwhelming the LLM with too many items
     for (let i = 0; i < findings.length; i += IntelligenceAgent.SCORING_BATCH_SIZE) {
       const batch = findings.slice(i, i + IntelligenceAgent.SCORING_BATCH_SIZE);
-      const batchScored = await this.scoreBatch(batch, watchConfig);
+      const batchScored = await this.scoreBatch(batch, watchConfig, mode, topic);
       scored.push(...batchScored);
     }
 
     return scored.sort((a, b) => b.signal_score - a.signal_score);
   }
 
-  private async scoreBatch(findings: RawFinding[], watchConfig: WatchDomainsConfig): Promise<ScoredFinding[]> {
+  private async scoreBatch(
+    findings: RawFinding[],
+    watchConfig: WatchDomainsConfig,
+    mode: RelevanceMode = "strict",
+    topic?: string,
+  ): Promise<ScoredFinding[]> {
     const findingsText = findings
       .map((f, i) => `[${i}] ${f.title}\nURL: ${f.url}\nSnippet: ${f.snippet}\nDomän: ${f.domain_slug}`)
       .join("\n\n");
 
-    const scoringPrompt = [
-      "Bedöm relevansen av följande sökresultat för Forefront Consulting Group.",
-      "Forefront är ett konsultbolag som hjälper företag med AI-transformation och digital strategi.",
-      "",
-      "Scora VARJE resultat på fyra dimensioner (0.0–1.0):",
-      "- domain_relevance (0.35): Hur starkt relaterar innehållet till bevakningsdomänen?",
-      "- forefront_impact (0.30): Hur mycket påverkar detta Forefront specifikt?",
-      "- actionability (0.20): Kan Forefront agera på detta?",
-      "- recency_novelty (0.15): Är det nytt och oväntat?",
-      "",
-      "--- RESULTAT ---",
-      findingsText,
-    ].join("\n");
+    const scoringPrompt = this.buildScoringPrompt(findingsText, mode, topic);
 
     const response = await this.callLLM("default", scoringPrompt, {
       tools: [SCORING_TOOL],
@@ -609,7 +609,8 @@ export class IntelligenceAgent extends BaseAgent {
             score.recency_novelty * 0.15) *
           domainWeight;
 
-        if (compositeScore >= watchConfig.settings.min_relevance_score) {
+        const thresholds = this.getThresholds(mode);
+        if (compositeScore >= thresholds.minScore) {
           scored.push({
             ...finding,
             signal_score: compositeScore,
@@ -625,8 +626,13 @@ export class IntelligenceAgent extends BaseAgent {
     return scored;
   }
 
-  private async deepAnalyze(findings: ScoredFinding[]): Promise<AnalyzedFinding[]> {
-    const highRelevance = findings.filter((f) => f.signal_score >= 0.7);
+  private async deepAnalyze(
+    findings: ScoredFinding[],
+    mode: RelevanceMode = "strict",
+    topic?: string,
+  ): Promise<AnalyzedFinding[]> {
+    const thresholds = this.getThresholds(mode);
+    const highRelevance = findings.filter((f) => f.signal_score >= thresholds.deepAnalysisScore);
     if (highRelevance.length === 0) return [];
 
     const findingsText = highRelevance
@@ -636,25 +642,7 @@ export class IntelligenceAgent extends BaseAgent {
       )
       .join("\n\n");
 
-    const analysisPrompt = [
-      "Djupanalysera följande högrelevanta omvärldsfynd för Forefront Consulting Group.",
-      "Forefront är ett konsultbolag som hjälper företag med AI-transformation och digital strategi.",
-      "",
-      "För VARJE fynd, ge:",
-      "- summary: 2–3 meningars sammanfattning",
-      "- implications: Vad betyder detta för Forefront specifikt?",
-      "- suggested_action: brief | rapid_response | strategy_input | escalate",
-      "- confidence: 0.0–1.0",
-      "",
-      "Regler för suggested_action:",
-      "- escalate: Konkurrent namnger Forefront, kris, regulatorisk förändring",
-      "- rapid_response: Konkurrent lanserar överlappande tjänst, branschrapport, positioneringsmöjlighet",
-      "- strategy_input: LLM-prisändring >20%, marknadsförskjutning, ny teknologi",
-      "- brief: Default – informativt, ingen omedelbar handling",
-      "",
-      "--- FYND ---",
-      findingsText,
-    ].join("\n");
+    const analysisPrompt = this.buildDeepAnalysisPrompt(findingsText, mode, topic);
 
     const response = await this.callLLM("deep_analysis", analysisPrompt, {
       tools: [DEEP_ANALYSIS_TOOL],
@@ -1206,6 +1194,9 @@ export class IntelligenceAgent extends BaseAgent {
     await updateTaskStatus(this.supabase, taskId, "in_progress");
 
     try {
+      // Step 0: Resolve relevance mode
+      const mode = this.resolveRelevanceMode(task);
+
       // Step 1: Assess depth
       await this.safeSubStatus(taskId, "gathering");
       await task.onProgress?.("depth", `:brain: Bedömer researchdjup...`, { task_id: taskId });
@@ -1213,11 +1204,12 @@ export class IntelligenceAgent extends BaseAgent {
       const depth = await this.assessDepth(task);
       const maxSearches = DEPTH_LIMITS[depth];
 
-      this.logger.info(`Research depth assessed: ${depth} (max ${maxSearches} searches)`, {
+      this.logger.info(`Research depth assessed: ${depth}, mode: ${mode}`, {
         agent: this.slug,
         action: "depth_assessed",
         task_id: taskId,
         depth,
+        relevance_mode: mode,
         task_type: task.type,
       });
 
@@ -1230,7 +1222,7 @@ export class IntelligenceAgent extends BaseAgent {
         task_id: taskId,
       });
 
-      const findings = await this.gatherResearchFindings(task.input, task.type, depth, existingProfile);
+      const findings = await this.gatherResearchFindings(task.input, task.type, depth, existingProfile, mode);
 
       if (findings.length === 0) {
         this.logger.warn("Research gathering returned 0 findings – check SERPER_API_KEY and network", {
@@ -1277,13 +1269,13 @@ export class IntelligenceAgent extends BaseAgent {
         ? `Befintlig kunskap: ${existingProfile.summary}\nTidigare undersökningar: ${existingProfile.research_count}`
         : "";
 
-      const analyzed = await this.analyzeResearchFindings(findings, task.type, depth, profileContext);
+      const analyzed = await this.analyzeResearchFindings(findings, task.type, depth, profileContext, mode, task.input);
 
       // Step 6: Compile output with modules
       await this.safeSubStatus(taskId, "compiling");
       await task.onProgress?.("compiling", `:memo: Sammanställer rapport...`, { task_id: taskId });
 
-      const output = await this.compileResearchOutput(task.type, task.input, analyzed, depth, existingProfile);
+      const output = await this.compileResearchOutput(task.type, task.input, analyzed, depth, existingProfile, mode);
 
       // Step 7: Update intelligence profile
       const category = this.inferProfileCategory(task.type);
@@ -1321,6 +1313,7 @@ export class IntelligenceAgent extends BaseAgent {
           task_type: task.type,
           total_searches: totalSearches,
           depth,
+          relevance_mode: mode,
           search_cost_sek: searchCostSek,
         },
       };
@@ -1474,6 +1467,7 @@ export class IntelligenceAgent extends BaseAgent {
     taskType: string,
     depth: ResearchDepth,
     profile: IntelligenceProfileRow | null,
+    mode: RelevanceMode = "strict",
   ): Promise<RawFinding[]> {
     const allFindings: RawFinding[] = [];
     const seenUrls = new Set<string>();
@@ -1487,7 +1481,7 @@ export class IntelligenceAgent extends BaseAgent {
     const sourceConfig = this.loadSourceTypesConfig();
 
     // Build search queries based on topic
-    const baseQueries = this.buildSearchQueries(topic, taskType, profile);
+    const baseQueries = this.buildSearchQueries(topic, taskType, profile, mode);
 
     for (const query of baseQueries) {
       if (searchCount >= maxSearches) break;
@@ -1558,7 +1552,12 @@ export class IntelligenceAgent extends BaseAgent {
     return allFindings;
   }
 
-  private buildSearchQueries(topic: string, taskType: string, profile: IntelligenceProfileRow | null): string[] {
+  private buildSearchQueries(
+    topic: string,
+    taskType: string,
+    profile: IntelligenceProfileRow | null,
+    mode: RelevanceMode = "strict",
+  ): string[] {
     const queries: string[] = [topic];
 
     switch (taskType) {
@@ -1604,7 +1603,11 @@ export class IntelligenceAgent extends BaseAgent {
         );
         break;
       default: // directed_research
-        queries.push(`${topic} Forefront consulting`, `${topic} Nordic market`, `${topic} latest news`);
+        if (mode === "strict") {
+          queries.push(`${topic} Forefront consulting`, `${topic} Nordic market`, `${topic} latest news`);
+        } else {
+          queries.push(`${topic} latest news`, `${topic} market overview`, `${topic} analysis`);
+        }
         break;
     }
 
@@ -1637,12 +1640,14 @@ export class IntelligenceAgent extends BaseAgent {
     taskType: string,
     depth: ResearchDepth,
     context: string,
+    mode: RelevanceMode = "strict",
+    topic?: string,
   ): Promise<AnalyzedFinding[]> {
     if (findings.length === 0) return [];
 
     // For quick: skip deep analysis, just score with Sonnet
     if (depth === "quick") {
-      const scored = await this.scoreFindings(findings, this.loadWatchDomains());
+      const scored = await this.scoreFindings(findings, this.loadWatchDomains(), mode, topic);
       return scored.map((f) => ({
         ...f,
         summary: f.snippet,
@@ -1653,8 +1658,9 @@ export class IntelligenceAgent extends BaseAgent {
     }
 
     // For standard/deep: score first, then deep analyze
-    const scored = await this.scoreFindings(findings, this.loadWatchDomains());
-    const toAnalyze = depth === "deep" ? scored : scored.filter((f) => f.signal_score >= 0.5);
+    const scored = await this.scoreFindings(findings, this.loadWatchDomains(), mode, topic);
+    const thresholds = this.getThresholds(mode);
+    const toAnalyze = depth === "deep" ? scored : scored.filter((f) => f.signal_score >= thresholds.deepAnalysisScore);
 
     if (toAnalyze.length === 0) {
       return scored.map((f) => ({
@@ -1666,7 +1672,7 @@ export class IntelligenceAgent extends BaseAgent {
       }));
     }
 
-    return this.deepAnalyze(toAnalyze);
+    return this.deepAnalyze(toAnalyze, mode, topic);
   }
 
   // ── Research Output Compilation ─────────────────────────────────
@@ -1677,6 +1683,7 @@ export class IntelligenceAgent extends BaseAgent {
     findings: AnalyzedFinding[],
     depth: ResearchDepth,
     profile: IntelligenceProfileRow | null,
+    mode: RelevanceMode = "strict",
   ): Promise<ResearchOutput> {
     // Build base output via LLM
     const findingsText = findings
@@ -1693,8 +1700,9 @@ export class IntelligenceAgent extends BaseAgent {
       ? `\nBefintlig profil: ${profile.summary}\nTidigare undersökningar: ${profile.research_count}`
       : "";
 
+    const recipient = mode === "strict" ? "för Forefront Consulting Group" : `om "${topic}"`;
     const compilePrompt = [
-      `Sammanställ en ${taskType.replace(/_/g, " ")}-rapport för Forefront Consulting Group.`,
+      `Sammanställ en ${taskType.replace(/_/g, " ")}-rapport ${recipient}.`,
       `Ämne: ${topic}`,
       `Djup: ${depth}`,
       profileContext,
@@ -1944,6 +1952,123 @@ export class IntelligenceAgent extends BaseAgent {
       }
     } catch {
       // No temp domains file
+    }
+  }
+
+  // ── Relevance Mode ──────────────────────────────────────────────
+
+  private resolveRelevanceMode(task: AgentTask, forceStrict: boolean = false): RelevanceMode {
+    if (forceStrict) return "strict";
+
+    const taskMode = task.content_json?.relevance_mode as string | undefined;
+    if (taskMode && ["strict", "balanced", "open"].includes(taskMode)) {
+      return taskMode as RelevanceMode;
+    }
+
+    return (this.manifest.relevance_mode as RelevanceMode) ?? "strict";
+  }
+
+  private buildScoringPrompt(findingsText: string, mode: RelevanceMode, topic?: string): string {
+    if (mode === "strict") {
+      return [
+        "Bedöm relevansen av följande sökresultat för Forefront Consulting Group.",
+        "Forefront är ett konsultbolag som hjälper företag med AI-transformation och digital strategi.",
+        "",
+        "Scora VARJE resultat på fyra dimensioner (0.0–1.0):",
+        "- domain_relevance (0.35): Hur starkt relaterar innehållet till bevakningsdomänen?",
+        "- forefront_impact (0.30): Hur mycket påverkar detta Forefront specifikt?",
+        "- actionability (0.20): Kan Forefront agera på detta?",
+        "- recency_novelty (0.15): Är det nytt och oväntat?",
+        "",
+        "--- RESULTAT ---",
+        findingsText,
+      ].join("\n");
+    }
+
+    if (mode === "balanced") {
+      return [
+        `Bedöm relevansen av följande sökresultat för ämnet: "${topic}".`,
+        "Scora mot ÄMNET, inte mot något specifikt företag.",
+        "",
+        "Scora VARJE resultat på fyra dimensioner (0.0–1.0):",
+        "- domain_relevance (0.50): Hur starkt relaterar innehållet till ämnet?",
+        "- forefront_impact (0.10): Hur relevant är detta för konsultverksamhet?",
+        "- actionability (0.25): Hur handlingsbar är informationen?",
+        "- recency_novelty (0.15): Är det nytt och oväntat?",
+        "",
+        "--- RESULTAT ---",
+        findingsText,
+      ].join("\n");
+    }
+
+    // mode === "open"
+    return [
+      `Bedöm följande sökresultat för ämnet: "${topic}".`,
+      "Scora generöst — alla resultat som tangerar ämnet ska inkluderas.",
+      "",
+      "Scora VARJE resultat på fyra dimensioner (0.0–1.0):",
+      "- domain_relevance (0.60): Hur starkt relaterar innehållet till ämnet?",
+      "- forefront_impact (0.05): Bonus om det har konsultrelevans (annars ge 0.5)",
+      "- actionability (0.20): Hur handlingsbar är informationen?",
+      "- recency_novelty (0.15): Är det nytt och oväntat?",
+      "",
+      "--- RESULTAT ---",
+      findingsText,
+    ].join("\n");
+  }
+
+  private buildDeepAnalysisPrompt(findingsText: string, mode: RelevanceMode, topic?: string): string {
+    if (mode === "strict") {
+      return [
+        "Djupanalysera följande högrelevanta omvärldsfynd för Forefront Consulting Group.",
+        "Forefront är ett konsultbolag som hjälper företag med AI-transformation och digital strategi.",
+        "",
+        "För VARJE fynd, ge:",
+        "- summary: 2–3 meningars sammanfattning",
+        "- implications: Vad betyder detta för Forefront specifikt?",
+        "- suggested_action: brief | rapid_response | strategy_input | escalate",
+        "- confidence: 0.0–1.0",
+        "",
+        "Regler för suggested_action:",
+        "- escalate: Konkurrent namnger Forefront, kris, regulatorisk förändring",
+        "- rapid_response: Konkurrent lanserar överlappande tjänst, branschrapport, positioneringsmöjlighet",
+        "- strategy_input: LLM-prisändring >20%, marknadsförskjutning, ny teknologi",
+        "- brief: Default – informativt, ingen omedelbar handling",
+        "",
+        "--- FYND ---",
+        findingsText,
+      ].join("\n");
+    }
+
+    // balanced / open
+    return [
+      `Djupanalysera följande högrelevanta fynd om "${topic}".`,
+      "",
+      "För VARJE fynd, ge:",
+      "- summary: 2–3 meningars sammanfattning",
+      "- implications: Vad är de viktigaste implikationerna?",
+      "- suggested_action: brief | rapid_response | strategy_input | escalate",
+      "- confidence: 0.0–1.0",
+      "",
+      "Regler för suggested_action:",
+      "- escalate: Kris, stor regulatorisk förändring, oväntad risk",
+      "- rapid_response: Viktig nyhet, positioneringsmöjlighet",
+      "- strategy_input: Marknadsförskjutning, ny teknologi, prisändring >20%",
+      "- brief: Default – informativt, ingen omedelbar handling",
+      "",
+      "--- FYND ---",
+      findingsText,
+    ].join("\n");
+  }
+
+  private getThresholds(mode: RelevanceMode): { minScore: number; deepAnalysisScore: number } {
+    switch (mode) {
+      case "strict":
+        return { minScore: 0.6, deepAnalysisScore: 0.7 };
+      case "balanced":
+        return { minScore: 0.3, deepAnalysisScore: 0.5 };
+      case "open":
+        return { minScore: 0.0, deepAnalysisScore: 0.0 };
     }
   }
 

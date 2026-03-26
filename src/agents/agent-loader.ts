@@ -24,6 +24,7 @@ export interface AgentManifest {
   score_threshold_mql?: number;
   self_eval?: SelfEvalConfig;
   triggers?: TriggerConfig[];
+  relevance_mode?: "strict" | "balanced" | "open";
 }
 
 export interface SkillMetadata {

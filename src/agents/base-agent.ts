@@ -32,6 +32,7 @@ export interface AgentTask {
   /** Correlation ID for tracing multi-agent flows through logs. */
   correlationId?: string;
   onProgress?: ProgressCallback;
+  content_json?: Record<string, unknown>;
 }
 
 export interface AgentResult {
