@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { requireRole, getDbUserId } from "../middleware/auth";
+import { requirePermission, getDbUserId } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { logActivity } from "../../supabase/activity-writer";
 import { knowledgeReseedSchema } from "../schemas/knowledge";
@@ -11,7 +11,7 @@ export function knowledgeRoutes(supabase: SupabaseClient, config: AppConfig): Ro
   const router = Router();
 
   // POST /api/knowledge/reseed – admin only
-  router.post("/reseed", requireRole("admin"), validateBody(knowledgeReseedSchema), async (req, res) => {
+  router.post("/reseed", requirePermission("knowledge_reseed"), validateBody(knowledgeReseedSchema), async (req, res) => {
     try {
       const confirm = req.body?.confirm === true;
       const agentSlug = req.body?.agent_slug as string | undefined;

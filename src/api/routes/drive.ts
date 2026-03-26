@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { requireRole, getDbUserId } from "../middleware/auth";
+import { requirePermission, getDbUserId } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { logActivity } from "../../supabase/activity-writer";
 import { AppConfig } from "../../utils/config";
@@ -36,7 +36,7 @@ export function driveRoutes(supabase: SupabaseClient, config: AppConfig, logger:
   });
 
   // POST /api/drive/setup — skapa mappar (admin only)
-  router.post("/setup", requireRole("admin"), validateBody(setupSchema), async (req, res) => {
+  router.post("/setup", requirePermission("drive_setup"), validateBody(setupSchema), async (req, res) => {
     const dryRun = req.body.dry_run === true;
 
     try {

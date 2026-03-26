@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { requireRole, getDbUserId } from "../middleware/auth";
+import { requirePermission, getDbUserId } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { updateTaskStatus, createApproval } from "../../supabase/task-writer";
 import { logActivity } from "../../supabase/activity-writer";
@@ -80,7 +80,7 @@ export function taskRoutes(supabase: SupabaseClient): Router {
   // POST /api/tasks – skapa en ny task (CLI / Dashboard)
   router.post(
     "/",
-    requireRole("orchestrator", "admin", "operator"),
+    requirePermission("create_tasks"),
     validateBody(createTaskSchema),
     async (req, res) => {
       try {
@@ -154,7 +154,7 @@ export function taskRoutes(supabase: SupabaseClient): Router {
   // POST /api/tasks/:id/approve
   router.post(
     "/:id/approve",
-    requireRole("orchestrator", "admin", "operator"),
+    requirePermission("approve_reject_tasks"),
     validateBody(approveSchema),
     async (req, res) => {
       try {
@@ -192,7 +192,7 @@ export function taskRoutes(supabase: SupabaseClient): Router {
   // POST /api/tasks/:id/reject
   router.post(
     "/:id/reject",
-    requireRole("orchestrator", "admin", "operator"),
+    requirePermission("approve_reject_tasks"),
     validateBody(rejectSchema),
     async (req, res) => {
       try {
@@ -231,7 +231,7 @@ export function taskRoutes(supabase: SupabaseClient): Router {
   // POST /api/tasks/:id/revision
   router.post(
     "/:id/revision",
-    requireRole("orchestrator", "admin", "operator"),
+    requirePermission("approve_reject_tasks"),
     validateBody(revisionSchema),
     async (req, res) => {
       try {
@@ -274,7 +274,7 @@ export function taskRoutes(supabase: SupabaseClient): Router {
 
   router.post(
     "/:id/status",
-    requireRole("orchestrator", "admin"),
+    requirePermission("pause_resume_agents"),
     validateBody(statusChangeSchema),
     async (req, res) => {
       try {

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { requireRole, getDbUserId } from "../middleware/auth";
+import { requirePermission, getDbUserId } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { logActivity } from "../../supabase/activity-writer";
 import { KillSwitch } from "../../utils/kill-switch";
@@ -78,7 +78,7 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch, co
   });
 
   // POST /api/agents/:slug/pause – orchestrator, admin
-  router.post("/:slug/pause", requireRole("orchestrator", "admin"), async (req, res) => {
+  router.post("/:slug/pause", requirePermission("pause_resume_agents"), async (req, res) => {
     try {
       const { slug } = req.params;
       const { data, error } = await supabase
@@ -118,7 +118,7 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch, co
   });
 
   // POST /api/agents/:slug/resume – orchestrator, admin
-  router.post("/:slug/resume", requireRole("orchestrator", "admin"), async (req, res) => {
+  router.post("/:slug/resume", requirePermission("pause_resume_agents"), async (req, res) => {
     try {
       const { slug } = req.params;
       const { data, error } = await supabase
@@ -158,7 +158,7 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch, co
   });
 
   // PATCH /api/agents/:slug/routing – admin only
-  router.patch("/:slug/routing", requireRole("admin"), validateBody(routingSchema), async (req, res) => {
+  router.patch("/:slug/routing", requirePermission("agent_routing_tools"), validateBody(routingSchema), async (req, res) => {
     try {
       const { slug } = req.params;
       const { routing } = req.body;
@@ -197,7 +197,7 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch, co
   });
 
   // PATCH /api/agents/:slug/tools – admin only
-  router.patch("/:slug/tools", requireRole("admin"), validateBody(toolsSchema), async (req, res) => {
+  router.patch("/:slug/tools", requirePermission("agent_routing_tools"), validateBody(toolsSchema), async (req, res) => {
     try {
       const { slug } = req.params;
       const { tools } = req.body;
@@ -259,7 +259,7 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch, co
   // PATCH /api/agents/:slug/triggers – orchestrator, admin
   router.patch(
     "/:slug/triggers",
-    requireRole("orchestrator", "admin"),
+    requirePermission("manage_triggers"),
     validateBody(triggersPatchSchema),
     async (req, res) => {
       try {
@@ -400,7 +400,7 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch, co
   );
 
   // POST /api/agents/:slug/triggers/reseed – admin only
-  router.post("/:slug/triggers/reseed", requireRole("admin"), validateBody(reseedSchema), async (req, res) => {
+  router.post("/:slug/triggers/reseed", requirePermission("knowledge_reseed"), validateBody(reseedSchema), async (req, res) => {
     try {
       const slug = req.params.slug as string;
       const confirm = req.body?.confirm === true;
