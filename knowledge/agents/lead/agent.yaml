@@ -15,6 +15,11 @@ system_context: []
 task_context:
   nurture_email:
     - context/templates/nurture-email.md
+  lead_scoring:
+    - context/templates/lead-scoring.md
+    - context/templates/scoring-rules.md
+  nurture_sequences:
+    - context/templates/nurture-sequences.md
 tools:
   - hubspot
 autonomy: autonomous

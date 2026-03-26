@@ -21,6 +21,8 @@ task_context:
     - context/templates/weekly-report.md
   quarterly_review:
     - context/templates/quarterly-review.md
+  anomaly_detection:
+    - context/templates/anomaly-detection.md
 tools:
   - "gws:analytics"
   - "gws:sheets"
