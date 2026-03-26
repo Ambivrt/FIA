@@ -1207,7 +1207,7 @@ export class IntelligenceAgent extends BaseAgent {
 
     try {
       // Step 1: Assess depth
-      await updateTaskSubStatus(this.supabase, taskId, "gathering");
+      await this.safeSubStatus(taskId, "gathering");
       await task.onProgress?.("depth", `:brain: Bedömer researchdjup...`, { task_id: taskId });
 
       const depth = await this.assessDepth(task);
@@ -1242,7 +1242,7 @@ export class IntelligenceAgent extends BaseAgent {
 
       // Step 4: Checkpoint for deep research
       if (depth === "deep") {
-        await updateTaskSubStatus(this.supabase, taskId, "awaiting_input");
+        await this.safeSubStatus(taskId, "awaiting_input");
         await task.onProgress?.(
           "checkpoint",
           `:pause_button: ${findings.length} fynd insamlade. Checkpoint: djupanalys påbörjas.`,
@@ -1258,7 +1258,7 @@ export class IntelligenceAgent extends BaseAgent {
       }
 
       // Step 5: Analyze findings
-      await updateTaskSubStatus(this.supabase, taskId, "analyzing");
+      await this.safeSubStatus(taskId, "analyzing");
       await task.onProgress?.("analyzing", `:microscope: Analyserar ${findings.length} fynd...`, {
         task_id: taskId,
       });
@@ -1270,7 +1270,7 @@ export class IntelligenceAgent extends BaseAgent {
       const analyzed = await this.analyzeResearchFindings(findings, task.type, depth, profileContext);
 
       // Step 6: Compile output with modules
-      await updateTaskSubStatus(this.supabase, taskId, "compiling");
+      await this.safeSubStatus(taskId, "compiling");
       await task.onProgress?.("compiling", `:memo: Sammanställer rapport...`, { task_id: taskId });
 
       const output = await this.compileResearchOutput(task.type, task.input, analyzed, depth, existingProfile);
@@ -1938,6 +1938,18 @@ export class IntelligenceAgent extends BaseAgent {
   }
 
   // ── Utility ─────────────────────────────────────────────────────
+
+  /** Non-fatal sub_status update – metadata should never crash a pipeline. */
+  private async safeSubStatus(taskId: string, subStatus: string): Promise<void> {
+    try {
+      await updateTaskSubStatus(this.supabase, taskId, subStatus);
+    } catch (err) {
+      this.logger.warn(`Failed to set sub_status="${subStatus}" for task ${taskId}: ${(err as Error).message}`, {
+        agent: this.slug,
+        action: "sub_status_error",
+      });
+    }
+  }
 
   private slugifyTopic(title: string): string {
     return title
