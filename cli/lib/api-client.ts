@@ -22,11 +22,26 @@ class ApiClientError extends Error {
   }
 }
 
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 1000;
+
 function headers(): Record<string, string> {
   return {
     Authorization: `Bearer ${CLI_CONFIG.cliToken}`,
     "Content-Type": "application/json",
   };
+}
+
+async function fetchWithRetry(url: string, init?: RequestInit): Promise<Response> {
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const res = await fetch(url, init);
+    if (res.status !== 429 || attempt === MAX_RETRIES) return res;
+
+    const retryAfter = res.headers.get("retry-after");
+    const delay = retryAfter ? parseInt(retryAfter, 10) * 1000 : BASE_DELAY_MS * Math.pow(2, attempt);
+    await new Promise((r) => setTimeout(r, delay));
+  }
+  throw new Error("Max retries exceeded");
 }
 
 async function handleResponse<T>(res: Response): Promise<T> {
@@ -58,12 +73,12 @@ export async function apiGet<T>(path: string, params?: Record<string, string>): 
     }
   }
 
-  const res = await fetch(url.toString(), { headers: headers() });
+  const res = await fetchWithRetry(url.toString(), { headers: headers() });
   return handleResponse<ApiResponse<T>>(res);
 }
 
 export async function apiPost<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
-  const res = await fetch(`${CLI_CONFIG.apiBaseUrl}${path}`, {
+  const res = await fetchWithRetry(`${CLI_CONFIG.apiBaseUrl}${path}`, {
     method: "POST",
     headers: headers(),
     body: body ? JSON.stringify(body) : undefined,
@@ -72,7 +87,7 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<ApiRespo
 }
 
 export async function apiPatch<T>(path: string, body: unknown): Promise<ApiResponse<T>> {
-  const res = await fetch(`${CLI_CONFIG.apiBaseUrl}${path}`, {
+  const res = await fetchWithRetry(`${CLI_CONFIG.apiBaseUrl}${path}`, {
     method: "PATCH",
     headers: headers(),
     body: JSON.stringify(body),

@@ -2,7 +2,7 @@
 
 import { Command } from "commander";
 import chalk from "chalk";
-import { apiGet } from "../lib/api-client";
+import { apiGet, ApiClientError } from "../lib/api-client";
 import { subscribeToActivityLog, subscribeToTaskChanges, unsubscribe } from "../lib/realtime";
 import { statusBadge, relativeTime, progressBar, EARTH, GRADIENT, agentLabel } from "../lib/formatters";
 import type {
@@ -84,12 +84,14 @@ export function registerWatchCommand(program: Command): void {
       while (running) {
         try {
           await render();
-        } catch {
-          // Ignorera tillfälliga fel
+        } catch (err) {
+          if (err instanceof ApiClientError && err.code === "RATE_LIMIT") {
+            process.stderr.write(chalk.yellow("\n⚠ Rate limited – retrying…\n"));
+          }
         }
 
-        // Wait up to 3s, but re-render immediately on realtime events
-        const deadline = Date.now() + 3000;
+        // Wait up to 10s, but re-render immediately on realtime events
+        const deadline = Date.now() + 10_000;
         while (Date.now() < deadline && running) {
           if (needsRerender) {
             needsRerender = false;
