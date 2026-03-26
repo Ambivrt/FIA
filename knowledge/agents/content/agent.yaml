@@ -49,7 +49,7 @@ self_eval:
   model: claude-sonnet
   criteria:
     - "Följer texten tonalitetsreglerna? (konkret, aktivt språk, tydlig poäng)"
-    - "Finns påståenden utan källa eller stöd?"
+    - "Finns faktapåståenden utan källa eller stöd? (erfarenhetsbaserade observationer och åsikter i thought leadership behöver inte källhänvisning)"
     - "Passar längd och format för målkanalen?"
   threshold: 0.7
 writable:

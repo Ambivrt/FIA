@@ -476,7 +476,7 @@ describe("BaseAgent – self-eval flow", () => {
     expect(mockCallClaude).toHaveBeenCalledTimes(2);
   });
 
-  it("self-eval fail (score <= 0.4): marks task as error, no revision", async () => {
+  it("self-eval fail (score <= 0.4): attempts revision, re-evals, then marks error if still low", async () => {
     // Generation call
     mockCallClaude.mockResolvedValueOnce({
       text: "Bad content",
@@ -499,6 +499,28 @@ describe("BaseAgent – self-eval flow", () => {
         input: { pass: false, score: 0.2, issues: ["Completely off-topic"] },
       },
     });
+    // Revision call
+    mockCallClaude.mockResolvedValueOnce({
+      text: "Revised content",
+      model: "claude-opus-4-6",
+      tokensIn: 800,
+      tokensOut: 400,
+      durationMs: 1500,
+      costUsd: 0.08,
+    });
+    // Re-eval call (still low score)
+    mockCallClaude.mockResolvedValueOnce({
+      text: "",
+      model: "claude-sonnet-4-6",
+      tokensIn: 200,
+      tokensOut: 80,
+      durationMs: 600,
+      costUsd: 0.002,
+      toolUse: {
+        toolName: "self_eval_response",
+        input: { pass: false, score: 0.3, issues: ["Still off-topic"] },
+      },
+    });
 
     const manifest = loadAgentManifest(mockConfig.knowledgeDir, "content");
     const agent = new TestAgent(mockConfig, mockLogger, mockSupabase, manifest);
@@ -509,8 +531,8 @@ describe("BaseAgent – self-eval flow", () => {
     });
 
     expect(result.status).toBe("error");
-    // Only 2 LLM calls: generation + self-eval. No revision call.
-    expect(mockCallClaude).toHaveBeenCalledTimes(2);
+    // 4 LLM calls: generation + self-eval + revision + re-eval
+    expect(mockCallClaude).toHaveBeenCalledTimes(4);
     expect(mockUpdateTaskStatus).toHaveBeenCalledWith(
       mockSupabase,
       "task-se-1",
