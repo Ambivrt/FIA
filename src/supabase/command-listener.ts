@@ -9,6 +9,8 @@ import { getAllAgentSlugs } from "../agents/agent-factory";
 import { TriggerConfig } from "../engine/trigger-types";
 import { AppConfig } from "../utils/config";
 import { seedAllKnowledge, seedAgentKnowledge } from "../knowledge/knowledge-seeder";
+import { checkDriveAuth, setupDriveFolders } from "../mcp/drive-setup";
+import { handleGwsToolUse } from "../mcp/gws";
 
 interface Command {
   id: string;
@@ -20,8 +22,15 @@ interface Command {
   created_at: string;
 }
 
-async function markCommand(supabase: SupabaseClient, commandId: string, status: "completed" | "failed"): Promise<void> {
-  await supabase.from("commands").update({ status, processed_at: new Date().toISOString() }).eq("id", commandId);
+async function markCommand(
+  supabase: SupabaseClient,
+  commandId: string,
+  status: "completed" | "failed",
+  resultJson?: unknown,
+): Promise<void> {
+  const update: Record<string, unknown> = { status, processed_at: new Date().toISOString() };
+  if (resultJson !== undefined) update.result_json = resultJson;
+  await supabase.from("commands").update(update).eq("id", commandId);
 }
 
 export function startCommandListener(
@@ -271,6 +280,71 @@ export function startCommandListener(
               action: "reseed_knowledge_complete",
             });
             break;
+          }
+
+          case "drive_setup": {
+            if (!appConfig) {
+              logger.warn("drive_setup: appConfig not available", { action: "drive_setup_error" });
+              break;
+            }
+
+            const dryRun = p.dry_run === true;
+            await checkDriveAuth(appConfig);
+            const setupResult = await setupDriveFolders(appConfig, supabase, dryRun);
+
+            if (!dryRun) {
+              await logActivity(supabase, {
+                user_id: cmd.issued_by,
+                action: "drive_setup",
+                details_json: {
+                  created: setupResult.created.length,
+                  existing: setupResult.existing.length,
+                  errors: setupResult.errors.length,
+                  source: "dashboard",
+                },
+              });
+            }
+
+            await markCommand(supabase, cmd.id, "completed", {
+              dry_run: dryRun,
+              created: setupResult.created,
+              existing: setupResult.existing,
+              errors: setupResult.errors,
+            });
+            return; // Already marked
+          }
+
+          case "drive_list_folder": {
+            if (!appConfig) {
+              logger.warn("drive_list_folder: appConfig not available", { action: "drive_list_error" });
+              break;
+            }
+
+            const folderId = p.folder_id as string;
+            const maxResults = Math.min((p.max_results as number) || 50, 200);
+
+            const raw = await handleGwsToolUse(
+              { toolName: "drive_list_folder_contents", input: { folder_id: folderId, max_results: maxResults } },
+              appConfig,
+            );
+
+            let files: unknown[] = [];
+            try {
+              const parsed = JSON.parse(raw);
+              if (parsed.content && Array.isArray(parsed.content)) {
+                const text = parsed.content.map((c: { text?: string }) => c.text ?? "").join("");
+                files = JSON.parse(text);
+              } else if (Array.isArray(parsed)) {
+                files = parsed;
+              } else if (parsed.files && Array.isArray(parsed.files)) {
+                files = parsed.files;
+              }
+            } catch {
+              // Return empty list if unparseable
+            }
+
+            await markCommand(supabase, cmd.id, "completed", { files });
+            return; // Already marked
           }
 
           default:
