@@ -73,14 +73,28 @@ export class StrategyAgent extends BaseAgent {
     const { createTask, updateTaskStatus } = await import("../../supabase/task-writer");
     const { logActivity } = await import("../../supabase/activity-writer");
 
-    const taskId = await createTask(this.supabase, {
+    const taskId = task.existingTaskId
+      ? task.existingTaskId
+      : await createTask(this.supabase, {
+          agent_id: agentRow,
+          type: task.type,
+          title: task.title,
+          priority: task.priority ?? "normal",
+          source: "gateway",
+        });
+
+    await updateTaskStatus(this.supabase, taskId, "in_progress");
+    await logActivity(this.supabase, {
       agent_id: agentRow,
-      type: task.type,
-      title: task.title,
-      priority: task.priority ?? "normal",
+      action: "task_started",
+      details_json: { task_id: taskId, type: task.type },
     });
 
     // Step 1: Researching — collect data context
+    await task.onProgress?.("researching", `:mag: Strategy Agent samlar data...`, {
+      task_id: taskId,
+      task_type: task.type,
+    });
     await this.setSubStatus(taskId, "researching");
     const dataContext = await this.callLLMWithTools(
       task.type,
@@ -94,6 +108,9 @@ export class StrategyAgent extends BaseAgent {
     );
 
     // Step 2: Analyzing — identify patterns and opportunities
+    await task.onProgress?.("analyzing", `:brain: Strategy Agent analyserar data...`, {
+      task_id: taskId,
+    });
     await this.setSubStatus(taskId, "analyzing");
     const analysisPrompt = [
       `Analysera följande data och identifiera mönster, möjligheter och risker.`,
@@ -111,6 +128,9 @@ export class StrategyAgent extends BaseAgent {
     const analysis = await this.callLLM("default", analysisPrompt);
 
     // Step 3: Drafting — create the strategy/plan
+    await task.onProgress?.("drafting", `:memo: Strategy Agent utformar strategi...`, {
+      task_id: taskId,
+    });
     await this.setSubStatus(taskId, "drafting");
     const draftPrompt = [
       `Skapa ett komplett utkast baserat på analysen.`,
@@ -125,6 +145,9 @@ export class StrategyAgent extends BaseAgent {
     const draft = await this.callLLM(task.type, draftPrompt);
 
     // Step 4: Aligning — check brand, goals, budget alignment
+    await task.onProgress?.("aligning", `:dart: Strategy Agent kvalitetssäkrar...`, {
+      task_id: taskId,
+    });
     await this.setSubStatus(taskId, "aligning");
     const selfEvalResult = await this.runSelfEval(draft.text);
 
@@ -188,18 +211,35 @@ export class StrategyAgent extends BaseAgent {
     const { createTask, updateTaskStatus } = await import("../../supabase/task-writer");
     const { logActivity } = await import("../../supabase/activity-writer");
 
-    const taskId = await createTask(this.supabase, {
+    const taskId = task.existingTaskId
+      ? task.existingTaskId
+      : await createTask(this.supabase, {
+          agent_id: agentRow,
+          type: task.type,
+          title: task.title,
+          priority: task.priority ?? "normal",
+          source: "gateway",
+        });
+
+    await updateTaskStatus(this.supabase, taskId, "in_progress");
+    await logActivity(this.supabase, {
       agent_id: agentRow,
-      type: task.type,
-      title: task.title,
-      priority: task.priority ?? "normal",
+      action: "task_started",
+      details_json: { task_id: taskId, type: task.type },
     });
 
     // Step 1: Researching — search for information
+    await task.onProgress?.("researching", `:mag: Strategy Agent söker information...`, {
+      task_id: taskId,
+      task_type: task.type,
+    });
     await this.setSubStatus(taskId, "researching");
     const searchResponse = await this.callLLM(task.type, task.input);
 
     // Step 2: Analyzing — summarize and analyze results
+    await task.onProgress?.("analyzing", `:brain: Strategy Agent analyserar sökresultat...`, {
+      task_id: taskId,
+    });
     await this.setSubStatus(taskId, "analyzing");
     const summarizePrompt = [
       `Sammanfatta och analysera följande sökresultat för Forefront.`,
