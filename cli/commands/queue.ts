@@ -27,8 +27,9 @@ export function registerQueueCommand(program: Command): void {
       for (const task of tasks) {
         const id = opts.verbose ? task.id : shortId(task.id);
         const agentSlug = task.agents?.slug ?? "—";
+        const statusLabel = task.sub_status ? `${task.status} (${task.sub_status})` : task.status;
 
-        table.push([id, agentSlug, task.type, task.priority, task.status, relativeTime(task.created_at)]);
+        table.push([id, agentSlug, task.type, task.priority, statusLabel, relativeTime(task.created_at)]);
       }
 
       process.stdout.write(table.toString() + "\n");

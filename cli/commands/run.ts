@@ -50,9 +50,10 @@ export function registerRunCommand(program: Command): void {
             break;
           }
 
-          // Uppdatera spinner-text med progress
+          // Uppdatera spinner-text med progress + sub-status
           const elapsed = Math.round((Date.now() - startTime) / 1000);
-          spinner.text = `${capitalize(agent)} Agent working on ${taskType}... (${elapsed}s)`;
+          const sub = data.sub_status ? ` [${data.sub_status}]` : "";
+          spinner.text = `${capitalize(agent)} Agent working on ${taskType}${sub}... (${elapsed}s)`;
         } catch {
           // Ignorera tillfälliga nätverksfel under polling
         }

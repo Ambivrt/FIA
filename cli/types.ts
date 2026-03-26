@@ -38,6 +38,7 @@ export interface TaskResponse {
   type: string;
   title: string;
   status: string;
+  sub_status: string | null;
   priority: string;
   content_json: Record<string, unknown> | null;
   model_used: string | null;

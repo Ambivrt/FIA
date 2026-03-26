@@ -66,10 +66,35 @@ export function shouldSetCompletedAt(status: string): boolean {
 
 // --- Sub-statuses (informational metadata on in_progress) ---
 
-export type TaskSubStatus = "gathering" | "analyzing" | "compiling" | "awaiting_input" | null;
+export type TaskSubStatus =
+  // Intelligence
+  | "gathering"
+  | "analyzing"
+  | "compiling"
+  | "awaiting_input"
+  // Content
+  | "generating"
+  | "screening"
+  | "revising"
+  | "brand_reviewing"
+  // Brand
+  | "text_review"
+  | "visual_review"
+  | null;
 
 export const VALID_SUB_STATUSES: Record<string, TaskSubStatus[]> = {
-  in_progress: ["gathering", "analyzing", "compiling", "awaiting_input"],
+  in_progress: [
+    "gathering",
+    "analyzing",
+    "compiling",
+    "awaiting_input",
+    "generating",
+    "screening",
+    "revising",
+    "brand_reviewing",
+    "text_review",
+    "visual_review",
+  ],
 };
 
 export function isValidSubStatus(status: string, subStatus: string | null): boolean {
