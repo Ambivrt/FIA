@@ -21,6 +21,7 @@ export interface AgentConfigJson {
   _yaml_triggers?: TriggerConfig[];
   _manifest_version: string;
   _admin_overrides?: string[];
+  relevance_mode?: "strict" | "balanced" | "open";
 }
 
 export function extractConfigJson(manifest: AgentManifest): AgentConfigJson {
@@ -43,6 +44,7 @@ export function extractConfigJson(manifest: AgentManifest): AgentConfigJson {
   if (manifest.has_veto != null) config.has_veto = manifest.has_veto;
   if (manifest.budget_limit_sek != null) config.budget_limit_sek = manifest.budget_limit_sek;
   if (manifest.score_threshold_mql != null) config.score_threshold_mql = manifest.score_threshold_mql;
+  if (manifest.relevance_mode != null) config.relevance_mode = manifest.relevance_mode;
 
   const yamlTriggers = manifest.triggers ?? [];
   config.triggers = yamlTriggers;

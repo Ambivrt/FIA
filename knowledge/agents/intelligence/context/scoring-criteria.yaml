@@ -38,6 +38,48 @@ signal_scoring:
     deep_analysis: 0.7
     rapid_response: 0.9
 
+relevance_modes:
+  description: "Styr hur strikt agenten filtrerar sökresultat mot Forefronts kärndomäner."
+  modes:
+    strict:
+      label: "Strict – Forefront-fokus"
+      framing: "för Forefront Consulting Group"
+      weights:
+        domain_relevance: 0.35
+        forefront_impact: 0.30
+        actionability: 0.20
+        recency_novelty: 0.15
+      thresholds:
+        min_score: 0.6
+        deep_analysis: 0.7
+      use_case: "Daglig scan (morning_scan, midday_sweep)"
+    balanced:
+      label: "Balanced – ämnesfokus"
+      framing: "för ämnet X"
+      weights:
+        domain_relevance: 0.50
+        forefront_impact: 0.10
+        actionability: 0.25
+        recency_novelty: 0.15
+      thresholds:
+        min_score: 0.3
+        deep_analysis: 0.5
+      use_case: "Klientresearch (directed_research, competitor_deep_dive)"
+    open:
+      label: "Open – ingen filtrering"
+      framing: "för ämnet X, scora generöst"
+      weights:
+        domain_relevance: 0.60
+        forefront_impact: 0.05
+        actionability: 0.20
+        recency_novelty: 0.15
+      thresholds:
+        min_score: 0.0
+        deep_analysis: 0.0
+      use_case: "Fri utforskning, explorativ research"
+  default: strict
+  override: "Per task via content_json.relevance_mode, per agent via agent.yaml"
+
 deep_analysis:
   model: claude-opus
   output_fields:
