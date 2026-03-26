@@ -22,6 +22,8 @@ import { registerTriggersCommand } from "./commands/triggers";
 import { registerLineageCommand } from "./commands/lineage";
 import { registerCronCommand } from "./commands/cron";
 import { registerDriveCommand } from "./commands/drive";
+import { registerCostsCommand } from "./commands/costs";
+import { registerKnowledgeCommand } from "./commands/knowledge";
 
 const program = new Command();
 
@@ -53,6 +55,8 @@ registerTriggersCommand(program);
 registerLineageCommand(program);
 registerCronCommand(program);
 registerDriveCommand(program);
+registerCostsCommand(program);
+registerKnowledgeCommand(program);
 
 // Globalt felhantering
 program.exitOverride();

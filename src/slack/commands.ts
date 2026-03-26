@@ -22,6 +22,9 @@ import { createAgent, getAllAgentSlugs } from "../agents/agent-factory";
 import { loadAgentManifest } from "../agents/agent-loader";
 import { ProgressCallback } from "../agents/base-agent";
 import { formatSlackStatus } from "./status-formatter";
+import { resolveSlackUser, checkSlackPermission } from "./auth";
+import { hasPermission, type Permission } from "../api/permissions";
+import { loadFolderMap, getAllFolderPaths, checkDriveAuth, setupDriveFolders } from "../mcp/drive-setup";
 
 export function registerCommands(
   app: App,
@@ -116,11 +119,41 @@ export function registerCommands(
           : "\n:satellite_antenna: Command Listener: _ej aktiv_ (Supabase saknas)";
         statusText += `\n:globe_with_meridians: REST API: port *${config.gatewayApiPort}*`;
 
+        // GWS Drive status
+        if (supabase) {
+          try {
+            const folderMap = await loadFolderMap(supabase);
+            const allPaths = getAllFolderPaths();
+            const configured = Object.keys(folderMap).length;
+            statusText +=
+              configured > 0
+                ? `\n:file_folder: Google Drive: *${configured}/${allPaths.length}* mappar konfigurerade`
+                : "\n:warning: Google Drive: _Ej konfigurerad_ (`/fia drive setup`)";
+          } catch {
+            statusText += "\n:warning: Google Drive: _Kunde inte hämta status_";
+          }
+        }
+
+        // Show caller's role if mapped
+        if (supabase) {
+          const profile = await resolveSlackUser(supabase, command.user_id);
+          if (profile) {
+            statusText += `\n\n:bust_in_silhouette: Du: *${profile.name}* (${profile.role})`;
+          }
+        }
+
         await respond({ response_type: "ephemeral", text: statusText });
         break;
       }
 
-      case "kill":
+      case "kill": {
+        if (supabase) {
+          const killPerm = await checkSlackPermission(supabase, command.user_id, "kill_switch");
+          if (!killPerm.allowed) {
+            await respond({ response_type: "ephemeral", text: `:lock: ${killPerm.reason}` });
+            break;
+          }
+        }
         if (killSwitch) {
           await killSwitch.activate("slack");
         }
@@ -129,8 +162,16 @@ export function registerCommands(
           text: ":octagonal_sign: *Kill switch activated.* All publishing agents paused.",
         });
         break;
+      }
 
-      case "resume":
+      case "resume": {
+        if (supabase) {
+          const resumePerm = await checkSlackPermission(supabase, command.user_id, "kill_switch");
+          if (!resumePerm.allowed) {
+            await respond({ response_type: "ephemeral", text: `:lock: ${resumePerm.reason}` });
+            break;
+          }
+        }
         if (killSwitch) {
           await killSwitch.deactivate("slack");
         }
@@ -139,6 +180,7 @@ export function registerCommands(
           text: ":white_check_mark: *Kill switch deactivated.* Agents resuming normal operations.",
         });
         break;
+      }
 
       case "approve": {
         const taskId = args[1];
@@ -838,6 +880,230 @@ export function registerCommands(
         break;
       }
 
+      case "drive": {
+        const driveSubCmd = args[1]?.toLowerCase() || "status";
+
+        if (driveSubCmd === "status") {
+          if (!supabase) {
+            await respond({ response_type: "ephemeral", text: ":x: Supabase krävs." });
+            break;
+          }
+          try {
+            const folderMap = await loadFolderMap(supabase);
+            const allPaths = getAllFolderPaths();
+            const configured = Object.keys(folderMap).length;
+
+            if (configured === 0) {
+              await respond({
+                response_type: "ephemeral",
+                text: ":warning: Ingen Drive-mappstruktur konfigurerad. Kör `/fia drive setup` för att skapa.",
+              });
+              break;
+            }
+
+            const lines = [`:file_folder: *Google Drive* (${configured}/${allPaths.length} mappar)`];
+            const paths = Object.keys(folderMap).sort();
+            for (const p of paths.slice(0, 20)) {
+              const name = p.split("/").pop() ?? p;
+              const depth = p.split("/").length - 1;
+              const indent = "  ".repeat(depth);
+              lines.push(`${indent}📁 ${name}`);
+            }
+            if (paths.length > 20) {
+              lines.push(`_...och ${paths.length - 20} till._`);
+            }
+
+            await respond({ response_type: "ephemeral", text: lines.join("\n") });
+          } catch (err) {
+            await respond({
+              response_type: "ephemeral",
+              text: `:x: Kunde inte hämta Drive-status: ${(err as Error).message}`,
+            });
+          }
+        } else if (driveSubCmd === "setup") {
+          if (!supabase) {
+            await respond({ response_type: "ephemeral", text: ":x: Supabase krävs." });
+            break;
+          }
+
+          const perm = await checkSlackPermission(supabase, command.user_id, "drive_setup");
+          if (!perm.allowed) {
+            await respond({ response_type: "ephemeral", text: `:lock: ${perm.reason}` });
+            break;
+          }
+
+          const dryRun = args.includes("--dry-run");
+
+          try {
+            await checkDriveAuth(config);
+            const result = await setupDriveFolders(config, supabase, dryRun);
+
+            const summary = [
+              `${result.created.length} skapade`,
+              `${result.existing.length} befintliga`,
+              result.errors.length > 0 ? `${result.errors.length} fel` : null,
+            ]
+              .filter(Boolean)
+              .join(", ");
+
+            const lines = [
+              dryRun ? `:eyes: *Drive setup dry-run:* ${summary}` : `:white_check_mark: *Drive setup klar:* ${summary}`,
+            ];
+
+            if (result.created.length > 0) {
+              lines.push("", "*Skapade:*");
+              for (const f of result.created.slice(0, 10)) {
+                lines.push(`  + ${f.path}`);
+              }
+            }
+
+            if (result.errors.length > 0) {
+              lines.push("", "*Fel:*");
+              for (const e of result.errors) {
+                lines.push(`  :x: ${e.path}: ${e.error}`);
+              }
+            }
+
+            await logActivity(supabase, {
+              user_id: perm.profile?.id,
+              action: "drive_setup",
+              details_json: {
+                created: result.created.length,
+                existing: result.existing.length,
+                errors: result.errors.length,
+                dry_run: dryRun,
+                source: "slack",
+              },
+            });
+
+            await respond({ response_type: "ephemeral", text: lines.join("\n") });
+          } catch (err) {
+            await respond({
+              response_type: "ephemeral",
+              text: `:x: Drive setup misslyckades: ${(err as Error).message}`,
+            });
+          }
+        } else {
+          await respond({
+            response_type: "ephemeral",
+            text: "Usage: `/fia drive status` eller `/fia drive setup [--dry-run]`",
+          });
+        }
+        break;
+      }
+
+      case "costs":
+      case "cost": {
+        if (!supabase) {
+          await respond({ response_type: "ephemeral", text: ":x: Supabase krävs." });
+          break;
+        }
+
+        const costPerm = await checkSlackPermission(supabase, command.user_id, "view_costs");
+        if (!costPerm.allowed) {
+          await respond({ response_type: "ephemeral", text: `:lock: ${costPerm.reason}` });
+          break;
+        }
+
+        try {
+          const now = new Date();
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          const monthStr = monthStart.toISOString().slice(0, 10);
+
+          const weekStart = new Date(now);
+          weekStart.setDate(now.getDate() - now.getDay() + 1);
+          const weekStr = weekStart.toISOString().slice(0, 10);
+
+          const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000).toISOString();
+
+          const [costResult, contentResult, approvalResult, pendingResult] = await Promise.all([
+            supabase
+              .from("tasks")
+              .select("cost_sek")
+              .gte("created_at", `${monthStr}T00:00:00Z`)
+              .not("cost_sek", "is", null),
+            supabase
+              .from("tasks")
+              .select("*", { count: "exact", head: true })
+              .eq("type", "blog_post")
+              .in("status", ["approved", "published"])
+              .gte("created_at", `${weekStr}T00:00:00Z`),
+            supabase.from("approvals").select("decision").gte("created_at", thirtyDaysAgo),
+            supabase.from("tasks").select("*", { count: "exact", head: true }).eq("status", "awaiting_review"),
+          ]);
+
+          const costMtd = (costResult.data ?? []).reduce(
+            (sum: number, t: { cost_sek: number | null }) => sum + (t.cost_sek ?? 0),
+            0,
+          );
+          const contentCount = contentResult.count ?? 0;
+          const totalApprovals = approvalResult.data?.length ?? 0;
+          const approvedCount =
+            approvalResult.data?.filter((a: { decision: string }) => a.decision === "approved").length ?? 0;
+          const approvalRate = totalApprovals > 0 ? Math.round((approvedCount / totalApprovals) * 100) : 0;
+          const pendingCount = pendingResult.count ?? 0;
+
+          const lines = [
+            `:money_with_wings: *FIA Kostnadsöversikt*`,
+            `  Kostnad MTD: *${costMtd.toFixed(1)} kr*`,
+            `  Content (vecka): *${contentCount}* publicerade`,
+            `  Godkännandegrad: *${approvalRate}%* (30 dagar)`,
+            `  Väntande: *${pendingCount}* approvals`,
+          ];
+
+          await respond({ response_type: "ephemeral", text: lines.join("\n") });
+        } catch (err) {
+          await respond({
+            response_type: "ephemeral",
+            text: `:x: Kunde inte hämta kostnadsdata: ${(err as Error).message}`,
+          });
+        }
+        break;
+      }
+
+      case "whoami": {
+        if (!supabase) {
+          await respond({ response_type: "ephemeral", text: ":x: Supabase krävs." });
+          break;
+        }
+
+        const profile = await resolveSlackUser(supabase, command.user_id);
+        if (!profile) {
+          await respond({
+            response_type: "ephemeral",
+            text:
+              `:question: Ditt Slack-konto (\`${command.user_id}\`) är inte kopplat till FIA.\n` +
+              "Be en admin uppdatera din profil med ditt Slack-ID i FIA Dashboard → Admin.",
+          });
+          break;
+        }
+
+        const PERMISSION_LABELS: Record<string, string> = {
+          view_dashboard: "Se dashboard",
+          approve_reject_tasks: "Godkänna/avslå tasks",
+          create_tasks: "Skapa tasks",
+          kill_switch: "Kill switch",
+          manage_triggers: "Hantera triggers",
+          view_costs: "Se kostnader",
+          drive_setup: "Drive setup",
+          knowledge_reseed: "Knowledge reseed",
+          user_management: "Användarhantering",
+        };
+
+        const perms = Object.entries(PERMISSION_LABELS)
+          .filter(([perm]) => hasPermission(profile.role, perm as Permission))
+          .map(([, label]) => label);
+
+        const lines = [
+          `:bust_in_silhouette: *${profile.name}*`,
+          `  Roll: *${profile.role}*`,
+          `  Behörigheter: ${perms.length > 0 ? perms.join(", ") : "_Inga_"}`,
+        ];
+
+        await respond({ response_type: "ephemeral", text: lines.join("\n") });
+        break;
+      }
+
       case "purge": {
         if (!supabase) {
           await respond({ response_type: "ephemeral", text: ":x: Supabase krävs." });
@@ -869,25 +1135,40 @@ export function registerCommands(
       case "?":
       default: {
         const helpLines = [
-          "*FIA Commands:*",
-          "  `/fia status` – Systemstatus, agenter och kill switch",
+          "*FIA v0.5.6 Commands:*",
+          "",
+          "*Översikt:*",
+          "  `/fia status` – Systemstatus, agenter, Drive och kill switch",
+          "  `/fia costs` – Kostnadsöversikt (MTD)",
+          "  `/fia whoami` – Visa din roll och behörigheter",
+          "",
+          "*Tasks & Queue:*",
           "  `/fia queue` – Visa kö-status (köade och aktiva tasks)",
-          "  `/fia kill` – Aktivera kill switch (pausar alla publiceringsagenter)",
-          "  `/fia resume` – Avaktivera kill switch",
           "  `/fia approve <task-id>` – Godkänn uppgift",
           "  `/fia reject <task-id> <feedback>` – Avslå uppgift med feedback",
           "  `/fia run <agent> <task-type> [description]` – Trigga agent manuellt",
-          "  `/fia triggers` – Visa pending triggers som väntar på godkännande",
+          "  `/fia lineage <task-id>` – Visa task-träd (föräldrar och barn)",
+          "",
+          "*Triggers:*",
+          "  `/fia triggers` – Visa pending triggers",
           "  `/fia triggers approve <id>` – Godkänn pending trigger",
           "  `/fia triggers reject <id> <reason>` – Avslå pending trigger",
-          "  `/fia lineage <task-id>` – Visa task-träd (föräldrar och barn)",
+          "",
+          "*Cron:*",
           "  `/fia cron` – Lista schemalagda cron-jobb",
           "  `/fia cron create <agent> <type> <cron 5 fält> <titel>` – Skapa jobb",
           "  `/fia cron edit <id> <fält>=<värde>` – Redigera jobb",
           "  `/fia cron delete <id>` – Ta bort jobb",
           "  `/fia cron enable|disable <id>` – Aktivera/inaktivera jobb",
-          "  `/fia purge` – Rensa stale queued/in_progress tasks (>30 min)",
-          "  `/fia help` – Visa denna hjälptext",
+          "",
+          "*Google Drive:*",
+          "  `/fia drive status` – Visa Drive-mappstruktur",
+          "  `/fia drive setup [--dry-run]` – Skapa mappar (admin)",
+          "",
+          "*Admin:*",
+          "  `/fia kill` – Aktivera kill switch",
+          "  `/fia resume` – Avaktivera kill switch",
+          "  `/fia purge` – Rensa stale tasks (>30 min)",
           "",
           "*Agenter och uppgiftstyper:*",
         ];

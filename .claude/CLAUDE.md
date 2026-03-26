@@ -30,6 +30,7 @@ npx ts-node cli/index.ts # FIA CLI
 
 ## Konventioner
 
+- **Kör alltid `npm run format:check` innan commit** — Prettier måste passera. Fixa med `npm run format`
 - Alla agent-ändringar via agent.yaml, inte hårdkodat
 - Status machine i status-machine.ts – alla övergångar valideras
 - Tasks flödar: queued → in_progress → completed → awaiting_review → approved → delivered
