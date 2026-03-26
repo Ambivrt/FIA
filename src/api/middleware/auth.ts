@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { SupabaseClient } from "@supabase/supabase-js";
-import type { UserRole } from "../permissions.js";
-export { requirePermission } from "../permissions.js";
+import type { UserRole } from "../permissions";
+export { requirePermission } from "../permissions";
 
 export interface AuthUser {
   id: string;
