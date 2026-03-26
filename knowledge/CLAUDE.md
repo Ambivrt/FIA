@@ -40,35 +40,35 @@ name: Content Agent
 slug: content
 version: 1.1.0
 
-skills:                       # Modulärt skill-system
+skills: # Modulärt skill-system
   - shared:forefront-identity # Prefix shared: eller agent:
   - agent:content-production
 
 routing:
-  default: claude-opus        # Enkel sträng (legacy)
-  deep_analysis:              # Objekt med fallback
+  default: claude-opus # Enkel sträng (legacy)
+  deep_analysis: # Objekt med fallback
     primary: claude-opus
     fallback: claude-sonnet
 
-system_context:               # Alltid i systemprompt (ordning spelar roll)
+system_context: # Alltid i systemprompt (ordning spelar roll)
   - context/tone-examples.md
 
-task_context:                 # On-demand baserat på uppgiftstyp
+task_context: # On-demand baserat på uppgiftstyp
   blog_post:
     - context/templates/blog-post.md
     - context/few-shot/blog-good.md
 
-tools:                        # MCP-verktyg (minsta möjliga rättighet)
+tools: # MCP-verktyg (minsta möjliga rättighet)
   - gws:docs
 
-autonomy: autonomous          # autonomous | semi-autonomous | manual
-escalation_threshold: 3       # Avslag innan eskalering
-sample_review_rate: 0.2       # Stickprovsgranskning
+autonomy: autonomous # autonomous | semi-autonomous | manual
+escalation_threshold: 3 # Avslag innan eskalering
+sample_review_rate: 0.2 # Stickprovsgranskning
 
-writable:                     # Enbart listade filer kan skrivas av agenten
+writable: # Enbart listade filer kan skrivas av agenten
   - memory/learnings.json
 
-triggers:                     # Deklarativa triggers (seedas till Supabase)
+triggers: # Deklarativa triggers (seedas till Supabase)
   - name: example_trigger
     on: task_completed
     condition: { task_type: [blog_post] }
@@ -93,7 +93,7 @@ triggers:                     # Deklarativa triggers (seedas till Supabase)
 
 | Slug         | Namn               | Routing default | Autonomi        | Speciellt                                             |
 | ------------ | ------------------ | --------------- | --------------- | ----------------------------------------------------- |
-| strategy     | Strategy Agent     | claude-opus     | semi-autonomous | `sample_review_rate: 1.0` (alla planer godkänns)     |
+| strategy     | Strategy Agent     | claude-opus     | semi-autonomous | `sample_review_rate: 1.0` (alla planer godkänns)      |
 | content      | Content Agent      | claude-opus     | autonomous      | Few-shot, metadata via Sonnet, bilder via Nano Banana |
 | campaign     | Campaign Agent     | claude-opus     | autonomous      | `budget_limit_sek: 10000` per kampanj                 |
 | seo          | SEO Agent          | google-search   | autonomous      | Keyword-rankings i memory                             |

@@ -84,12 +84,12 @@ Varje agentbeslut loggas som strukturerad JSON:
 
 ### Strukturerad output (tool_use)
 
-| Verktyg                 | Agent                   | Syfte                                                  |
-| ----------------------- | ----------------------- | ------------------------------------------------------ |
-| `content_response`      | Content, Campaign, Lead | Strukturerad content-output (title, body, summary)     |
+| Verktyg                 | Agent                   | Syfte                                                   |
+| ----------------------- | ----------------------- | ------------------------------------------------------- |
+| `content_response`      | Content, Campaign, Lead | Strukturerad content-output (title, body, summary)      |
 | `brand_review_decision` | Brand                   | Granskningsbeslut (approved/rejected, feedback, scores) |
-| `signal_scoring`        | Intelligence            | Signalscoring (4 dimensioner)                          |
-| `deep_analysis`         | Intelligence            | Djupanalys (summary, implications, suggested_action)   |
+| `signal_scoring`        | Intelligence            | Signalscoring (4 dimensioner)                           |
+| `deep_analysis`         | Intelligence            | Djupanalys (summary, implications, suggested_action)    |
 
 ## REST API (internt)
 
@@ -141,19 +141,19 @@ Auth: `Authorization: Bearer <supabase-jwt|FIA_CLI_TOKEN>`, valideras mot Supaba
 
 ## Slack-kommandon
 
-| Kommando                   | Roll          | Beskrivning              |
-| -------------------------- | ------------- | ------------------------ |
-| `/fia status`              | Alla          | Systemstatus             |
-| `/fia kill`                | Orchestrator+ | Aktivera kill switch     |
-| `/fia resume`              | Orchestrator+ | Avaktivera kill switch   |
-| `/fia run <agent> <task>`  | Orchestrator+ | Manuell trigger          |
+| Kommando                    | Roll          | Beskrivning              |
+| --------------------------- | ------------- | ------------------------ |
+| `/fia status`               | Alla          | Systemstatus             |
+| `/fia kill`                 | Orchestrator+ | Aktivera kill switch     |
+| `/fia resume`               | Orchestrator+ | Avaktivera kill switch   |
+| `/fia run <agent> <task>`   | Orchestrator+ | Manuell trigger          |
 | `/fia approve\|reject <id>` | Orchestrator+ | Godkänn/avslå            |
-| `/fia queue`               | Alla          | Köade uppgifter          |
-| `/fia purge`               | Orchestrator+ | Rensa föräldralösa tasks |
+| `/fia queue`                | Alla          | Köade uppgifter          |
+| `/fia purge`                | Orchestrator+ | Rensa föräldralösa tasks |
 | `/fia drive status\|setup`  | Admin (setup) | Drive-mappstruktur       |
-| `/fia costs`               | Alla          | Kostnadsöversikt         |
-| `/fia whoami`              | Alla          | Roll och permissions     |
-| `/fia help`                | Alla          | Alla kommandon           |
+| `/fia costs`                | Alla          | Kostnadsöversikt         |
+| `/fia whoami`               | Alla          | Roll och permissions     |
+| `/fia help`                 | Alla          | Alla kommandon           |
 
 ## Schemalagda uppgifter
 
