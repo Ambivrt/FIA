@@ -41,7 +41,7 @@ export async function updateTaskStatus(
   if (extras?.currentStatus != null) {
     const from = extras.currentStatus as string;
     if (!isValidTransition(from, status)) {
-      console.warn(`[task-writer] Invalid status transition: ${from} → ${status} for task ${taskId}`);
+      console.warn(`[task-writer] Invalid status transition: ${from} \u2192 ${status} for task ${taskId}`);
     }
   }
 
@@ -125,6 +125,7 @@ export async function purgeOrphanedTasks(
     .from("tasks")
     .update({ status: "error", completed_at: now })
     .eq("status", "in_progress")
+    .is("sub_status", null)
     .lt("created_at", cutoff)
     .select("id");
 
