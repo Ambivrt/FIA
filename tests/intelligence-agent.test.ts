@@ -16,6 +16,13 @@ jest.mock("../src/supabase/task-writer", () => ({
   createTask: jest.fn().mockResolvedValue("task-intel-123"),
   createApproval: jest.fn().mockResolvedValue("approval-id"),
   updateTaskStatus: jest.fn().mockResolvedValue(undefined),
+  updateTaskSubStatus: jest.fn().mockResolvedValue(undefined),
+}));
+jest.mock("../src/supabase/intelligence-profiles", () => ({
+  getProfile: jest.fn().mockResolvedValue(null),
+  upsertProfile: jest.fn().mockResolvedValue("profile-id"),
+  searchProfiles: jest.fn().mockResolvedValue([]),
+  listProfilesByCategory: jest.fn().mockResolvedValue([]),
 }));
 jest.mock("../src/supabase/activity-writer", () => ({
   logActivity: jest.fn().mockResolvedValue(undefined),
@@ -47,12 +54,16 @@ jest.mock("../src/llm/pricing", () => ({
 
 import { routeRequest } from "../src/gateway/router";
 import { searchGoogle } from "../src/llm/google-search";
-import { createTask, updateTaskStatus } from "../src/supabase/task-writer";
+import { createTask, updateTaskStatus, updateTaskSubStatus } from "../src/supabase/task-writer";
+import { getProfile, upsertProfile } from "../src/supabase/intelligence-profiles";
 
 const mockRouteRequest = routeRequest as jest.MockedFunction<typeof routeRequest>;
 const mockSearchGoogle = searchGoogle as jest.MockedFunction<typeof searchGoogle>;
 const mockCreateTask = createTask as jest.MockedFunction<typeof createTask>;
 const mockUpdateTaskStatus = updateTaskStatus as jest.MockedFunction<typeof updateTaskStatus>;
+const mockUpdateTaskSubStatus = updateTaskSubStatus as jest.MockedFunction<typeof updateTaskSubStatus>;
+const mockGetProfile = getProfile as jest.MockedFunction<typeof getProfile>;
+const mockUpsertProfile = upsertProfile as jest.MockedFunction<typeof upsertProfile>;
 
 const mockConfig: AppConfig = {
   nodeEnv: "test",
@@ -89,11 +100,14 @@ const mockLogger: Logger = {
 const mockManifest: AgentManifest = {
   name: "Intelligence Agent",
   slug: "intelligence",
-  version: "1.1.0",
+  version: "2.0.0",
   routing: {
     default: "claude-sonnet",
     deep_analysis: "claude-opus",
     search: "google-search",
+    quick: "claude-sonnet",
+    standard_analysis: "claude-opus",
+    deep: "claude-opus",
   },
   system_context: ["context/watch-domains.yaml", "context/scoring-criteria.yaml"],
   task_context: {
@@ -101,12 +115,23 @@ const mockManifest: AgentManifest = {
     midday_sweep: ["context/templates/morning-scan.md"],
     weekly_intelligence: ["context/templates/weekly-brief.md"],
     rapid_response: ["context/templates/rapid-response.md"],
+    directed_research: ["context/templates/directed-research.md"],
+    competitor_deep_dive: ["context/templates/competitor-deep-dive.md"],
+    trend_analysis: ["context/templates/trend-analysis.md"],
+    company_industry_analysis: ["context/templates/company-industry-analysis.md"],
+    tech_watch: ["context/templates/tech-watch.md"],
+    talent_intel: ["context/templates/talent-intel.md"],
   },
   tools: ["gws:drive", "gws:docs", "gws:sheets"],
   autonomy: "autonomous",
   escalation_threshold: 3,
   sample_review_rate: 0.2,
-  writable: ["memory/source-history.json", "memory/scoring-calibration.json", "memory/learnings.json"],
+  writable: [
+    "memory/source-history.json",
+    "memory/scoring-calibration.json",
+    "memory/learnings.json",
+    "memory/temp-watch-domains.json",
+  ],
 };
 
 const mockSupabase = {
@@ -403,4 +428,518 @@ describe("IntelligenceAgent", () => {
       expect(agent.slug).toBe("intelligence");
     });
   });
+
+  // ──────────────────────────────────────────────────────────────
+  // NEW TESTS: Research pipeline, depth, profiles, sub-statuses
+  // ──────────────────────────────────────────────────────────────
+
+  describe("depth assessment", () => {
+    function makeDepthResponse(depth: string): LLMResponse {
+      return {
+        text: "",
+        model: "claude-sonnet-4-6",
+        tokensIn: 200,
+        tokensOut: 100,
+        durationMs: 500,
+        costUsd: 0.002,
+        toolUse: {
+          toolName: "depth_assessment",
+          input: {
+            recommended_depth: depth,
+            reasoning: `Bedömt som ${depth}`,
+            estimated_searches: depth === "quick" ? 5 : depth === "standard" ? 15 : 40,
+          },
+        },
+      };
+    }
+
+    it("returns quick for Slack-initiated research with no hint", async () => {
+      // Depth assessment + scoring + research output tool calls
+      mockRouteRequest.mockResolvedValueOnce(makeScoringResponse()).mockResolvedValueOnce(makeResearchOutputResponse());
+
+      const agent = createIntelligenceAgent();
+      const result = await agent.execute(
+        makeTask({
+          type: "directed_research",
+          title: "Snabb fråga om Claude priser",
+          input: "Vad kostar Claude Opus?",
+          content_json: { source_channel: "slack" },
+        } as any),
+      );
+
+      expect(result.status).toBe("completed");
+    });
+
+    it("returns standard for high priority tasks", async () => {
+      mockRouteRequest
+        .mockResolvedValueOnce(makeScoringResponse())
+        .mockResolvedValueOnce(makeDeepAnalysisResponse())
+        .mockResolvedValueOnce(makeResearchOutputResponse());
+
+      const agent = createIntelligenceAgent();
+      const result = await agent.execute(
+        makeTask({
+          type: "directed_research",
+          title: "Urgent: Konkurrent namnger Forefront",
+          input: "Analysera situationen",
+          priority: "high",
+        }),
+      );
+
+      expect(result.status).toBe("completed");
+    });
+
+    it("respects user depth_hint override", async () => {
+      mockRouteRequest
+        .mockResolvedValueOnce(makeScoringResponse())
+        .mockResolvedValueOnce(makeDeepAnalysisResponse())
+        .mockResolvedValueOnce(makeResearchOutputResponse());
+
+      const agent = createIntelligenceAgent();
+      const result = await agent.execute(
+        makeTask({
+          type: "directed_research",
+          title: "Deep dive AI-konsulting",
+          input: "Komplett analys",
+          content_json: { depth_hint: "deep" },
+        } as any),
+      );
+
+      expect(result.status).toBe("completed");
+    });
+  });
+
+  describe("directed research", () => {
+    it("executes full research pipeline", async () => {
+      mockRouteRequest
+        .mockResolvedValueOnce(makeDepthAssessmentResponse("standard"))
+        .mockResolvedValueOnce(makeScoringResponse())
+        .mockResolvedValueOnce(makeDeepAnalysisResponse())
+        .mockResolvedValueOnce(makeResearchOutputResponse());
+
+      const agent = createIntelligenceAgent();
+      const result = await agent.execute(
+        makeTask({
+          type: "directed_research",
+          title: "Hur använder Accenture AI?",
+          input: "Analysera Accentures AI-strategi i Norden",
+        }),
+      );
+
+      expect(result.status).toBe("completed");
+      expect(result.taskId).toBe("task-intel-123");
+    });
+
+    it("creates intelligence profile after research", async () => {
+      mockRouteRequest
+        .mockResolvedValueOnce(makeDepthAssessmentResponse("standard"))
+        .mockResolvedValueOnce(makeScoringResponse())
+        .mockResolvedValueOnce(makeDeepAnalysisResponse())
+        .mockResolvedValueOnce(makeResearchOutputResponse());
+
+      const agent = createIntelligenceAgent();
+      await agent.execute(
+        makeTask({
+          type: "directed_research",
+          title: "Accenture AI-strategi",
+          input: "Analysera",
+        }),
+      );
+
+      expect(mockUpsertProfile).toHaveBeenCalled();
+    });
+  });
+
+  describe("competitor deep dive", () => {
+    it("generates SWOT module", async () => {
+      mockRouteRequest
+        .mockResolvedValueOnce(makeDepthAssessmentResponse("standard"))
+        .mockResolvedValueOnce(makeScoringResponse())
+        .mockResolvedValueOnce(makeDeepAnalysisResponse())
+        .mockResolvedValueOnce(makeResearchOutputResponse())
+        .mockResolvedValueOnce(makeSwotModuleResponse());
+
+      const agent = createIntelligenceAgent();
+      const result = await agent.execute(
+        makeTask({
+          type: "competitor_deep_dive",
+          title: "McKinsey konkurrentanalys",
+          input: "Djupanalys av McKinseys AI-erbjudande",
+        }),
+      );
+
+      expect(result.status).toBe("completed");
+    });
+  });
+
+  describe("trend analysis", () => {
+    it("generates timeline module", async () => {
+      mockRouteRequest
+        .mockResolvedValueOnce(makeDepthAssessmentResponse("standard"))
+        .mockResolvedValueOnce(makeScoringResponse())
+        .mockResolvedValueOnce(makeDeepAnalysisResponse())
+        .mockResolvedValueOnce(makeResearchOutputResponse())
+        .mockResolvedValueOnce(makeTimelineModuleResponse());
+
+      const agent = createIntelligenceAgent();
+      const result = await agent.execute(
+        makeTask({
+          type: "trend_analysis",
+          title: "AI Agent-trend 2025-2026",
+          input: "Analysera trender inom AI-agenter",
+        }),
+      );
+
+      expect(result.status).toBe("completed");
+    });
+  });
+
+  describe("tech watch", () => {
+    it("generates scorecard module", async () => {
+      mockRouteRequest
+        .mockResolvedValueOnce(makeDepthAssessmentResponse("standard"))
+        .mockResolvedValueOnce(makeScoringResponse())
+        .mockResolvedValueOnce(makeDeepAnalysisResponse())
+        .mockResolvedValueOnce(makeResearchOutputResponse())
+        .mockResolvedValueOnce(makeScorecardModuleResponse());
+
+      const agent = createIntelligenceAgent();
+      const result = await agent.execute(
+        makeTask({
+          type: "tech_watch",
+          title: "Cursor vs Windsurf utvärdering",
+          input: "Utvärdera Cursor och Windsurf som AI-kodverktyg",
+        }),
+      );
+
+      expect(result.status).toBe("completed");
+    });
+  });
+
+  describe("talent intel", () => {
+    it("generates talent matrix module", async () => {
+      mockRouteRequest
+        .mockResolvedValueOnce(makeDepthAssessmentResponse("standard"))
+        .mockResolvedValueOnce(makeScoringResponse())
+        .mockResolvedValueOnce(makeDeepAnalysisResponse())
+        .mockResolvedValueOnce(makeResearchOutputResponse())
+        .mockResolvedValueOnce(makeTalentMatrixModuleResponse());
+
+      const agent = createIntelligenceAgent();
+      const result = await agent.execute(
+        makeTask({
+          type: "talent_intel",
+          title: "AI-konsultrekrytering Norden",
+          input: "Bevaka rekryteringsläget för AI-konsulter",
+        }),
+      );
+
+      expect(result.status).toBe("completed");
+    });
+  });
+
+  describe("company industry analysis", () => {
+    it("generates company profile module", async () => {
+      mockRouteRequest
+        .mockResolvedValueOnce(makeDepthAssessmentResponse("standard"))
+        .mockResolvedValueOnce(makeScoringResponse())
+        .mockResolvedValueOnce(makeDeepAnalysisResponse())
+        .mockResolvedValueOnce(makeResearchOutputResponse())
+        .mockResolvedValueOnce(makeCompanyProfileModuleResponse());
+
+      const agent = createIntelligenceAgent();
+      const result = await agent.execute(
+        makeTask({
+          type: "company_industry_analysis",
+          title: "EdTech AI-branschen",
+          input: "Analysera EdTech AI-marknaden i Norden",
+        }),
+      );
+
+      expect(result.status).toBe("completed");
+    });
+  });
+
+  describe("sub-statuses", () => {
+    it("transitions through sub-statuses during research", async () => {
+      mockRouteRequest
+        .mockResolvedValueOnce(makeDepthAssessmentResponse("standard"))
+        .mockResolvedValueOnce(makeScoringResponse())
+        .mockResolvedValueOnce(makeDeepAnalysisResponse())
+        .mockResolvedValueOnce(makeResearchOutputResponse());
+
+      const agent = createIntelligenceAgent();
+      await agent.execute(
+        makeTask({
+          type: "directed_research",
+          title: "Test sub-statuses",
+          input: "Test",
+        }),
+      );
+
+      // Should have set gathering, analyzing, compiling sub-statuses
+      expect(mockUpdateTaskSubStatus).toHaveBeenCalledWith(expect.anything(), "task-intel-123", "gathering");
+      expect(mockUpdateTaskSubStatus).toHaveBeenCalledWith(expect.anything(), "task-intel-123", "analyzing");
+      expect(mockUpdateTaskSubStatus).toHaveBeenCalledWith(expect.anything(), "task-intel-123", "compiling");
+    });
+  });
+
+  describe("intelligence profiles", () => {
+    it("loads existing profile for context", async () => {
+      mockGetProfile.mockResolvedValueOnce({
+        id: "prof-1",
+        topic_slug: "accenture",
+        topic_name: "Accenture",
+        category: "competitor",
+        summary: "Stor konsultbyrå med AI-fokus",
+        key_facts: { employees: "700000" },
+        last_updated: new Date().toISOString(),
+        research_count: 3,
+        sources: ["https://accenture.com"],
+        related_profiles: [],
+        created_at: new Date().toISOString(),
+      });
+
+      mockRouteRequest
+        .mockResolvedValueOnce(makeDepthAssessmentResponse("standard"))
+        .mockResolvedValueOnce(makeScoringResponse())
+        .mockResolvedValueOnce(makeDeepAnalysisResponse())
+        .mockResolvedValueOnce(makeResearchOutputResponse());
+
+      const agent = createIntelligenceAgent();
+      await agent.execute(
+        makeTask({
+          type: "directed_research",
+          title: "Accenture uppdatering",
+          input: "Senaste nytt om Accenture",
+        }),
+      );
+
+      expect(mockGetProfile).toHaveBeenCalled();
+      expect(mockUpsertProfile).toHaveBeenCalled();
+    });
+
+    it("increments research_count on upsert", async () => {
+      const existingProfile = {
+        id: "prof-1",
+        topic_slug: "accenture",
+        topic_name: "Accenture",
+        category: "competitor" as const,
+        summary: "Befintlig profil",
+        key_facts: {},
+        last_updated: new Date().toISOString(),
+        research_count: 5,
+        sources: [] as string[],
+        related_profiles: [] as string[],
+        created_at: new Date().toISOString(),
+      };
+      // getProfile is called multiple times: assessDepth, executeResearch, upsertIntelligenceProfile
+      mockGetProfile.mockResolvedValue(existingProfile);
+
+      mockRouteRequest
+        .mockResolvedValueOnce(makeDepthAssessmentResponse("standard"))
+        .mockResolvedValueOnce(makeScoringResponse())
+        .mockResolvedValueOnce(makeDeepAnalysisResponse())
+        .mockResolvedValueOnce(makeResearchOutputResponse());
+
+      const agent = createIntelligenceAgent();
+      await agent.execute(
+        makeTask({
+          type: "directed_research",
+          title: "Accenture",
+          input: "Uppdatera",
+        }),
+      );
+
+      expect(mockUpsertProfile).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ research_count: 6 }));
+    });
+  });
+
+  describe("enrichment", () => {
+    it("includes suggested_research_topics in scan output", async () => {
+      mockRouteRequest
+        .mockResolvedValueOnce(makeScoringResponse())
+        .mockResolvedValueOnce(makeDeepAnalysisResponse())
+        .mockResolvedValueOnce(makeBriefingResponse());
+
+      const agent = createIntelligenceAgent();
+      await agent.execute(makeTask());
+
+      // Verify content_json includes suggested_research_topics
+      expect(mockUpdateTaskStatus).toHaveBeenCalledWith(
+        expect.anything(),
+        "task-intel-123",
+        "published",
+        expect.objectContaining({
+          content_json: expect.objectContaining({
+            suggested_research_topics: expect.any(Array),
+          }),
+        }),
+      );
+    });
+  });
 });
+
+// ──────────────────────────────────────────────────────────────
+// Additional test helpers for research pipeline
+// ──────────────────────────────────────────────────────────────
+
+function makeDepthAssessmentResponse(depth: string): LLMResponse {
+  return {
+    text: "",
+    model: "claude-sonnet-4-6",
+    tokensIn: 200,
+    tokensOut: 100,
+    durationMs: 500,
+    costUsd: 0.002,
+    toolUse: {
+      toolName: "depth_assessment",
+      input: {
+        recommended_depth: depth,
+        reasoning: `Bedömt som ${depth}`,
+        estimated_searches: 15,
+      },
+    },
+  };
+}
+
+function makeResearchOutputResponse(): LLMResponse {
+  return {
+    text: "",
+    model: "claude-opus-4-6",
+    tokensIn: 1500,
+    tokensOut: 800,
+    durationMs: 4000,
+    costUsd: 0.15,
+    toolUse: {
+      toolName: "research_output",
+      input: {
+        summary: "Sammanfattning av research-resultat.",
+        findings: [
+          {
+            title: "Fynd 1",
+            detail: "Beskrivning av fynd 1",
+            source: "https://example.com/article-1",
+            relevance: 0.85,
+          },
+        ],
+        recommendations: ["Forefront bör bevaka detta område"],
+        sources: ["https://example.com/article-1"],
+        publishable: false,
+        seo_relevant: false,
+        lead_opportunities: false,
+        urgency_score: 0.3,
+        suggested_action: "brief",
+      },
+    },
+  };
+}
+
+function makeSwotModuleResponse(): LLMResponse {
+  return {
+    text: "",
+    model: "claude-opus-4-6",
+    tokensIn: 800,
+    tokensOut: 400,
+    durationMs: 2000,
+    costUsd: 0.08,
+    toolUse: {
+      toolName: "swot_module",
+      input: {
+        strengths: ["Starkt varumärke", "Global närvaro"],
+        weaknesses: ["Hög kostnad", "Långsam anpassning"],
+        opportunities: ["Forefront kan differentiera på specialisering"],
+        threats: ["Priskrig på AI-konsulting"],
+      },
+    },
+  };
+}
+
+function makeTimelineModuleResponse(): LLMResponse {
+  return {
+    text: "",
+    model: "claude-opus-4-6",
+    tokensIn: 800,
+    tokensOut: 400,
+    durationMs: 2000,
+    costUsd: 0.08,
+    toolUse: {
+      toolName: "timeline_module",
+      input: {
+        timeline_entries: [
+          { date: "2025-01", event: "GPT-5 lanseras", significance: "Ny nivå av AI-kapabilitet" },
+          { date: "2025-06", event: "EU AI Act träder i kraft", significance: "Regulatorisk förändring" },
+        ],
+        trend_direction: "emerging",
+        inflection_points: ["EU AI Act ändrar spelreglerna"],
+      },
+    },
+  };
+}
+
+function makeScorecardModuleResponse(): LLMResponse {
+  return {
+    text: "",
+    model: "claude-opus-4-6",
+    tokensIn: 800,
+    tokensOut: 400,
+    durationMs: 2000,
+    costUsd: 0.08,
+    toolUse: {
+      toolName: "scorecard_module",
+      input: {
+        criteria: [
+          { name: "Capabilities", score: 8, notes: "Stark kodkomplettering" },
+          { name: "Pricing", score: 6, notes: "Premium-pris" },
+          { name: "Integration Fit", score: 7, notes: "Bra VS Code-integration" },
+        ],
+        overall_score: 7,
+        verdict: "Rekommenderas",
+      },
+    },
+  };
+}
+
+function makeTalentMatrixModuleResponse(): LLMResponse {
+  return {
+    text: "",
+    model: "claude-opus-4-6",
+    tokensIn: 800,
+    tokensOut: 400,
+    durationMs: 2000,
+    costUsd: 0.08,
+    toolUse: {
+      toolName: "talent_matrix_module",
+      input: {
+        roles_in_demand: [
+          { title: "AI Engineer", count: 45, companies: ["Accenture", "McKinsey"] },
+          { title: "ML Ops", count: 20, companies: ["Spotify", "Klarna"] },
+        ],
+        seniority_distribution: "Senior 60%, Mid 30%, Junior 10%",
+        skill_patterns: ["Python", "LLM fine-tuning", "RAG"],
+        hiring_velocity: "increasing",
+      },
+    },
+  };
+}
+
+function makeCompanyProfileModuleResponse(): LLMResponse {
+  return {
+    text: "",
+    model: "claude-opus-4-6",
+    tokensIn: 800,
+    tokensOut: 400,
+    durationMs: 2000,
+    costUsd: 0.08,
+    toolUse: {
+      toolName: "company_profile_module",
+      input: {
+        overview: "EdTech AI-branschen i Norden växer snabbt",
+        financials: { market_size: "2 miljarder SEK", growth: "25% YoY" },
+        strategy_summary: "Fokus på personaliserad inlärning med AI",
+        market_position: "Fragmenterad marknad med få stora aktörer",
+        risk_factors: ["Regulatoriska krav", "Dataintegritet"],
+      },
+    },
+  };
+}

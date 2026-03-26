@@ -63,3 +63,18 @@ export function isValidTransition(from: string, to: string): boolean {
 export function shouldSetCompletedAt(status: string): boolean {
   return COMPLETED_STATUSES.has(status);
 }
+
+// --- Sub-statuses (informational metadata on in_progress) ---
+
+export type TaskSubStatus = "gathering" | "analyzing" | "compiling" | "awaiting_input" | null;
+
+export const VALID_SUB_STATUSES: Record<string, TaskSubStatus[]> = {
+  in_progress: ["gathering", "analyzing", "compiling", "awaiting_input"],
+};
+
+export function isValidSubStatus(status: string, subStatus: string | null): boolean {
+  if (subStatus === null) return true;
+  const allowed = VALID_SUB_STATUSES[status];
+  if (!allowed) return false;
+  return allowed.includes(subStatus as TaskSubStatus);
+}

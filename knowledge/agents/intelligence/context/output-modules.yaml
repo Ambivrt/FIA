@@ -1,0 +1,64 @@
+version: 1.0.0
+
+modules:
+  base:
+    description: "Grundstruktur som alltid inkluderas"
+    sections:
+      - summary
+      - findings
+      - recommendations
+      - sources
+    required: true
+
+  swot:
+    description: "SWOT-analys (Strengths, Weaknesses, Opportunities, Threats)"
+    sections:
+      - strengths
+      - weaknesses
+      - opportunities
+      - threats
+    used_by:
+      - competitor_deep_dive
+
+  timeline:
+    description: "Kronologisk tidslinje med trendriktning"
+    sections:
+      - timeline_entries
+      - trend_direction
+      - inflection_points
+    used_by:
+      - trend_analysis
+
+  scorecard:
+    description: "Utvärderingsmatris med poängsättning"
+    sections:
+      - capabilities
+      - pricing
+      - integration_fit
+      - maturity
+      - community
+      - overall_score
+      - verdict
+    used_by:
+      - tech_watch
+
+  talent_matrix:
+    description: "Arbetsmarknadsmatris med roller, kompetenser, aktivitet"
+    sections:
+      - roles_in_demand
+      - seniority_distribution
+      - skill_patterns
+      - hiring_velocity
+    used_by:
+      - talent_intel
+
+  company_profile:
+    description: "Företags-/branschprofil med finansiella data"
+    sections:
+      - overview
+      - financials
+      - strategy_summary
+      - market_position
+      - risk_factors
+    used_by:
+      - company_industry_analysis

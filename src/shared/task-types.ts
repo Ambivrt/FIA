@@ -19,7 +19,17 @@ export const AGENT_TASK_TYPES: Record<string, string[]> = {
   seo: ["seo_audit", "keyword_research", "bulk_optimization", "content_recommendations"],
   lead: ["lead_scoring", "nurture_email", "nurture_sequences"],
   analytics: ["morning_pulse", "weekly_report", "quarterly_review", "anomaly_detection"],
-  intelligence: ["morning_scan", "midday_sweep", "weekly_intelligence"],
+  intelligence: [
+    "morning_scan",
+    "midday_sweep",
+    "weekly_intelligence",
+    "directed_research",
+    "competitor_deep_dive",
+    "trend_analysis",
+    "company_industry_analysis",
+    "tech_watch",
+    "talent_intel",
+  ],
 };
 
 // Task types created only by triggers (not user-schedulable).
