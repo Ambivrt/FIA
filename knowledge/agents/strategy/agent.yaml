@@ -16,8 +16,7 @@ skills:
 
 routing:
   default: claude-opus
-  research: google-search
-  trend_analysis: google-search
+  strategic_research: google-search
   channel_strategy: claude-opus
   some_strategy: claude-opus
   ads_strategy: claude-opus
@@ -80,8 +79,7 @@ review_config:
   sampled_review:
     rate: 0.5
     task_types:
-      - research
-      - trend_analysis
+      - strategic_research
       - competitive_response
 
 self_eval:
