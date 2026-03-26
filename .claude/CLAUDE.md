@@ -45,5 +45,8 @@ npx ts-node cli/index.ts # FIA CLI
 - Kill switch lever i Supabase system_settings
 - Drive folder map lever i Supabase system_settings (key: drive_folder_map)
 - Kör `fia drive setup` för att skapa/verifiera Drive-mappar
+- OAuth consent screen är Internal (Google Workspace) — refresh tokens löper aldrig ut
+- OAuth-klient måste vara Desktop App (inte Web Application) — `gcp-oauth.keys.json` har `"installed"`-nyckel
+- Gateway refreshar access tokens automatiskt var 45:e minut via `setupTokenRefresh()`
 - Triggers seedas från agent.yaml vid startup men dashboarden äger config efter seed
 - ANTHROPIC_API_KEY finns i .env – används av gateway, inte direkt av agents

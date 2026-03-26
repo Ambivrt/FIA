@@ -82,22 +82,24 @@ Auth-scriptet `scripts/gws-auth.mjs` gor headless OAuth utan extra dependencies.
 
 #### Forutsattningar
 
-1. OAuth Client ID konfigurerat i Google Cloud Console (projekt `ffcg-fia`)
-2. `client_secret.json` placerad i `~/.config/gws/` (skapas via `gws auth setup`)
-3. `http://localhost` konfigurerat som Authorized redirect URI
+1. OAuth Client ID av typen **Desktop App** i Google Cloud Console (projekt `ffcg-fia`)
+2. OAuth consent screen satt till **Internal** (Google Workspace) — ger obegransad token-livstid
+3. `gcp-oauth.keys.json` med `"installed"`-nyckel i `GWORKSPACE_CREDS_DIR`
+4. `CLIENT_ID` och `CLIENT_SECRET` i `.env`
+
+!!! warning "Desktop App, inte Web Application"
+OAuth-klienten **maste** vara av typen "Desktop App" i Google Cloud Console. "Web Application"-klienter stodjer inte `http://localhost` redirect URI som auth-scriptet anvander. Ladda ner JSON fran Console — den ska ha en `"installed"`-nyckel.
+
+!!! tip "Internal app = permanent auth"
+Med OAuth consent screen satt till **Internal** (kraver Google Workspace) loper refresh tokens aldrig ut. Gateway refreshar access tokens automatiskt var 45:e minut via `setupTokenRefresh()`. Du ska aldrig behova kora auth-scriptet igen efter initial setup.
 
 #### Steg
 
 ```bash
 cd ~/FIA
 
-# Hamta client_id och client_secret fran:
-cat ~/.config/gws/client_secret.json
-
-# Kor auth-scriptet
-CLIENT_ID="ditt-id.apps.googleusercontent.com" \
-CLIENT_SECRET="GOCSPX-din-secret" \
-GWORKSPACE_CREDS_DIR=/home/marcus_landstrom/FIA \
+# Kor auth-scriptet (laser CLIENT_ID/CLIENT_SECRET fran .env)
+source .env
 node scripts/gws-auth.mjs
 ```
 
@@ -109,33 +111,18 @@ node scripts/gws-auth.mjs
 6. Klistra in i terminalen och tryck Enter
 7. Tokens sparas till `$GWORKSPACE_CREDS_DIR/.gworkspace-credentials.json`
 
-#### gws CLI med token
+#### Token-refresh
 
-gws CLI v0.4.4 laser inte plaintext-credentials automatiskt. For att anvanda gws CLI direkt, exportera token:
+Gateway hanterar token-refresh automatiskt:
 
-```bash
-export GOOGLE_WORKSPACE_CLI_TOKEN=$(cat ~/FIA/.gworkspace-credentials.json | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).access_token))")
-gws drive files list
-```
+- `ensureGlobalAuth()` i `src/mcp/gws.ts` laddar credentials och satter `google.options({ auth })`
+- `setupTokenRefresh()` refreshar var 45:e minut
+- `expiry_date` (timestamp) anvands for att avgora nar refresh behovs
+- Med **Internal** OAuth consent screen loper refresh_token aldrig ut
 
-!!! note "Access token giltig i 1 timme"
-Access token fran OAuth loper ut efter ~1 timme. Gateway-MCP-wrappern (`src/mcp/gws.ts`) hanterar token-refresh automatiskt via refresh_token. For manuell CLI-anvandning, kor export-kommandot igen.
-
-#### Alternativ: gws auth export (fran maskin med webbläsare)
-
-Om du har tillgang till en maskin med webbläsare (t.ex. lokal dator):
-
-```bash
-# Pa maskin med webbläsare
-npx @googleworkspace/cli auth login
-npx @googleworkspace/cli auth export --unmasked > credentials.json
-
-# Kopiera till VPS
-scp credentials.json user@VPS:~/FIA/gws-credentials.json
-
-# Pa VPS
-export GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE=/home/marcus_landstrom/FIA/gws-credentials.json
-```
+!!! note "Om auth slutar fungera"
+Om token av nagon anledning upphör (t.ex. OAuth-klient raderas eller aterställs):
+`source ~/FIA/.env && node ~/FIA/scripts/gws-auth.mjs`
 
 ---
 
