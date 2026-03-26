@@ -1,9 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { SupabaseClient } from "@supabase/supabase-js";
+import type { UserRole } from "../permissions";
+export { requirePermission } from "../permissions";
 
 export interface AuthUser {
   id: string;
-  role: string;
+  role: UserRole | string;
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

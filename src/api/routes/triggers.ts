@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { requireRole, getDbUserId } from "../middleware/auth";
+import { requirePermission, getDbUserId } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { logActivity } from "../../supabase/activity-writer";
 import { createTask } from "../../supabase/task-writer";
@@ -19,7 +19,7 @@ export function triggerRoutes(supabase: SupabaseClient, config?: AppConfig): Rou
   const router = Router();
 
   // GET /api/triggers/pending
-  router.get("/pending", requireRole("orchestrator", "admin"), async (_req, res) => {
+  router.get("/pending", requirePermission("manage_triggers"), async (_req, res) => {
     try {
       const { data, error } = await supabase
         .from("pending_triggers")
@@ -35,7 +35,7 @@ export function triggerRoutes(supabase: SupabaseClient, config?: AppConfig): Rou
   });
 
   // POST /api/triggers/:id/approve
-  router.post("/:id/approve", requireRole("orchestrator", "admin"), async (req, res) => {
+  router.post("/:id/approve", requirePermission("manage_triggers"), async (req, res) => {
     try {
       const triggerId = req.params.id;
 
@@ -110,7 +110,7 @@ export function triggerRoutes(supabase: SupabaseClient, config?: AppConfig): Rou
   });
 
   // POST /api/triggers/:id/reject
-  router.post("/:id/reject", requireRole("orchestrator", "admin"), validateBody(rejectSchema), async (req, res) => {
+  router.post("/:id/reject", requirePermission("manage_triggers"), validateBody(rejectSchema), async (req, res) => {
     try {
       const triggerId = req.params.id;
       const { reason } = req.body;
@@ -153,7 +153,7 @@ export function triggerRoutes(supabase: SupabaseClient, config?: AppConfig): Rou
   });
 
   // POST /api/triggers/reseed – admin only (all agents)
-  router.post("/reseed", requireRole("admin"), validateBody(reseedSchema), async (req, res) => {
+  router.post("/reseed", requirePermission("knowledge_reseed"), validateBody(reseedSchema), async (req, res) => {
     try {
       const confirm = req.body?.confirm === true;
 

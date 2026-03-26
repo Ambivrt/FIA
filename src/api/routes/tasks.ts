@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { requireRole, getDbUserId } from "../middleware/auth";
+import { requirePermission, getDbUserId } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { updateTaskStatus, createApproval } from "../../supabase/task-writer";
 import { logActivity } from "../../supabase/activity-writer";
@@ -78,52 +78,47 @@ export function taskRoutes(supabase: SupabaseClient): Router {
   });
 
   // POST /api/tasks – skapa en ny task (CLI / Dashboard)
-  router.post(
-    "/",
-    requireRole("orchestrator", "admin", "operator"),
-    validateBody(createTaskSchema),
-    async (req, res) => {
-      try {
-        const { agent_slug, type, title, priority } = req.body;
+  router.post("/", requirePermission("create_tasks"), validateBody(createTaskSchema), async (req, res) => {
+    try {
+      const { agent_slug, type, title, priority } = req.body;
 
-        const { data: agent, error: agentErr } = await supabase
-          .from("agents")
-          .select("id, name")
-          .eq("slug", agent_slug)
-          .single();
+      const { data: agent, error: agentErr } = await supabase
+        .from("agents")
+        .select("id, name")
+        .eq("slug", agent_slug)
+        .single();
 
-        if (agentErr || !agent) {
-          res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${agent_slug}' not found.` } });
-          return;
-        }
-
-        const { data: task, error } = await supabase
-          .from("tasks")
-          .insert({
-            agent_id: agent.id,
-            type,
-            title: title || `${type} (CLI)`,
-            priority,
-            status: "queued",
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        await logActivity(supabase, {
-          agent_id: agent.id,
-          user_id: getDbUserId(req),
-          action: "task_created",
-          details_json: { task_id: task.id, type, priority, source: "cli" },
-        });
-
-        res.status(201).json({ data: task });
-      } catch (err) {
-        res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+      if (agentErr || !agent) {
+        res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${agent_slug}' not found.` } });
+        return;
       }
-    },
-  );
+
+      const { data: task, error } = await supabase
+        .from("tasks")
+        .insert({
+          agent_id: agent.id,
+          type,
+          title: title || `${type} (CLI)`,
+          priority,
+          status: "queued",
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await logActivity(supabase, {
+        agent_id: agent.id,
+        user_id: getDbUserId(req),
+        action: "task_created",
+        details_json: { task_id: task.id, type, priority, source: "cli" },
+      });
+
+      res.status(201).json({ data: task });
+    } catch (err) {
+      res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+    }
+  });
 
   // GET /api/tasks/:id
   router.get("/:id", async (req, res) => {
@@ -154,7 +149,7 @@ export function taskRoutes(supabase: SupabaseClient): Router {
   // POST /api/tasks/:id/approve
   router.post(
     "/:id/approve",
-    requireRole("orchestrator", "admin", "operator"),
+    requirePermission("approve_reject_tasks"),
     validateBody(approveSchema),
     async (req, res) => {
       try {
@@ -192,7 +187,7 @@ export function taskRoutes(supabase: SupabaseClient): Router {
   // POST /api/tasks/:id/reject
   router.post(
     "/:id/reject",
-    requireRole("orchestrator", "admin", "operator"),
+    requirePermission("approve_reject_tasks"),
     validateBody(rejectSchema),
     async (req, res) => {
       try {
@@ -231,7 +226,7 @@ export function taskRoutes(supabase: SupabaseClient): Router {
   // POST /api/tasks/:id/revision
   router.post(
     "/:id/revision",
-    requireRole("orchestrator", "admin", "operator"),
+    requirePermission("approve_reject_tasks"),
     validateBody(revisionSchema),
     async (req, res) => {
       try {
@@ -274,7 +269,7 @@ export function taskRoutes(supabase: SupabaseClient): Router {
 
   router.post(
     "/:id/status",
-    requireRole("orchestrator", "admin"),
+    requirePermission("pause_resume_agents"),
     validateBody(statusChangeSchema),
     async (req, res) => {
       try {

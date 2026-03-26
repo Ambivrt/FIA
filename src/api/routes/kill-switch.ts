@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { requireRole, getDbUserId } from "../middleware/auth";
+import { requirePermission, getDbUserId } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { KillSwitch } from "../../utils/kill-switch";
 
@@ -20,7 +20,7 @@ export function killSwitchRoutes(killSwitch: KillSwitch, supabase: SupabaseClien
   });
 
   // POST /api/kill-switch
-  router.post("/", requireRole("orchestrator", "admin"), validateBody(killSwitchSchema), async (req, res) => {
+  router.post("/", requirePermission("kill_switch"), validateBody(killSwitchSchema), async (req, res) => {
     try {
       const { action } = req.body;
 
