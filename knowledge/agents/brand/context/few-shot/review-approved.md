@@ -12,13 +12,13 @@ Exemplarisk Forefront-text. Narrativdriven, modig, tekniskt djup utan att tappa 
 
 ## Helhetsbedömning: 5/5
 
-| Dimension | Betyg | Kommentar |
-|---|---|---|
-| Tonalitet | 5/5 | Alla tre principer aktiva. Nyfiken genom scenbygget och utforskande ton. Modig genom tesen att arbetsflöden förändras fundamentalt. Lustfylld genom understatement ("Ingen mänsklig anställd skulle vilja"). |
-| Substans & trovärdighet | 5/5 | Konkret person, plats, händelse. Tekniska detaljer kontextualiseras med mänskliga konsekvenser. Egen vinkel — inte en produktrecension utan en analys av vad förändringen betyder. |
-| Förbjudna mönster | **Godkänt** | Inga brott identifierade |
-| Kanal & format | 4/5 | Longform-artikel på LinkedIn. Längden är motiverad av ämnets djup. Metadata komplett. |
-| Varumärkeskonsistens | 5/5 | Positionerar Forefront som insiktsfulla och framåtlutade utan att explicit nämna Forefront i varje stycke. CTA implicit genom hela texten — läsaren vill veta mer. |
+| Dimension               | Betyg       | Kommentar                                                                                                                                                                                                    |
+| ----------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Tonalitet               | 5/5         | Alla tre principer aktiva. Nyfiken genom scenbygget och utforskande ton. Modig genom tesen att arbetsflöden förändras fundamentalt. Lustfylld genom understatement ("Ingen mänsklig anställd skulle vilja"). |
+| Substans & trovärdighet | 5/5         | Konkret person, plats, händelse. Tekniska detaljer kontextualiseras med mänskliga konsekvenser. Egen vinkel — inte en produktrecension utan en analys av vad förändringen betyder.                           |
+| Förbjudna mönster       | **Godkänt** | Inga brott identifierade                                                                                                                                                                                     |
+| Kanal & format          | 4/5         | Longform-artikel på LinkedIn. Längden är motiverad av ämnets djup. Metadata komplett.                                                                                                                        |
+| Varumärkeskonsistens    | 5/5         | Positionerar Forefront som insiktsfulla och framåtlutade utan att explicit nämna Forefront i varje stycke. CTA implicit genom hela texten — läsaren vill veta mer.                                           |
 
 ## Styrkor
 

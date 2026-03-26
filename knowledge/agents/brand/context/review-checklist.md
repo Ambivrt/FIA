@@ -84,14 +84,14 @@ Skriv din feedback som **ren markdown** (INTE JSON, INTE inuti kodblock). Följ 
 
 ## Helhetsbedömning: [1–5]/5
 
-| Dimension | Betyg | Kommentar |
-|---|---|---|
-| Tonalitet | [1–5]/5 | [Kort motivering] |
-| Substans & trovärdighet | [1–5]/5 | [Kort motivering] |
-| Förbjudna mönster | **Godkänt** / **Underkänt** | [Om underkänt: antal brott, annars "Inga brott"] |
-| Kanal & format | [1–5]/5 | [Kort motivering] |
-| Varumärkeskonsistens | [1–5]/5 | [Kort motivering] |
-| Visuellt innehåll | [1–5]/5 | [Kort motivering — inkludera enbart vid bildgranskning] |
+| Dimension               | Betyg                       | Kommentar                                               |
+| ----------------------- | --------------------------- | ------------------------------------------------------- |
+| Tonalitet               | [1–5]/5                     | [Kort motivering]                                       |
+| Substans & trovärdighet | [1–5]/5                     | [Kort motivering]                                       |
+| Förbjudna mönster       | **Godkänt** / **Underkänt** | [Om underkänt: antal brott, annars "Inga brott"]        |
+| Kanal & format          | [1–5]/5                     | [Kort motivering]                                       |
+| Varumärkeskonsistens    | [1–5]/5                     | [Kort motivering]                                       |
+| Visuellt innehåll       | [1–5]/5                     | [Kort motivering — inkludera enbart vid bildgranskning] |
 
 ## Brott mot förbjudna mönster
 
@@ -111,6 +111,7 @@ Skriv din feedback som **ren markdown** (INTE JSON, INTE inuti kodblock). Följ 
 ---
 
 **Regler:**
+
 - Utelämna "Styrkor" om det inte finns några
 - Utelämna "Ändringar som krävs" om inga ändringar behövs
 - Utelämna "Brott mot förbjudna mönster" om inga brott finns

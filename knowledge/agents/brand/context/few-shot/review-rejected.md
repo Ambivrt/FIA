@@ -26,13 +26,13 @@ Avvisad. Texten bryter mot sex förbjudna mönster och saknar Forefronts tonalit
 
 ## Helhetsbedömning: 1/5
 
-| Dimension | Betyg | Kommentar |
-|---|---|---|
-| Tonalitet | 1/5 | Saknar alla tre bärande principer. Inte nyfiken — levererar påståenden utan frågor. Inte modig — säger samma sak som alla andra. Inte lustfylld — generisk entusiasm är inte humor. |
-| Substans & trovärdighet | 1/5 | Ingen tes, inga belägg, inga konkreta exempel. "40% av din tid" saknar källa. Fem punkter som kunde stå i vilken tech-blogg som helst. |
-| Förbjudna mönster | **Underkänt** | 6 brott identifierade (se nedan) |
-| Kanal & format | 2/5 | Längden är ok för kortformat men strukturen (numrerad lista) är förbjuden. |
-| Varumärkeskonsistens | 1/5 | Texten kunde stå på vilken konsultfirmas LinkedIn som helst. Noll Forefront-identitet. CTA:n är transaktionell och generisk. |
+| Dimension               | Betyg         | Kommentar                                                                                                                                                                           |
+| ----------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tonalitet               | 1/5           | Saknar alla tre bärande principer. Inte nyfiken — levererar påståenden utan frågor. Inte modig — säger samma sak som alla andra. Inte lustfylld — generisk entusiasm är inte humor. |
+| Substans & trovärdighet | 1/5           | Ingen tes, inga belägg, inga konkreta exempel. "40% av din tid" saknar källa. Fem punkter som kunde stå i vilken tech-blogg som helst.                                              |
+| Förbjudna mönster       | **Underkänt** | 6 brott identifierade (se nedan)                                                                                                                                                    |
+| Kanal & format          | 2/5           | Längden är ok för kortformat men strukturen (numrerad lista) är förbjuden.                                                                                                          |
+| Varumärkeskonsistens    | 1/5           | Texten kunde stå på vilken konsultfirmas LinkedIn som helst. Noll Forefront-identitet. CTA:n är transaktionell och generisk.                                                        |
 
 ## Brott mot förbjudna mönster
 
