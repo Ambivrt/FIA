@@ -271,42 +271,10 @@ export abstract class BaseAgent {
       const selfEvalThreshold = this.manifest.self_eval?.threshold ?? 0.7;
 
       if (selfEvalResult && selfEvalResult.score < selfEvalThreshold) {
-        if (selfEvalResult.score <= 0.4) {
-          // Very poor quality – mark as error
-          await updateTaskStatus(this.supabase, taskId, "error", {
-            content_json: { output: finalOutput, _pipeline: pipeline, error: "Self-eval score too low" },
-          });
-
-          await logActivity(this.supabase, {
-            agent_id: agentRow,
-            action: "self_eval_error",
-            details_json: { task_id: taskId, score: selfEvalResult.score, issues: selfEvalResult.issues },
-          });
-
-          this.logger.warn(`${this.name} self-eval too low (${selfEvalResult.score}): ${task.title}`, {
-            agent: this.slug,
-            task_id: taskId,
-            action: "self_eval_error",
-            score: selfEvalResult.score,
-          });
-
-          this.clearIterations(taskId);
-          return {
-            taskId,
-            output: finalOutput,
-            model: response.model,
-            tokensIn: accumulatedTokensIn,
-            tokensOut: accumulatedTokensOut,
-            durationMs: accumulatedDurationMs,
-            status: "error",
-            pipeline,
-          };
-        }
-
-        // Score > 0.4 but below threshold – one revision attempt
+        // Always attempt one revision before giving up
         await task.onProgress?.(
           "self_eval_revision",
-          `:arrows_counterclockwise: Self-eval identifierade brister — omgenererar...`,
+          `:arrows_counterclockwise: Self-eval identifierade brister (${selfEvalResult.score.toFixed(2)}) — omgenererar...`,
           {
             task_id: taskId,
             issues: selfEvalResult.issues,
@@ -331,6 +299,46 @@ export abstract class BaseAgent {
         accumulatedDurationMs += revision.durationMs;
 
         pipeline.self_eval!.revision_triggered = true;
+
+        // Re-evaluate revised output — only hard-fail if still very poor
+        if (selfEvalResult.score <= 0.4) {
+          const reEval = await this.runSelfEvalIfEnabled(finalOutput, taskId, task, pipeline);
+          if (reEval && reEval.score <= 0.4) {
+            await updateTaskStatus(this.supabase, taskId, "error", {
+              content_json: { output: finalOutput, _pipeline: pipeline, error: "Self-eval score too low" },
+            });
+
+            await logActivity(this.supabase, {
+              agent_id: agentRow,
+              action: "self_eval_error",
+              details_json: {
+                task_id: taskId,
+                score: reEval.score,
+                original_score: selfEvalResult.score,
+                issues: reEval.issues,
+              },
+            });
+
+            this.logger.warn(`${this.name} self-eval still too low after revision (${reEval.score}): ${task.title}`, {
+              agent: this.slug,
+              task_id: taskId,
+              action: "self_eval_error",
+              score: reEval.score,
+            });
+
+            this.clearIterations(taskId);
+            return {
+              taskId,
+              output: finalOutput,
+              model: response.model,
+              tokensIn: accumulatedTokensIn,
+              tokensOut: accumulatedTokensOut,
+              durationMs: accumulatedDurationMs,
+              status: "error",
+              pipeline,
+            };
+          }
+        }
       }
 
       const costSek = usdToSek(accumulatedCostUsd, this.config.usdToSek);
