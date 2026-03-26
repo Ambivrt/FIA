@@ -1,0 +1,43 @@
+version: 1.0.0
+
+source_types:
+  web_search:
+    provider: serper
+    enabled: true
+    description: "Generell webbsökning via Google (Serper API)"
+    used_by:
+      [directed_research, competitor_deep_dive, trend_analysis, company_industry_analysis, tech_watch, talent_intel]
+
+  job_sites:
+    provider: serper
+    enabled: true
+    description: "Jobbsajter via site:-queries (LinkedIn Jobs, Indeed, karriärsidor)"
+    site_prefixes:
+      - "site:linkedin.com/jobs"
+      - "site:indeed.se"
+      - "site:arbetsformedlingen.se"
+    rate_limit_per_hour: 20
+    used_by: [talent_intel, competitor_deep_dive]
+
+  academic:
+    provider: serper
+    enabled: true
+    description: "Akademiska källor via site:-queries (Google Scholar, arXiv)"
+    site_prefixes:
+      - "site:scholar.google.com"
+      - "site:arxiv.org"
+      - "site:papers.ssrn.com"
+    used_by: [trend_analysis, company_industry_analysis, tech_watch]
+
+  company_registers:
+    provider: serper
+    enabled: true
+    description: "Företagsdata via site:-queries (Allabolag, Crunchbase)"
+    site_prefixes:
+      - "site:allabolag.se"
+      - "site:crunchbase.com"
+      - "site:bolagsverket.se"
+    used_by: [competitor_deep_dive, company_industry_analysis]
+
+# Framtida: direkta API-integrationer för job_sites, academic, company_registers
+# MVP använder Serper med site:-prefix för alla källtyper

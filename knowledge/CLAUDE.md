@@ -91,16 +91,16 @@ triggers: # Deklarativa triggers (seedas till Supabase)
 
 Åtta agenter under `knowledge/agents/<slug>/`.
 
-| Slug         | Namn               | Routing default | Autonomi        | Speciellt                                             |
-| ------------ | ------------------ | --------------- | --------------- | ----------------------------------------------------- |
-| strategy     | Strategy Agent     | claude-opus     | semi-autonomous | `sample_review_rate: 1.0` (alla planer godkänns)      |
-| content      | Content Agent      | claude-opus     | autonomous      | Few-shot, metadata via Sonnet, bilder via Nano Banana |
-| campaign     | Campaign Agent     | claude-opus     | autonomous      | `budget_limit_sek: 10000` per kampanj                 |
-| seo          | SEO Agent          | google-search   | autonomous      | Keyword-rankings i memory                             |
-| lead         | Lead Agent         | claude-sonnet   | autonomous      | `score_threshold_mql: 75`                             |
-| analytics    | Analytics Agent    | claude-sonnet   | autonomous      | Skriver KPI-data till Supabase                        |
-| brand        | Brand Agent        | claude-opus     | autonomous      | `has_veto: true`, granskar allt content               |
-| intelligence | Intelligence Agent | claude-sonnet   | autonomous      | Multi-steg pipeline, self-eval, bevakningsdomäner     |
+| Slug         | Namn               | Routing default | Autonomi        | Speciellt                                                              |
+| ------------ | ------------------ | --------------- | --------------- | ---------------------------------------------------------------------- |
+| strategy     | Strategy Agent     | claude-opus     | semi-autonomous | `sample_review_rate: 1.0` (alla planer godkänns)                       |
+| content      | Content Agent      | claude-opus     | autonomous      | Few-shot, metadata via Sonnet, bilder via Nano Banana                  |
+| campaign     | Campaign Agent     | claude-opus     | autonomous      | `budget_limit_sek: 10000` per kampanj                                  |
+| seo          | SEO Agent          | google-search   | autonomous      | Keyword-rankings i memory                                              |
+| lead         | Lead Agent         | claude-sonnet   | autonomous      | `score_threshold_mql: 75`                                              |
+| analytics    | Analytics Agent    | claude-sonnet   | autonomous      | Skriver KPI-data till Supabase                                         |
+| brand        | Brand Agent        | claude-opus     | autonomous      | `has_veto: true`, granskar allt content                                |
+| intelligence | Intelligence Agent | claude-sonnet   | autonomous      | v2.0.0: 10 jobbtyper, adaptivt djup, intelligence profiles, 7 triggers |
 
 ## Agentflöde
 
@@ -113,19 +113,38 @@ Trigger (cron/Slack/agent/CLI) → Gateway → agent-loader → router → LLM-a
 
 ### Intelligence Agent pipeline
 
-1. **Gather** – Söker bevakningsdomäner via Serper. Dedup mot `source-history.json` (72h fönster).
+**Scan-pipeline (morning_scan, midday_sweep, weekly_intelligence):**
+
+1. **Gather** – Söker bevakningsdomäner via Serper. Dedup mot `source-history.json` (72h fönster). Mergar temporära watch-domains.
 2. **Signal scoring** – Sonnet bedömer fynd på 4 dimensioner via `signal_scoring` tool_use.
 3. **Deep analysis** – Opus djupanalyserar fynd med score ≥ 0.7 via `deep_analysis` tool_use.
 4. **Rapid response** – `suggested_action: rapid_response` → high-priority task åt Content Agent.
-5. **Briefing** – Opus genererar strukturerad rapport med toppfynd och statistik.
+5. **Briefing** – Opus genererar strukturerad rapport med toppfynd och statistik + research-förslag.
 
-### Aktiva triggers (7 st)
+**Research-pipeline (6 nya jobbtyper v2.0.0):**
+
+1. **Depth assessment** – AI bedömer quick/standard/deep baserat på komplexitet, profil, priority.
+2. **Gather** – Multi-source sökning (webb, jobbsajter, akademiskt, företagsregister) anpassad per jobbtyp.
+3. **Checkpoint** – Vid deep: pausar efter gathering (awaiting_input) för bekräftelse.
+4. **Analyze** – Scorar och djupanalyserar (Sonnet→Opus beroende på djup).
+5. **Compile** – Genererar basstruktur + jobbtyp-specifik modul (SWOT/timeline/scorecard/talent_matrix/company_profile).
+6. **Profile** – Uppdaterar intelligence profile i Supabase för ackumulerad kunskap.
+
+**Intelligence Profiles:** Supabase-tabell (`intelligence_profiles`) med FTS. Byggs över tid per ämne/företag/trend.
+
+**Sub-statusar:** `gathering` → `analyzing` → `compiling` (+ `awaiting_input` vid deep checkpoint).
+
+### Aktiva triggers (11 st)
 
 | Agent        | Trigger                        | Event          | Auto? |
 | ------------ | ------------------------------ | -------------- | ----- |
 | Intelligence | rapid_response_to_content      | task_completed | Ja    |
 | Intelligence | strategy_input_to_strategy     | task_completed | Nej   |
 | Intelligence | escalate_critical              | task_completed | Ja    |
+| Intelligence | research_to_content            | task_completed | Nej   |
+| Intelligence | research_to_lead               | task_completed | Nej   |
+| Intelligence | research_to_seo                | task_completed | Nej   |
+| Intelligence | research_urgency_alert         | task_completed | Ja    |
 | Strategy     | brief_to_content               | task_activated | Ja    |
 | Strategy     | brief_to_campaign              | task_activated | Nej   |
 | Analytics    | anomaly_escalation             | task_completed | Ja    |

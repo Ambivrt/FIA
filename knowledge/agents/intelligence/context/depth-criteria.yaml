@@ -1,0 +1,42 @@
+version: 1.0.0
+
+depth_levels:
+  quick:
+    max_searches: 5
+    model_scoring: claude-sonnet
+    model_analysis: claude-sonnet
+    output_format: concise
+    description: "Snabb sammanfattning, 3-5 bullets, Slack-anpassad"
+    skip_deep_analysis: true
+    include_academic: false
+    checkpoint_after_gathering: false
+    estimated_cost_sek: 0.5
+
+  standard:
+    max_searches: 15
+    model_scoring: claude-sonnet
+    model_analysis: claude-opus
+    output_format: structured_report
+    description: "Strukturerad rapport med alla sektioner"
+    skip_deep_analysis: false
+    include_academic: false
+    checkpoint_after_gathering: false
+    estimated_cost_sek: 5
+
+  deep:
+    max_searches: 40
+    model_scoring: claude-sonnet
+    model_analysis: claude-opus
+    output_format: comprehensive
+    description: "Komplett analysrapport med alla moduler, checkpoint efter insamling"
+    skip_deep_analysis: false
+    include_academic: true
+    checkpoint_after_gathering: true
+    estimated_cost_sek: 15
+
+assessment_heuristics:
+  slack_default: quick
+  dashboard_default: standard
+  trigger_default: standard
+  high_priority_minimum: standard
+  no_profile_minimum: standard

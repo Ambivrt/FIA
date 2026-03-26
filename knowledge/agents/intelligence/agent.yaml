@@ -1,6 +1,6 @@
 name: Intelligence Agent
 slug: intelligence
-version: 1.1.0
+version: 2.0.0
 
 skills:
   - shared:forefront-identity
@@ -9,16 +9,28 @@ skills:
   - agent:source-monitoring
   - agent:relevance-scoring
   - agent:briefing-generation
+  - agent:directed-research
+  - agent:competitor-analysis
+  - agent:trend-analysis
+  - agent:tech-evaluation
+  - agent:talent-intelligence
+  - agent:depth-assessment
 
 routing:
   default: claude-sonnet
   deep_analysis: claude-opus
   search: google-search
+  quick: claude-sonnet
+  standard_analysis: claude-opus
+  deep: claude-opus
 
 system_context:
   - context/watch-domains.yaml
   - context/scoring-criteria.yaml
   - context/drive-folders.md
+  - context/source-types.yaml
+  - context/depth-criteria.yaml
+  - context/output-modules.yaml
 
 task_context:
   morning_scan:
@@ -29,6 +41,19 @@ task_context:
     - context/templates/weekly-brief.md
   rapid_response:
     - context/templates/rapid-response.md
+  directed_research:
+    - context/templates/directed-research.md
+    - context/few-shot/directed-research-good.md
+  competitor_deep_dive:
+    - context/templates/competitor-deep-dive.md
+  trend_analysis:
+    - context/templates/trend-analysis.md
+  company_industry_analysis:
+    - context/templates/company-industry-analysis.md
+  tech_watch:
+    - context/templates/tech-watch.md
+  talent_intel:
+    - context/templates/talent-intel.md
 
 tools:
   - gws:drive
@@ -47,12 +72,15 @@ self_eval:
     - "Är alla fynd relevanta för Forefront och bevakningsdomänerna?"
     - "Är scoring-motiveringar tydliga och konsekventa?"
     - "Är briefen koncis och handlingsorienterad?"
+    - "Matchar djupet (quick/standard/deep) ämnets komplexitet?"
+    - "Är alla moduler (SWOT/timeline/scorecard) korrekt ifyllda?"
   threshold: 0.7
 
 writable:
   - memory/source-history.json
   - memory/scoring-calibration.json
   - memory/learnings.json
+  - memory/temp-watch-domains.json
 
 triggers:
   - name: rapid_response_to_content
@@ -75,7 +103,8 @@ triggers:
     description: "Skickar strategiskt relevant fynd till Strategy Agent"
     on: task_completed
     condition:
-      task_type: [morning_scan, midday_sweep]
+      task_type:
+        [morning_scan, midday_sweep, directed_research, competitor_deep_dive, trend_analysis, company_industry_analysis]
       output_field: "suggested_action"
       output_value: "strategy_input"
     action:
@@ -91,9 +120,70 @@ triggers:
     description: "Eskalerar kritiska fynd till Orchestrator via Slack"
     on: task_completed
     condition:
-      task_type: [morning_scan, midday_sweep]
+      task_type: [morning_scan, midday_sweep, directed_research, competitor_deep_dive]
       output_field: "suggested_action"
       output_value: "escalate"
+    action:
+      type: notify_slack
+      channel: "#fia-orchestrator"
+    requires_approval: false
+    enabled: true
+
+  - name: research_to_content
+    description: "Skickar publiceringsvärdiga forskningsfynd till Content Agent"
+    on: task_completed
+    condition:
+      task_type: [directed_research, trend_analysis, competitor_deep_dive]
+      output_field: "content_json.publishable"
+      output_value: "true"
+    action:
+      type: create_task
+      target_agent: content
+      task_type: blog_post
+      priority: normal
+      context_fields: [title, content_json.summary, content_json.findings, content_json.recommendations]
+    requires_approval: true
+    enabled: true
+
+  - name: research_to_lead
+    description: "Identifierade marknadssegment/leads skickas till Lead Agent"
+    on: task_completed
+    condition:
+      task_type: [company_industry_analysis, trend_analysis, talent_intel]
+      output_field: "content_json.lead_opportunities"
+      output_value: "true"
+    action:
+      type: create_task
+      target_agent: lead
+      task_type: lead_scoring
+      priority: normal
+      context_fields: [title, content_json.market_segments, content_json.companies]
+    requires_approval: true
+    enabled: true
+
+  - name: research_to_seo
+    description: "Keyword- och trendinsikter skickas till SEO Agent"
+    on: task_completed
+    condition:
+      task_type: [trend_analysis, directed_research, tech_watch]
+      output_field: "content_json.seo_relevant"
+      output_value: "true"
+    action:
+      type: create_task
+      target_agent: seo
+      task_type: keyword_research
+      priority: normal
+      context_fields: [title, content_json.keywords, content_json.trends]
+    requires_approval: true
+    enabled: true
+
+  - name: research_urgency_alert
+    description: "Auto Slack-alert vid hög urgency"
+    on: task_completed
+    condition:
+      task_type: [directed_research, competitor_deep_dive, company_industry_analysis, tech_watch, talent_intel]
+      score_field: "content_json.urgency_score"
+      score_above: 0.8
     action:
       type: notify_slack
       channel: "#fia-orchestrator"

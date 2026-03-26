@@ -61,6 +61,9 @@ export async function updateTaskStatus(
   if (extras?.cost_sek != null) {
     updatePayload.cost_sek = extras.cost_sek;
   }
+  if (extras?.sub_status !== undefined) {
+    updatePayload.sub_status = extras.sub_status;
+  }
   if (completedAt != null) {
     updatePayload.completed_at = completedAt;
   }
@@ -68,6 +71,16 @@ export async function updateTaskStatus(
   const { error } = await supabase.from("tasks").update(updatePayload).eq("id", taskId);
 
   if (error) throw new Error(`Failed to update task ${taskId}: ${error.message}`);
+}
+
+export async function updateTaskSubStatus(
+  supabase: SupabaseClient,
+  taskId: string,
+  subStatus: string | null,
+): Promise<void> {
+  const { error } = await supabase.from("tasks").update({ sub_status: subStatus }).eq("id", taskId);
+
+  if (error) throw new Error(`Failed to update sub_status for task ${taskId}: ${error.message}`);
 }
 
 export async function recoverOrphanedTasks(supabase: SupabaseClient): Promise<{ queued: number; inProgress: number }> {
