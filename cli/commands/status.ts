@@ -6,18 +6,28 @@ import { apiGet } from "../lib/api-client";
 import { statusBadge, relativeTime, box, EARTH, agentLabel } from "../lib/formatters";
 import type { AgentResponse, KillSwitchStatus } from "../types";
 
+interface DriveStatusResponse {
+  configured: boolean;
+  folder_count: number;
+  expected_count: number;
+}
+
 export function registerStatusCommand(program: Command): void {
   program
     .command("status")
     .description("Show FIA system status overview")
     .action(async () => {
-      const [agentsRes, killRes] = await Promise.all([
+      const [agentsRes, killRes, driveRes] = await Promise.all([
         apiGet<AgentResponse[]>("/api/agents"),
         apiGet<KillSwitchStatus>("/api/kill-switch/status"),
+        apiGet<DriveStatusResponse>("/api/drive/status").catch(() => ({
+          data: { configured: false, folder_count: 0, expected_count: 0 },
+        })),
       ]);
 
       const agents = agentsRes.data;
       const killSwitch = killRes.data;
+      const drive = driveRes.data;
 
       // Beräkna kö-statistik
       let queued = 0;
@@ -33,10 +43,17 @@ export function registerStatusCommand(program: Command): void {
           (killSwitch.activated_at ? chalk.gray(`  since ${relativeTime(killSwitch.activated_at)}`) : "")
         : chalk.green("● OFF");
 
+      // Drive status-rad
+      const driveLine = drive.configured
+        ? chalk.green(`✓ ${drive.folder_count}/${drive.expected_count} mappar`)
+        : chalk.yellow("Ej konfigurerad");
+
       // Bygg innehåll
       const lines: string[] = [];
+      lines.push(`  ${EARTH.stone("Roll:")}          ${chalk.white("admin")} ${chalk.dim("(CLI token)")}`);
       lines.push(`  ${EARTH.stone("Kill Switch:")}  ${killLine}`);
       lines.push(`  ${EARTH.stone("Queue:")}        ${queued} queued / ${running} running`);
+      lines.push(`  ${EARTH.stone("GWS Drive:")}    ${driveLine}`);
       lines.push("");
       lines.push(EARTH.slate("  Agents:"));
 

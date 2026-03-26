@@ -225,6 +225,24 @@ Se `.env.example` för alla nyckelnamn. Aldrig i kod. Kritiska:
 - [x] `.gworkspace-credentials.json` och `gcp-oauth.keys.json` tillagda i `.gitignore`
 - [x] Debug-script: `scripts/test-drive-auth.mjs` för OAuth-felsökning
 
+### Klart (Deploy 0.5.6 – klientuppdatering, 2026-03-26)
+
+- [x] Rollsystem v2: 5 roller (admin, orchestrator, reviewer, viewer, external), 18 permissions
+- [x] DB-migration `017_role_system_v2.sql` – operator→reviewer, external tillagd, RLS-uppdateringar
+- [x] Backend permissions-modul (`src/api/permissions.ts`) med `hasPermission()` + `requirePermission()` middleware
+- [x] Slack user→role-mapping: `slack_user_id`-kolumn på profiles (migration `018_slack_user_mapping.sql`)
+- [x] Slack auth-helper (`src/slack/auth.ts`) med cachad lookup och permission-check
+- [x] Slack permission-kontroll på destruktiva kommandon (kill, resume, drive setup)
+- [x] Nya Slack-kommandon: `/fia drive status|setup`, `/fia costs`, `/fia whoami`
+- [x] GWS Drive-status i `/fia status` (Slack) och `fia status` (CLI)
+- [x] Roll-info i `fia status` (CLI)
+- [x] Nya CLI-kommandon: `fia costs`, `fia knowledge list|reseed`
+- [x] GET /api/knowledge endpoint för knowledge-listning
+- [x] Dashboard: Drive-status widget i Inställningar, version 0.5.6 i sidebar
+- [x] Frontend rollsystem v2: centraliserad `permissions.ts`, permission-baserad navigation och UI
+- [x] Dashboard: PublishedContentPage för external-rollen
+- [x] Uppdaterad Slack help-text med grupperade kommandon
+
 ### Pågår
 
 - [ ] Gemini context caching
