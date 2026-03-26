@@ -23,7 +23,16 @@ describe("loadAgentManifest", () => {
   it.each(ALL_SLUGS)("%s routing values are all valid models", (slug) => {
     const manifest = loadAgentManifest(KNOWLEDGE_DIR, slug);
     for (const [key, model] of Object.entries(manifest.routing)) {
-      expect(VALID_MODELS).toContain(model);
+      if (typeof model === "string") {
+        expect(VALID_MODELS).toContain(model);
+      } else if (typeof model === "object" && model !== null) {
+        // { primary, fallback } routing object
+        const obj = model as { primary: string; fallback?: string };
+        expect(VALID_MODELS).toContain(obj.primary);
+        if (obj.fallback) {
+          expect(VALID_MODELS).toContain(obj.fallback);
+        }
+      }
     }
   });
 
