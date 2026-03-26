@@ -354,16 +354,31 @@ export class ContentAgent extends BaseAgent {
     const agentRow = await this.getAgentId();
     const { createTask } = await import("../../supabase/task-writer");
 
-    const taskId = await createTask(this.supabase, {
-      agent_id: agentRow,
-      type: task.type,
-      title: task.title,
-      priority: task.priority ?? "normal",
+    const taskId = task.existingTaskId
+      ? task.existingTaskId
+      : await createTask(this.supabase, {
+          agent_id: agentRow,
+          type: task.type,
+          title: task.title,
+          priority: task.priority ?? "normal",
+          source: "gateway",
+        });
+
+    await updateTaskStatus(this.supabase, taskId, "in_progress", {
+      sub_status: "generating",
     });
 
-    await updateTaskStatus(this.supabase, taskId, "in_progress");
+    await logActivity(this.supabase, {
+      agent_id: agentRow,
+      action: "task_started",
+      details_json: { task_id: taskId, type: task.type },
+    });
 
     try {
+      await task.onProgress?.("image_generating", `:art: Content Agent genererar bild...`, {
+        task_id: taskId,
+      });
+
       const response = await routeImageRequest(this.config, this.logger, {
         prompt: task.input,
       });
@@ -388,6 +403,13 @@ export class ContentAgent extends BaseAgent {
           action: "metric_write_error",
         });
       }
+
+      const durationSec = (response.durationMs / 1000).toFixed(1);
+      await task.onProgress?.("image_generated", `:white_check_mark: Bild genererad (${durationSec}s)`, {
+        task_id: taskId,
+        cost_sek: costSek,
+        duration_ms: response.durationMs,
+      });
 
       await logActivity(this.supabase, {
         agent_id: agentRow,
@@ -489,6 +511,11 @@ export class ContentAgent extends BaseAgent {
           "",
           "Generera en ny bild som adresserar feedbacken ovan.",
         ].join("\n");
+
+        await task.onProgress?.("image_regenerating", `:art: Omgenererar bild (${attempts + 1}/${maxAttempts})...`, {
+          task_id: taskId,
+          attempt: attempts + 1,
+        });
 
         const retryResponse = await routeImageRequest(this.config, this.logger, {
           prompt: retryPrompt,
