@@ -20,48 +20,34 @@
 
 ## Brand Agents bedömning
 
-```json
-{
-  "verdict": "rejected",
-  "overall_score": 1,
-  "dimensions": {
-    "tonality": {
-      "score": 1,
-      "comment": "Saknar alla tre bärande principer. Inte nyfiken — levererar påståenden utan frågor. Inte modig — säger samma sak som alla andra. Inte lustfylld — generisk entusiasm är inte humor."
-    },
-    "substance": {
-      "score": 1,
-      "comment": "Ingen tes, inga belägg, inga konkreta exempel. '40% av din tid' saknar källa. Fem punkter som kunde stå i vilken tech-blogg som helst."
-    },
-    "forbidden_patterns": {
-      "pass": false,
-      "violations": [
-        "Topp-5-lista som struktur",
-        "Emojis (🚀👉)",
-        "Clickbait: 'förändrar ALLT' med versaler",
-        "Generiskt konsultspråk: 'kickstarta', 'cutting-edge', 'levererar värde', 'sömlös', 'skalbar', 'game changers'",
-        "Killgissning: '40% av din tid' utan källa",
-        "Säljpush i CTA: 'Boka en kostnadsfri konsultation'"
-      ]
-    },
-    "channel_fit": {
-      "score": 2,
-      "comment": "Längden är ok för kortformat men strukturen (numrerad lista) är förbjuden."
-    },
-    "brand_consistency": {
-      "score": 1,
-      "comment": "Texten kunde stå på vilken konsultfirmas LinkedIn som helst. Noll Forefront-identitet. CTA:n är transaktionell och generisk."
-    }
-  },
-  "summary": "Avvisad. Texten bryter mot sex förbjudna mönster och saknar Forefronts tonalitet helt. Kan inte redigeras till godkänt — kräver omskrivning från grunden. Utgå från en konkret händelse eller insikt, ta en egen vinkel, och skriv som till en klok kollega som redan vet att AI finns.",
-  "required_changes": [
-    "Ta bort listformat — skriv i löpande text med narrativ ingång",
-    "Ta bort alla emojis",
-    "Ersätt alla buzzwords med konkret språk",
-    "Hitta en egen vinkel — vad ser Forefront som andra missar?",
-    "Bygg CTA som naturlig förlängning av textens poäng, inte som säljpitch",
-    "Belägg påståenden med källor eller konkreta exempel"
-  ],
-  "strengths": []
-}
-```
+## Sammanfattning
+
+Avvisad. Texten bryter mot sex förbjudna mönster och saknar Forefronts tonalitet helt. Kan inte redigeras till godkänt — kräver omskrivning från grunden. Utgå från en konkret händelse eller insikt, ta en egen vinkel, och skriv som till en klok kollega som redan vet att AI finns.
+
+## Helhetsbedömning: 1/5
+
+| Dimension | Betyg | Kommentar |
+|---|---|---|
+| Tonalitet | 1/5 | Saknar alla tre bärande principer. Inte nyfiken — levererar påståenden utan frågor. Inte modig — säger samma sak som alla andra. Inte lustfylld — generisk entusiasm är inte humor. |
+| Substans & trovärdighet | 1/5 | Ingen tes, inga belägg, inga konkreta exempel. "40% av din tid" saknar källa. Fem punkter som kunde stå i vilken tech-blogg som helst. |
+| Förbjudna mönster | **Underkänt** | 6 brott identifierade (se nedan) |
+| Kanal & format | 2/5 | Längden är ok för kortformat men strukturen (numrerad lista) är förbjuden. |
+| Varumärkeskonsistens | 1/5 | Texten kunde stå på vilken konsultfirmas LinkedIn som helst. Noll Forefront-identitet. CTA:n är transaktionell och generisk. |
+
+## Brott mot förbjudna mönster
+
+- Topp-5-lista som struktur
+- Emojis (raket, pekfinger)
+- Clickbait: "förändrar ALLT" med versaler
+- Generiskt konsultspråk: "kickstarta", "cutting-edge", "levererar värde", "sömlös", "skalbar", "game changers"
+- Killgissning: "40% av din tid" utan källa
+- Säljpush i CTA: "Boka en kostnadsfri konsultation"
+
+## Ändringar som krävs
+
+- Ta bort listformat — skriv i löpande text med narrativ ingång
+- Ta bort alla emojis
+- Ersätt alla buzzwords med konkret språk
+- Hitta en egen vinkel — vad ser Forefront som andra missar?
+- Bygg CTA som naturlig förlängning av textens poäng, inte som säljpitch
+- Belägg påståenden med källor eller konkreta exempel
