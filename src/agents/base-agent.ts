@@ -256,7 +256,7 @@ export abstract class BaseAgent {
       const generationTokens = response.tokensIn + response.tokensOut;
       await task.onProgress?.(
         "llm_complete",
-        `:white_check_mark: Innehåll genererat (${generationTokens} tokens, ${durationSec}s)`,
+        `:white_check_mark: Inneh\u00e5ll genererat (${generationTokens} tokens, ${durationSec}s)`,
         {
           task_id: taskId,
           model: response.model,
@@ -321,7 +321,12 @@ export abstract class BaseAgent {
           if (reEval && reEval.score <= 0.4) {
             tracker.failStep("Self-eval score too low");
             await updateTaskStatus(this.supabase, taskId, "error", {
-              content_json: { output: finalOutput, _pipeline: pipeline, _steps: tracker.toArray(), error: "Self-eval score too low" },
+              content_json: {
+                output: finalOutput,
+                _pipeline: pipeline,
+                _steps: tracker.toArray(),
+                error: "Self-eval score too low",
+              },
             });
 
             await logActivity(this.supabase, {
