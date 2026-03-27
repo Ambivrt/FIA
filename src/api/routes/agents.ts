@@ -9,6 +9,7 @@ import { resolveDisplayStatus } from "../../shared/display-status";
 import { triggersPatchSchema, reseedSchema, TriggerPatchItem } from "../schemas/trigger-config";
 import { TriggerConfig } from "../../engine/trigger-types";
 import { loadAgentManifest } from "../../agents/agent-loader";
+import { getAllAgentSlugs } from "../../agents/agent-factory";
 import { AppConfig } from "../../utils/config";
 
 const modelAliasEnum = z.enum([
@@ -403,6 +404,239 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch, co
         });
 
         res.json({ agent_slug: slug, updated: updatedNames, triggers: updatedTriggers });
+      } catch (err) {
+        res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+      }
+    },
+  );
+
+  // POST /api/agents/routing/reseed – admin only (all agents)
+  router.post(
+    "/routing/reseed",
+    requirePermission("knowledge_reseed"),
+    validateBody(reseedSchema),
+    async (req, res) => {
+      try {
+        const confirm = req.body?.confirm === true;
+
+        if (!config) {
+          res
+            .status(500)
+            .json({ error: { code: "CONFIG_MISSING", message: "Gateway config not available for YAML loading." } });
+          return;
+        }
+
+        const slugs = getAllAgentSlugs();
+        const agentDiffs: Array<{
+          slug: string;
+          current_route_count: number;
+          yaml_route_count: number;
+          changes: Array<{ task_type: string; diff: string }>;
+        }> = [];
+
+        for (const slug of slugs) {
+          const { data: agent } = await supabase.from("agents").select("id, config_json").eq("slug", slug).single();
+          if (!agent) continue;
+
+          const current = (agent.config_json as Record<string, unknown>) ?? {};
+          const currentRouting = (current.routing as Record<string, unknown>) ?? {};
+
+          let yamlRouting: Record<string, unknown> = {};
+          try {
+            const manifest = loadAgentManifest(config.knowledgeDir, slug);
+            yamlRouting = manifest.routing ?? {};
+          } catch {
+            // No manifest
+          }
+
+          const changes: Array<{ task_type: string; diff: string }> = [];
+          for (const [taskType, yamlEntry] of Object.entries(yamlRouting)) {
+            const currentEntry = currentRouting[taskType];
+            if (currentEntry === undefined) {
+              changes.push({ task_type: taskType, diff: "Ny i YAML" });
+            } else if (JSON.stringify(currentEntry) !== JSON.stringify(yamlEntry)) {
+              changes.push({
+                task_type: taskType,
+                diff: `${JSON.stringify(currentEntry)} → ${JSON.stringify(yamlEntry)}`,
+              });
+            }
+          }
+          for (const taskType of Object.keys(currentRouting)) {
+            if (!(taskType in yamlRouting)) {
+              changes.push({ task_type: taskType, diff: "Finns bara i dashboard" });
+            }
+          }
+
+          agentDiffs.push({
+            slug,
+            current_route_count: Object.keys(currentRouting).length,
+            yaml_route_count: Object.keys(yamlRouting).length,
+            changes,
+          });
+        }
+
+        if (!confirm) {
+          res.json({ dry_run: true, agents: agentDiffs });
+          return;
+        }
+
+        // Perform reseed for all agents
+        const reseeded: string[] = [];
+        const unchanged: string[] = [];
+
+        for (const slug of slugs) {
+          const { data: agent } = await supabase.from("agents").select("id, config_json").eq("slug", slug).single();
+          if (!agent) continue;
+
+          let yamlRouting: Record<string, unknown> = {};
+          try {
+            const manifest = loadAgentManifest(config.knowledgeDir, slug);
+            yamlRouting = manifest.routing ?? {};
+          } catch {
+            continue;
+          }
+
+          const current = (agent.config_json as Record<string, unknown>) ?? {};
+          const currentRouting = (current.routing as Record<string, unknown>) ?? {};
+
+          if (JSON.stringify(currentRouting) === JSON.stringify(yamlRouting)) {
+            unchanged.push(slug);
+            continue;
+          }
+
+          const adminOverrides = new Set((current._admin_overrides as string[]) ?? []);
+          adminOverrides.delete("routing");
+          const merged = {
+            ...current,
+            routing: yamlRouting,
+            _yaml_routing: yamlRouting,
+            _admin_overrides: [...adminOverrides],
+          };
+
+          await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
+          reseeded.push(slug);
+        }
+
+        await logActivity(supabase, {
+          user_id: getDbUserId(req),
+          action: "routing_config_reseeded",
+          details_json: {
+            scope: "all",
+            agents_reseeded: reseeded,
+          },
+        });
+
+        res.json({
+          dry_run: false,
+          reseeded,
+          unchanged,
+          message: `${reseeded.length} agenters routing reseedade från agent.yaml.`,
+        });
+      } catch (err) {
+        res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+      }
+    },
+  );
+
+  // POST /api/agents/:slug/routing/reseed – admin only
+  router.post(
+    "/:slug/routing/reseed",
+    requirePermission("knowledge_reseed"),
+    validateBody(reseedSchema),
+    async (req, res) => {
+      try {
+        const slug = req.params.slug as string;
+        const confirm = req.body?.confirm === true;
+
+        const { data: agent, error: fetchErr } = await supabase
+          .from("agents")
+          .select("id, config_json")
+          .eq("slug", slug)
+          .single();
+
+        if (fetchErr || !agent) {
+          res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
+          return;
+        }
+
+        const current = (agent.config_json as Record<string, unknown>) ?? {};
+        const currentRouting = (current.routing as Record<string, unknown>) ?? {};
+
+        // Load YAML routing
+        let yamlRouting: Record<string, unknown> = {};
+        if (config) {
+          try {
+            const manifest = loadAgentManifest(config.knowledgeDir, slug);
+            yamlRouting = manifest.routing ?? {};
+          } catch {
+            // No manifest or invalid
+          }
+        }
+
+        // Compute diff
+        const changes: Array<{ task_type: string; diff: string }> = [];
+        for (const [taskType, yamlEntry] of Object.entries(yamlRouting)) {
+          const currentEntry = currentRouting[taskType];
+          if (currentEntry === undefined) {
+            changes.push({ task_type: taskType, diff: "Ny i YAML (läggs till)" });
+          } else if (JSON.stringify(currentEntry) !== JSON.stringify(yamlEntry)) {
+            changes.push({
+              task_type: taskType,
+              diff: `${JSON.stringify(currentEntry)} → ${JSON.stringify(yamlEntry)}`,
+            });
+          }
+        }
+        for (const taskType of Object.keys(currentRouting)) {
+          if (!(taskType in yamlRouting)) {
+            changes.push({ task_type: taskType, diff: "Finns bara i dashboard (tas bort)" });
+          }
+        }
+
+        if (!confirm) {
+          res.json({
+            dry_run: true,
+            agents: [
+              {
+                slug,
+                current_route_count: Object.keys(currentRouting).length,
+                yaml_route_count: Object.keys(yamlRouting).length,
+                changes,
+              },
+            ],
+          });
+          return;
+        }
+
+        // Perform reseed
+        const adminOverrides = new Set((current._admin_overrides as string[]) ?? []);
+        adminOverrides.delete("routing");
+        const merged = {
+          ...current,
+          routing: yamlRouting,
+          _yaml_routing: yamlRouting,
+          _admin_overrides: [...adminOverrides],
+        };
+
+        const { error } = await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
+        if (error) throw error;
+
+        await logActivity(supabase, {
+          agent_id: agent.id,
+          user_id: getDbUserId(req),
+          action: "routing_config_reseeded",
+          details_json: {
+            scope: "single",
+            agents_reseeded: [slug],
+            previous_routing: currentRouting,
+          },
+        });
+
+        res.json({
+          dry_run: false,
+          reseeded: [slug],
+          unchanged: [],
+          message: `Agent '${slug}' routing reseedad från agent.yaml.`,
+        });
       } catch (err) {
         res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
       }
