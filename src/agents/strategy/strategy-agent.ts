@@ -5,6 +5,7 @@ import { AgentManifest } from "../agent-loader";
 import { BaseAgent, AgentTask, AgentResult } from "../base-agent";
 import { TaskSubStatus } from "../../engine/status-machine";
 import { runSelfEval } from "../self-eval";
+import { StepTracker } from "../step-tracker";
 
 /** Task types that use the research pipeline (search → analyze). */
 const RESEARCH_TASK_TYPES = ["strategic_research", "competitive_response"];
@@ -90,116 +91,155 @@ export class StrategyAgent extends BaseAgent {
       details_json: { task_id: taskId, type: task.type },
     });
 
-    // Step 1: Researching — collect data context
-    await task.onProgress?.("researching", `:mag: Strategy Agent samlar data...`, {
-      task_id: taskId,
-      task_type: task.type,
-    });
-    await this.setSubStatus(taskId, "researching");
-    const dataContext = await this.callLLMWithTools(
-      task.type,
-      [
-        `Samla in relevant data och kontext för att skapa: ${task.title}`,
+    const tracker = this.createStepTracker();
+
+    try {
+      // Step 1: Researching — collect data context
+      tracker.startStep("researching");
+      await task.onProgress?.("researching", `:mag: Strategy Agent samlar data...`, {
+        task_id: taskId,
+        task_type: task.type,
+      });
+      await this.setSubStatus(taskId, "researching");
+      const dataContext = await this.callLLMWithTools(
+        task.type,
+        [
+          `Samla in relevant data och kontext för att skapa: ${task.title}`,
+          `Typ: ${task.type}`,
+          `Input: ${task.input}`,
+          "",
+          "Hämta relevant data från GA4, HubSpot och tillgängliga verktyg.",
+        ].join("\n"),
+      );
+
+      // Step 2: Analyzing — identify patterns and opportunities
+      tracker.startStep("analyzing");
+      await task.onProgress?.("analyzing", `:brain: Strategy Agent analyserar data...`, {
+        task_id: taskId,
+      });
+      await this.setSubStatus(taskId, "analyzing");
+      const analysisPrompt = [
+        `Analysera följande data och identifiera mönster, möjligheter och risker.`,
+        `Uppgift: ${task.title} (${task.type})`,
+        "",
+        "--- DATA ---",
+        dataContext.text,
+        "",
+        "Ge en strukturerad analys med:",
+        "1. Nyckelinsikter från data",
+        "2. Identifierade möjligheter",
+        "3. Risker och utmaningar",
+        "4. Rekommenderad riktning",
+      ].join("\n");
+      const analysis = await this.callLLM("default", analysisPrompt);
+
+      // Step 3: Drafting — create the strategy/plan
+      tracker.startStep("drafting");
+      await task.onProgress?.("drafting", `:memo: Strategy Agent utformar strategi...`, {
+        task_id: taskId,
+      });
+      await this.setSubStatus(taskId, "drafting");
+      const draftPrompt = [
+        `Skapa ett komplett utkast baserat på analysen.`,
         `Typ: ${task.type}`,
         `Input: ${task.input}`,
         "",
-        "Hämta relevant data från GA4, HubSpot och tillgängliga verktyg.",
-      ].join("\n"),
-    );
+        "--- ANALYS ---",
+        analysis.text,
+        "",
+        "Följ mallen för denna task type. Inkludera konkreta KPI:er och mätbara mål.",
+      ].join("\n");
+      const draft = await this.callLLM(task.type, draftPrompt);
 
-    // Step 2: Analyzing — identify patterns and opportunities
-    await task.onProgress?.("analyzing", `:brain: Strategy Agent analyserar data...`, {
-      task_id: taskId,
-    });
-    await this.setSubStatus(taskId, "analyzing");
-    const analysisPrompt = [
-      `Analysera följande data och identifiera mönster, möjligheter och risker.`,
-      `Uppgift: ${task.title} (${task.type})`,
-      "",
-      "--- DATA ---",
-      dataContext.text,
-      "",
-      "Ge en strukturerad analys med:",
-      "1. Nyckelinsikter från data",
-      "2. Identifierade möjligheter",
-      "3. Risker och utmaningar",
-      "4. Rekommenderad riktning",
-    ].join("\n");
-    const analysis = await this.callLLM("default", analysisPrompt);
-
-    // Step 3: Drafting — create the strategy/plan
-    await task.onProgress?.("drafting", `:memo: Strategy Agent utformar strategi...`, {
-      task_id: taskId,
-    });
-    await this.setSubStatus(taskId, "drafting");
-    const draftPrompt = [
-      `Skapa ett komplett utkast baserat på analysen.`,
-      `Typ: ${task.type}`,
-      `Input: ${task.input}`,
-      "",
-      "--- ANALYS ---",
-      analysis.text,
-      "",
-      "Följ mallen för denna task type. Inkludera konkreta KPI:er och mätbara mål.",
-    ].join("\n");
-    const draft = await this.callLLM(task.type, draftPrompt);
-
-    // Step 4: Aligning — check brand, goals, budget alignment
-    await task.onProgress?.("aligning", `:dart: Strategy Agent kvalitetssäkrar...`, {
-      task_id: taskId,
-    });
-    await this.setSubStatus(taskId, "aligning");
-    const selfEvalResult = await this.runSelfEval(draft.text);
-
-    const contentJson: Record<string, unknown> = {
-      data_context: dataContext.text,
-      analysis: analysis.text,
-      output: draft.text,
-      eval_score: selfEvalResult?.score ?? null,
-      eval_pass: selfEvalResult?.pass ?? null,
-      eval_issues: selfEvalResult?.issues ?? [],
-    };
-
-    // Check escalation rules
-    const escalation = this.checkEscalation(contentJson);
-
-    const totalTokensIn = dataContext.tokensIn + analysis.tokensIn + draft.tokensIn;
-    const totalTokensOut = dataContext.tokensOut + analysis.tokensOut + draft.tokensOut;
-    const totalDuration = dataContext.durationMs + analysis.durationMs + draft.durationMs;
-
-    // Determine review status
-    const targetStatus = this.determineReviewStatus(task.type, escalation);
-
-    if (escalation) {
-      contentJson.escalation = escalation;
-    }
-
-    await updateTaskStatus(this.supabase, taskId, targetStatus, {
-      content_json: contentJson,
-      model_used: draft.model,
-      tokens_used: totalTokensIn + totalTokensOut,
-    });
-
-    await logActivity(this.supabase, {
-      agent_id: agentRow,
-      action: "strategy_completed",
-      details_json: {
+      // Step 4: Aligning — check brand, goals, budget alignment
+      tracker.startStep("aligning");
+      await task.onProgress?.("aligning", `:dart: Strategy Agent kvalitetssäkrar...`, {
         task_id: taskId,
-        type: task.type,
-        eval_score: selfEvalResult?.score ?? null,
-        escalated: !!escalation,
-      },
-    });
+      });
+      await this.setSubStatus(taskId, "aligning");
+      const selfEvalResult = await this.runSelfEval(draft.text);
 
-    return {
-      taskId,
-      output: draft.text,
-      model: draft.model,
-      tokensIn: totalTokensIn,
-      tokensOut: totalTokensOut,
-      durationMs: totalDuration,
-      status: "completed",
-    };
+      tracker.complete();
+
+      const contentJson: Record<string, unknown> = {
+        data_context: dataContext.text,
+        analysis: analysis.text,
+        output: draft.text,
+        eval_score: selfEvalResult?.score ?? null,
+        eval_pass: selfEvalResult?.pass ?? null,
+        eval_issues: selfEvalResult?.issues ?? [],
+        _steps: tracker.toArray(),
+      };
+
+      // Check escalation rules
+      const escalation = this.checkEscalation(contentJson);
+
+      const totalTokensIn = dataContext.tokensIn + analysis.tokensIn + draft.tokensIn;
+      const totalTokensOut = dataContext.tokensOut + analysis.tokensOut + draft.tokensOut;
+      const totalDuration = dataContext.durationMs + analysis.durationMs + draft.durationMs;
+
+      // Determine review status
+      const targetStatus = this.determineReviewStatus(task.type, escalation);
+
+      if (escalation) {
+        contentJson.escalation = escalation;
+      }
+
+      await updateTaskStatus(this.supabase, taskId, targetStatus, {
+        content_json: contentJson,
+        model_used: draft.model,
+        tokens_used: totalTokensIn + totalTokensOut,
+      });
+
+      await logActivity(this.supabase, {
+        agent_id: agentRow,
+        action: "strategy_completed",
+        details_json: {
+          task_id: taskId,
+          type: task.type,
+          eval_score: selfEvalResult?.score ?? null,
+          escalated: !!escalation,
+        },
+      });
+
+      return {
+        taskId,
+        output: draft.text,
+        model: draft.model,
+        tokensIn: totalTokensIn,
+        tokensOut: totalTokensOut,
+        durationMs: totalDuration,
+        status: "completed",
+      };
+    } catch (err) {
+      const message = (err as Error).message;
+      tracker.failStep(message);
+      try {
+        await updateTaskStatus(this.supabase, taskId, "error", {
+          content_json: { error: message, _steps: tracker.toArray() },
+        });
+        await logActivity(this.supabase, {
+          agent_id: agentRow,
+          action: "task_error",
+          details_json: { task_id: taskId, error: message },
+        });
+      } catch (updateErr) {
+        this.logger.error(`Failed to write error status for task ${taskId}: ${(updateErr as Error).message}`, {
+          agent: this.slug,
+          task_id: taskId,
+          action: "task_error_write_failed",
+        });
+      }
+      return {
+        taskId,
+        output: "",
+        model: "",
+        tokensIn: 0,
+        tokensOut: 0,
+        durationMs: 0,
+        status: "error",
+      };
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -228,77 +268,114 @@ export class StrategyAgent extends BaseAgent {
       details_json: { task_id: taskId, type: task.type },
     });
 
-    // Step 1: Researching — search for information
-    await task.onProgress?.("researching", `:mag: Strategy Agent söker information...`, {
-      task_id: taskId,
-      task_type: task.type,
-    });
-    await this.setSubStatus(taskId, "researching");
-    const searchResponse = await this.callLLM(task.type, task.input);
+    const tracker = this.createStepTracker();
 
-    // Step 2: Analyzing — summarize and analyze results
-    await task.onProgress?.("analyzing", `:brain: Strategy Agent analyserar sökresultat...`, {
-      task_id: taskId,
-    });
-    await this.setSubStatus(taskId, "analyzing");
-    const summarizePrompt = [
-      `Sammanfatta och analysera följande sökresultat för Forefront.`,
-      `Ursprunglig fråga: ${task.input}`,
-      `Typ: ${task.type}`,
-      "",
-      "--- SÖKRESULTAT ---",
-      searchResponse.text,
-      "",
-      "Ge en strukturerad analys med:",
-      "1. Nyckelinsikter",
-      "2. Relevans för Forefront",
-      "3. Rekommenderade åtgärder",
-      task.type === "competitive_response" ? "4. Allvarlighetsgrad (låg/medium/hög/kritisk)" : "",
-      task.type === "competitive_response" ? "5. Rekommenderad responstid" : "",
-    ].join("\n");
-
-    const analysisResponse = await this.callLLM("default", summarizePrompt);
-
-    const contentJson: Record<string, unknown> = {
-      search_results: searchResponse.text,
-      analysis: analysisResponse.text,
-      output: analysisResponse.text,
-    };
-
-    // Check escalation rules for competitive_response
-    const escalation = this.checkEscalation(contentJson);
-    if (escalation) {
-      contentJson.escalation = escalation;
-    }
-
-    const targetStatus = this.determineReviewStatus(task.type, escalation);
-
-    await updateTaskStatus(this.supabase, taskId, targetStatus, {
-      content_json: contentJson,
-      model_used: analysisResponse.model,
-      tokens_used:
-        searchResponse.tokensIn + searchResponse.tokensOut + analysisResponse.tokensIn + analysisResponse.tokensOut,
-    });
-
-    await logActivity(this.supabase, {
-      agent_id: agentRow,
-      action: "research_completed",
-      details_json: {
+    try {
+      // Step 1: Researching — search for information
+      tracker.startStep("researching");
+      await task.onProgress?.("researching", `:mag: Strategy Agent söker information...`, {
         task_id: taskId,
-        type: task.type,
-        escalated: !!escalation,
-      },
-    });
+        task_type: task.type,
+      });
+      await this.setSubStatus(taskId, "researching");
+      const searchResponse = await this.callLLM(task.type, task.input);
 
-    return {
-      taskId,
-      output: analysisResponse.text,
-      model: analysisResponse.model,
-      tokensIn: searchResponse.tokensIn + analysisResponse.tokensIn,
-      tokensOut: searchResponse.tokensOut + analysisResponse.tokensOut,
-      durationMs: searchResponse.durationMs + analysisResponse.durationMs,
-      status: "completed",
-    };
+      // Step 2: Analyzing — summarize and analyze results
+      tracker.startStep("analyzing");
+      await task.onProgress?.("analyzing", `:brain: Strategy Agent analyserar sökresultat...`, {
+        task_id: taskId,
+      });
+      await this.setSubStatus(taskId, "analyzing");
+      const summarizePrompt = [
+        `Sammanfatta och analysera följande sökresultat för Forefront.`,
+        `Ursprunglig fråga: ${task.input}`,
+        `Typ: ${task.type}`,
+        "",
+        "--- SÖKRESULTAT ---",
+        searchResponse.text,
+        "",
+        "Ge en strukturerad analys med:",
+        "1. Nyckelinsikter",
+        "2. Relevans för Forefront",
+        "3. Rekommenderade åtgärder",
+        task.type === "competitive_response" ? "4. Allvarlighetsgrad (låg/medium/hög/kritisk)" : "",
+        task.type === "competitive_response" ? "5. Rekommenderad responstid" : "",
+      ].join("\n");
+
+      const analysisResponse = await this.callLLM("default", summarizePrompt);
+
+      tracker.complete();
+
+      const contentJson: Record<string, unknown> = {
+        search_results: searchResponse.text,
+        analysis: analysisResponse.text,
+        output: analysisResponse.text,
+        _steps: tracker.toArray(),
+      };
+
+      // Check escalation rules for competitive_response
+      const escalation = this.checkEscalation(contentJson);
+      if (escalation) {
+        contentJson.escalation = escalation;
+      }
+
+      const targetStatus = this.determineReviewStatus(task.type, escalation);
+
+      await updateTaskStatus(this.supabase, taskId, targetStatus, {
+        content_json: contentJson,
+        model_used: analysisResponse.model,
+        tokens_used:
+          searchResponse.tokensIn + searchResponse.tokensOut + analysisResponse.tokensIn + analysisResponse.tokensOut,
+      });
+
+      await logActivity(this.supabase, {
+        agent_id: agentRow,
+        action: "research_completed",
+        details_json: {
+          task_id: taskId,
+          type: task.type,
+          escalated: !!escalation,
+        },
+      });
+
+      return {
+        taskId,
+        output: analysisResponse.text,
+        model: analysisResponse.model,
+        tokensIn: searchResponse.tokensIn + analysisResponse.tokensIn,
+        tokensOut: searchResponse.tokensOut + analysisResponse.tokensOut,
+        durationMs: searchResponse.durationMs + analysisResponse.durationMs,
+        status: "completed",
+      };
+    } catch (err) {
+      const message = (err as Error).message;
+      tracker.failStep(message);
+      try {
+        await updateTaskStatus(this.supabase, taskId, "error", {
+          content_json: { error: message, _steps: tracker.toArray() },
+        });
+        await logActivity(this.supabase, {
+          agent_id: agentRow,
+          action: "task_error",
+          details_json: { task_id: taskId, error: message },
+        });
+      } catch (updateErr) {
+        this.logger.error(`Failed to write error status for task ${taskId}: ${(updateErr as Error).message}`, {
+          agent: this.slug,
+          task_id: taskId,
+          action: "task_error_write_failed",
+        });
+      }
+      return {
+        taskId,
+        output: "",
+        model: "",
+        tokensIn: 0,
+        tokensOut: 0,
+        durationMs: 0,
+        status: "error",
+      };
+    }
   }
 
   // ---------------------------------------------------------------------------

@@ -19,6 +19,7 @@ import { writeMetric } from "../supabase/metrics-writer";
 import { usdToSek } from "../llm/pricing";
 import { runSelfEval } from "./self-eval";
 import { buildToolDefinitions, dispatchToolUse, hasTools } from "../mcp/tool-registry";
+import { StepTracker } from "./step-tracker";
 
 export type ProgressCallback = (action: string, message: string, details?: Record<string, unknown>) => Promise<void>;
 
@@ -206,6 +207,11 @@ export abstract class BaseAgent {
     };
   }
 
+  /** Create a StepTracker instance. Subclasses can call this to manage their own step tracking. */
+  protected createStepTracker(): StepTracker {
+    return new StepTracker();
+  }
+
   async execute(task: AgentTask): Promise<AgentResult> {
     const cid = task.correlationId;
     this.logger.info(`${this.name} executing: ${task.title}`, {
@@ -233,6 +239,8 @@ export abstract class BaseAgent {
       details_json: { task_id: taskId, type: task.type },
     });
 
+    const tracker = this.createStepTracker();
+
     try {
       const routeAlias = this.getRouteAlias(task.type);
       await task.onProgress?.("llm_calling", `:brain: ${this.name} anropar ${routeAlias}...`, {
@@ -241,13 +249,14 @@ export abstract class BaseAgent {
         task_type: task.type,
       });
 
+      tracker.startStep("llm_calling");
       const response = await this.callLLMWithTools(task.type, task.input);
 
       const durationSec = (response.durationMs / 1000).toFixed(1);
       const generationTokens = response.tokensIn + response.tokensOut;
       await task.onProgress?.(
         "llm_complete",
-        `:white_check_mark: Innehåll genererat (${generationTokens} tokens, ${durationSec}s)`,
+        `:white_check_mark: Inneh\u00e5ll genererat (${generationTokens} tokens, ${durationSec}s)`,
         {
           task_id: taskId,
           model: response.model,
@@ -272,6 +281,7 @@ export abstract class BaseAgent {
       let accumulatedCostUsd = response.costUsd;
       let accumulatedDurationMs = response.durationMs;
 
+      tracker.startStep("self_eval");
       const selfEvalResult = await this.runSelfEvalIfEnabled(finalOutput, taskId, task, pipeline);
       const selfEvalThreshold = this.manifest.self_eval?.threshold ?? 0.7;
 
@@ -279,7 +289,7 @@ export abstract class BaseAgent {
         // Always attempt one revision before giving up
         await task.onProgress?.(
           "self_eval_revision",
-          `:arrows_counterclockwise: Self-eval identifierade brister (${selfEvalResult.score.toFixed(2)}) — omgenererar...`,
+          `:arrows_counterclockwise: Self-eval identifierade brister (${selfEvalResult.score.toFixed(2)}) \u2014 omgenererar...`,
           {
             task_id: taskId,
             issues: selfEvalResult.issues,
@@ -287,7 +297,7 @@ export abstract class BaseAgent {
         );
 
         const revisionPrompt = [
-          "Förbättra följande text baserat på feedbacken nedan.",
+          "F\u00f6rb\u00e4ttra f\u00f6ljande text baserat p\u00e5 feedbacken nedan.",
           "",
           "## Feedback",
           ...selfEvalResult.issues.map((i) => `- ${i}`),
@@ -305,12 +315,18 @@ export abstract class BaseAgent {
 
         pipeline.self_eval!.revision_triggered = true;
 
-        // Re-evaluate revised output — only hard-fail if still very poor
+        // Re-evaluate revised output \u2014 only hard-fail if still very poor
         if (selfEvalResult.score <= 0.4) {
           const reEval = await this.runSelfEvalIfEnabled(finalOutput, taskId, task, pipeline);
           if (reEval && reEval.score <= 0.4) {
+            tracker.failStep("Self-eval score too low");
             await updateTaskStatus(this.supabase, taskId, "error", {
-              content_json: { output: finalOutput, _pipeline: pipeline, error: "Self-eval score too low" },
+              content_json: {
+                output: finalOutput,
+                _pipeline: pipeline,
+                _steps: tracker.toArray(),
+                error: "Self-eval score too low",
+              },
             });
 
             await logActivity(this.supabase, {
@@ -350,14 +366,15 @@ export abstract class BaseAgent {
 
       const totalAccumulatedTokens = accumulatedTokensIn + accumulatedTokensOut;
 
+      tracker.complete();
       await updateTaskStatus(this.supabase, taskId, "awaiting_review", {
-        content_json: { output: finalOutput, _pipeline: pipeline },
+        content_json: { output: finalOutput, _pipeline: pipeline, _steps: tracker.toArray() },
         model_used: response.model,
         tokens_used: totalAccumulatedTokens,
         cost_sek: costSek,
       });
 
-      // Write cost metric (non-fatal – must not block task completion)
+      // Write cost metric (non-fatal \u2013 must not block task completion)
       try {
         await writeMetric(this.supabase, {
           category: "cost",
@@ -401,9 +418,10 @@ export abstract class BaseAgent {
       };
     } catch (err) {
       const message = (err as Error).message;
+      tracker.failStep(message);
       try {
         await updateTaskStatus(this.supabase, taskId, "error", {
-          content_json: { error: message },
+          content_json: { error: message, _steps: tracker.toArray() },
         });
 
         await logActivity(this.supabase, {
@@ -451,7 +469,7 @@ export abstract class BaseAgent {
     if (!selfEvalConfig?.enabled) return null;
 
     try {
-      await task.onProgress?.("self_eval", `:mag: Self-eval körs...`, { task_id: taskId });
+      await task.onProgress?.("self_eval", `:mag: Self-eval k\u00f6rs...`, { task_id: taskId });
 
       const verbosity = this.resolveVerbosity(task.priority, task.type);
       const result = await runSelfEval(this.config, this.logger, this.slug, output, selfEvalConfig, verbosity);
@@ -473,7 +491,7 @@ export abstract class BaseAgent {
 
       return result;
     } catch (err) {
-      // Self-eval failure is non-fatal – log and continue
+      // Self-eval failure is non-fatal \u2013 log and continue
       this.logger.warn(`Self-eval failed, continuing without: ${(err as Error).message}`, {
         action: "self_eval_error",
         agent: this.slug,
