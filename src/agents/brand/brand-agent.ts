@@ -8,7 +8,7 @@ import { createApproval, updateTaskStatus } from "../../supabase/task-writer";
 import { logActivity } from "../../supabase/activity-writer";
 import { getSlackApp } from "../../slack/app";
 import { sendEscalation } from "../../slack/handlers";
-import { ToolDefinition, VerbosityLevel } from "../../llm/types";
+import { ToolDefinition, VerbosityLevel, ComplianceMode } from "../../llm/types";
 
 const BRAND_REVIEW_TOOL: ToolDefinition = {
   name: "brand_review_decision",
@@ -39,6 +39,7 @@ export interface ReviewRequest {
   imageBase64?: string;
   imageMimeType?: string;
   verbosity?: VerbosityLevel;
+  complianceMode?: ComplianceMode;
 }
 
 export interface ReviewResult {
@@ -51,6 +52,13 @@ const REVIEW_VERBOSITY: Record<VerbosityLevel, string> = {
   minimal: "Ge kortfattad feedback, max 2-3 meningar. Fokusera på det viktigaste.",
   standard: "",
   detailed: "Ge utförlig feedback med specifika citat från innehållet och konkreta förbättringsförslag.",
+};
+
+const COMPLIANCE_REVIEW_INSTRUCTION: Record<ComplianceMode, string> = {
+  strict:
+    "Var extra noggrann. Kontrollera alla detaljer: tonalitet, budskapshierarki, färger, typsnitt. Avslå vid minsta avvikelse från varumärkesriktlinjerna.",
+  balanced: "",
+  open: "Var generös i din bedömning. Godkänn om innehållet inte bryter mot kritiska varumärkesregler. Fokusera bara på allvarliga problem som kan skada varumärket.",
 };
 
 export class BrandAgent extends BaseAgent {
@@ -90,6 +98,7 @@ export class BrandAgent extends BaseAgent {
 
     if (request.imageBase64) {
       // Visual brand review — multimodal (image + text → Claude Vision)
+      const complianceInstr = request.complianceMode ? COMPLIANCE_REVIEW_INSTRUCTION[request.complianceMode] : "";
       const prompt = [
         "Granska följande bild för visuell varumärkesöverensstämmelse med Forefronts visuella identitet.",
         "",
@@ -106,6 +115,7 @@ export class BrandAgent extends BaseAgent {
         "",
         "Använd verktyget brand_review_decision för att lämna ditt beslut.",
         "Vid avslag, var specifik om vilka visuella element som behöver ändras.",
+        ...(complianceInstr ? ["", complianceInstr] : []),
         ...(request.verbosity && REVIEW_VERBOSITY[request.verbosity] ? ["", REVIEW_VERBOSITY[request.verbosity]] : []),
       ].join("\n");
 
@@ -115,11 +125,13 @@ export class BrandAgent extends BaseAgent {
         toolChoice: { type: "tool", name: "brand_review_decision" },
       });
     } else {
-      // Text brand review (unchanged)
+      // Text brand review
+      const complianceInstr = request.complianceMode ? COMPLIANCE_REVIEW_INSTRUCTION[request.complianceMode] : "";
       const prompt = [
         "Granska följande innehåll för varumärkesöverensstämmelse.",
         "Kontrollera: tonalitet, budskapshierarki, visuella riktlinjer och Forefronts varumärkesvärden.",
         "Använd verktyget brand_review_decision för att lämna ditt beslut.",
+        ...(complianceInstr ? ["", complianceInstr] : []),
         ...(request.verbosity && REVIEW_VERBOSITY[request.verbosity] ? ["", REVIEW_VERBOSITY[request.verbosity]] : []),
         "",
         `Innehållstyp: ${request.taskType}`,

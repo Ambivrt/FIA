@@ -93,6 +93,7 @@ export function normalizeRoutingEntry(entry: string | RoutingEntry): RoutingEntr
 // --- Self-eval types ---
 
 export type VerbosityLevel = "minimal" | "standard" | "detailed";
+export type ComplianceMode = "strict" | "balanced" | "open";
 
 export interface SelfEvalConfig {
   enabled: boolean;

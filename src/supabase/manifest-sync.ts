@@ -22,7 +22,7 @@ export interface AgentConfigJson {
   _yaml_routing?: Record<string, string | { primary: string; fallback?: string }>;
   _manifest_version: string;
   _admin_overrides?: string[];
-  relevance_mode?: "strict" | "balanced" | "open";
+  compliance_mode?: "strict" | "balanced" | "open";
 }
 
 export function extractConfigJson(manifest: AgentManifest): AgentConfigJson {
@@ -45,7 +45,7 @@ export function extractConfigJson(manifest: AgentManifest): AgentConfigJson {
   if (manifest.has_veto != null) config.has_veto = manifest.has_veto;
   if (manifest.budget_limit_sek != null) config.budget_limit_sek = manifest.budget_limit_sek;
   if (manifest.score_threshold_mql != null) config.score_threshold_mql = manifest.score_threshold_mql;
-  if (manifest.relevance_mode != null) config.relevance_mode = manifest.relevance_mode;
+  if (manifest.compliance_mode != null) config.compliance_mode = manifest.compliance_mode;
 
   const yamlTriggers = manifest.triggers ?? [];
   config.triggers = yamlTriggers;
@@ -72,6 +72,12 @@ export function mergeConfigJson(
       merged[key] = existing[key];
     }
   }
+
+  // Migrate legacy relevance_mode → compliance_mode
+  if (!merged.compliance_mode && existing.relevance_mode) {
+    merged.compliance_mode = existing.relevance_mode;
+  }
+  delete merged.relevance_mode;
 
   // Always overwrite _yaml_triggers and _yaml_routing with latest YAML (for dashboard diff)
   merged._yaml_triggers = manifestConfig._yaml_triggers;

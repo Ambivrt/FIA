@@ -63,6 +63,7 @@ tools:
   - google-ads
 
 autonomy: semi-autonomous
+compliance_mode: strict
 escalation_threshold: 3
 sample_review_rate: 1.0
 max_iterations: 5

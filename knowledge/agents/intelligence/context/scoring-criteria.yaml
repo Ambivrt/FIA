@@ -38,7 +38,7 @@ signal_scoring:
     deep_analysis: 0.7
     rapid_response: 0.9
 
-relevance_modes:
+compliance_modes:
   description: "Styr hur strikt agenten filtrerar sökresultat mot Forefronts kärndomäner."
   modes:
     strict:
@@ -78,7 +78,7 @@ relevance_modes:
         deep_analysis: 0.0
       use_case: "Fri utforskning, explorativ research"
   default: strict
-  override: "Per task via content_json.relevance_mode, per agent via agent.yaml"
+  override: "Per task via content_json.compliance_mode, per agent via agent.yaml"
 
 deep_analysis:
   model: claude-opus

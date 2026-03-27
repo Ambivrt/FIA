@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { AppConfig } from "../utils/config";
 import { Logger } from "../gateway/logger";
-import { loadAgentManifest } from "./agent-loader";
+import { loadAgentManifest, AgentManifest } from "./agent-loader";
 import { BaseAgent } from "./base-agent";
 import { ContentAgent } from "./content/content-agent";
 import { BrandAgent } from "./brand/brand-agent";
@@ -51,6 +51,17 @@ export async function createAgent(
       if (overrides.includes("tools") && cfg.tools) {
         manifest.tools = cfg.tools as string[];
         logger.debug(`Applied admin tools override for ${slug}`, { action: "admin_override", field: "tools" });
+      }
+      if (overrides.includes("compliance_mode") && cfg.compliance_mode) {
+        manifest.compliance_mode = cfg.compliance_mode as AgentManifest["compliance_mode"];
+        logger.debug(`Applied admin compliance_mode override for ${slug}`, {
+          action: "admin_override",
+          field: "compliance_mode",
+        });
+      }
+      // Backwards compat: migrate legacy relevance_mode
+      if (!manifest.compliance_mode && cfg.relevance_mode) {
+        manifest.compliance_mode = cfg.relevance_mode as AgentManifest["compliance_mode"];
       }
     }
   } catch {

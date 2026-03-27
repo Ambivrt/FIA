@@ -374,7 +374,8 @@ const DEPTH_LIMITS: Record<ResearchDepth, number> = {
   deep: 40,
 };
 
-type RelevanceMode = "strict" | "balanced" | "open";
+// Compliance mode type imported via BaseAgent; local alias for readability
+type ComplianceMode = "strict" | "balanced" | "open";
 
 export class IntelligenceAgent extends BaseAgent {
   readonly name = "Intelligence Agent";
@@ -539,7 +540,7 @@ export class IntelligenceAgent extends BaseAgent {
   private async scoreFindings(
     findings: RawFinding[],
     watchConfig: WatchDomainsConfig,
-    mode: RelevanceMode = "strict",
+    mode: ComplianceMode = "strict",
     topic?: string,
   ): Promise<ScoredFinding[]> {
     if (findings.length === 0) return [];
@@ -559,7 +560,7 @@ export class IntelligenceAgent extends BaseAgent {
   private async scoreBatch(
     findings: RawFinding[],
     watchConfig: WatchDomainsConfig,
-    mode: RelevanceMode = "strict",
+    mode: ComplianceMode = "strict",
     topic?: string,
   ): Promise<ScoredFinding[]> {
     const findingsText = findings
@@ -628,7 +629,7 @@ export class IntelligenceAgent extends BaseAgent {
 
   private async deepAnalyze(
     findings: ScoredFinding[],
-    mode: RelevanceMode = "strict",
+    mode: ComplianceMode = "strict",
     topic?: string,
   ): Promise<AnalyzedFinding[]> {
     const thresholds = this.getThresholds(mode);
@@ -1195,7 +1196,7 @@ export class IntelligenceAgent extends BaseAgent {
 
     try {
       // Step 0: Resolve relevance mode
-      const mode = this.resolveRelevanceMode(task);
+      const mode = this.resolveComplianceMode(task);
 
       // Step 1: Assess depth
       await this.safeSubStatus(taskId, "gathering");
@@ -1209,7 +1210,7 @@ export class IntelligenceAgent extends BaseAgent {
         action: "depth_assessed",
         task_id: taskId,
         depth,
-        relevance_mode: mode,
+        compliance_mode: mode,
         task_type: task.type,
       });
 
@@ -1313,7 +1314,7 @@ export class IntelligenceAgent extends BaseAgent {
           task_type: task.type,
           total_searches: totalSearches,
           depth,
-          relevance_mode: mode,
+          compliance_mode: mode,
           search_cost_sek: searchCostSek,
         },
       };
@@ -1467,7 +1468,7 @@ export class IntelligenceAgent extends BaseAgent {
     taskType: string,
     depth: ResearchDepth,
     profile: IntelligenceProfileRow | null,
-    mode: RelevanceMode = "strict",
+    mode: ComplianceMode = "strict",
   ): Promise<RawFinding[]> {
     const allFindings: RawFinding[] = [];
     const seenUrls = new Set<string>();
@@ -1556,7 +1557,7 @@ export class IntelligenceAgent extends BaseAgent {
     topic: string,
     taskType: string,
     profile: IntelligenceProfileRow | null,
-    mode: RelevanceMode = "strict",
+    mode: ComplianceMode = "strict",
   ): string[] {
     const queries: string[] = [topic];
 
@@ -1640,7 +1641,7 @@ export class IntelligenceAgent extends BaseAgent {
     taskType: string,
     depth: ResearchDepth,
     context: string,
-    mode: RelevanceMode = "strict",
+    mode: ComplianceMode = "strict",
     topic?: string,
   ): Promise<AnalyzedFinding[]> {
     if (findings.length === 0) return [];
@@ -1683,7 +1684,7 @@ export class IntelligenceAgent extends BaseAgent {
     findings: AnalyzedFinding[],
     depth: ResearchDepth,
     profile: IntelligenceProfileRow | null,
-    mode: RelevanceMode = "strict",
+    mode: ComplianceMode = "strict",
   ): Promise<ResearchOutput> {
     // Build base output via LLM
     const findingsText = findings
@@ -1955,20 +1956,11 @@ export class IntelligenceAgent extends BaseAgent {
     }
   }
 
-  // ── Relevance Mode ──────────────────────────────────────────────
+  // ── Compliance Mode (scoring & filtering) ──────────────────────
 
-  private resolveRelevanceMode(task: AgentTask, forceStrict: boolean = false): RelevanceMode {
-    if (forceStrict) return "strict";
+  // resolveComplianceMode() is inherited from BaseAgent
 
-    const taskMode = task.content_json?.relevance_mode as string | undefined;
-    if (taskMode && ["strict", "balanced", "open"].includes(taskMode)) {
-      return taskMode as RelevanceMode;
-    }
-
-    return (this.manifest.relevance_mode as RelevanceMode) ?? "strict";
-  }
-
-  private buildScoringPrompt(findingsText: string, mode: RelevanceMode, topic?: string): string {
+  private buildScoringPrompt(findingsText: string, mode: ComplianceMode, topic?: string): string {
     if (mode === "strict") {
       return [
         "Bedöm relevansen av följande sökresultat för Forefront Consulting Group.",
@@ -2017,7 +2009,7 @@ export class IntelligenceAgent extends BaseAgent {
     ].join("\n");
   }
 
-  private buildDeepAnalysisPrompt(findingsText: string, mode: RelevanceMode, topic?: string): string {
+  private buildDeepAnalysisPrompt(findingsText: string, mode: ComplianceMode, topic?: string): string {
     if (mode === "strict") {
       return [
         "Djupanalysera följande högrelevanta omvärldsfynd för Forefront Consulting Group.",
@@ -2061,7 +2053,7 @@ export class IntelligenceAgent extends BaseAgent {
     ].join("\n");
   }
 
-  private getThresholds(mode: RelevanceMode): { minScore: number; deepAnalysisScore: number } {
+  private getThresholds(mode: ComplianceMode): { minScore: number; deepAnalysisScore: number } {
     switch (mode) {
       case "strict":
         return { minScore: 0.6, deepAnalysisScore: 0.7 };

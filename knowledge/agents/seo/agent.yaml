@@ -28,6 +28,7 @@ tools:
   - "gws:analytics"
   - "gws:sheets"
 autonomy: autonomous
+compliance_mode: balanced
 escalation_threshold: 3
 sample_review_rate: 0.05
 max_iterations: 5
