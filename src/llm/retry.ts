@@ -13,7 +13,7 @@ export const DEFAULT_RETRY_CONFIG: RetryConfig = {
   maxRetries: 3,
   baseDelayMs: 1000,
   maxDelayMs: 30000,
-  retryableStatuses: [429, 500, 502, 503, 504],
+  retryableStatuses: [429, 529, 500, 502, 503, 504],
 };
 
 export function isRetryableError(error: unknown, config: RetryConfig = DEFAULT_RETRY_CONFIG): boolean {

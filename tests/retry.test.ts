@@ -4,7 +4,7 @@ const FAST_CONFIG: RetryConfig = {
   maxRetries: 3,
   baseDelayMs: 1, // Fast for tests
   maxDelayMs: 10,
-  retryableStatuses: [429, 500, 502, 503, 504],
+  retryableStatuses: [429, 529, 500, 502, 503, 504],
 };
 
 describe("isRetryableError", () => {
@@ -24,6 +24,16 @@ describe("isRetryableError", () => {
     const err = new Error("Internal server error") as any;
     err.status = 500;
     expect(isRetryableError(err)).toBe(true);
+  });
+
+  it("returns true for 529 overloaded", () => {
+    const err = new Error("Overloaded") as any;
+    err.status = 529;
+    expect(isRetryableError(err)).toBe(true);
+  });
+
+  it("matches 529 in error message text", () => {
+    expect(isRetryableError(new Error("529 overloaded_error"))).toBe(true);
   });
 
   it("returns false for 400 bad request", () => {
@@ -74,6 +84,16 @@ describe("withRetry", () => {
   it("retries on retryable error and succeeds", async () => {
     const err = new Error("Service unavailable") as any;
     err.status = 503;
+    const fn = jest.fn().mockRejectedValueOnce(err).mockResolvedValueOnce("recovered");
+
+    const result = await withRetry(fn, FAST_CONFIG);
+    expect(result).toBe("recovered");
+    expect(fn).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries on 529 overloaded and succeeds", async () => {
+    const err = new Error("Overloaded") as any;
+    err.status = 529;
     const fn = jest.fn().mockRejectedValueOnce(err).mockResolvedValueOnce("recovered");
 
     const result = await withRetry(fn, FAST_CONFIG);
