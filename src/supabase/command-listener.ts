@@ -247,6 +247,67 @@ export function startCommandListener(
             break;
           }
 
+          case "reseed_routing": {
+            if (!appConfig) {
+              logger.warn("reseed_routing: appConfig not available", { action: "reseed_routing_error" });
+              break;
+            }
+
+            const routingTargetSlug = cmd.target_slug ?? (p.slug as string | undefined);
+            const routingSlugsToReseed = routingTargetSlug ? [routingTargetSlug] : getAllAgentSlugs();
+            const routingReseeded: string[] = [];
+
+            for (const slug of routingSlugsToReseed) {
+              const { data: agentRow } = await supabase
+                .from("agents")
+                .select("id, config_json")
+                .eq("slug", slug)
+                .single();
+
+              if (!agentRow) continue;
+
+              let yamlRouting: Record<string, unknown> = {};
+              try {
+                const manifest = loadAgentManifest(appConfig.knowledgeDir, slug);
+                yamlRouting = manifest.routing ?? {};
+              } catch {
+                continue;
+              }
+
+              const currentCfg = (agentRow.config_json as Record<string, unknown>) ?? {};
+              const currentRouting = (currentCfg.routing as Record<string, unknown>) ?? {};
+
+              if (JSON.stringify(currentRouting) === JSON.stringify(yamlRouting)) continue;
+
+              const adminOverrides = new Set((currentCfg._admin_overrides as string[]) ?? []);
+              adminOverrides.delete("routing");
+              const merged = {
+                ...currentCfg,
+                routing: yamlRouting,
+                _yaml_routing: yamlRouting,
+                _admin_overrides: [...adminOverrides],
+              };
+
+              await supabase.from("agents").update({ config_json: merged }).eq("id", agentRow.id);
+              routingReseeded.push(slug);
+            }
+
+            await logActivity(supabase, {
+              user_id: cmd.issued_by,
+              action: "routing_config_reseeded",
+              details_json: {
+                scope: routingTargetSlug ? "single" : "all",
+                agents_reseeded: routingReseeded,
+                source: "dashboard",
+              },
+            });
+
+            logger.info(`Routing reseeded: ${routingReseeded.join(", ") || "none"}`, {
+              action: "reseed_routing_complete",
+            });
+            break;
+          }
+
           case "reseed_knowledge": {
             if (!appConfig) {
               logger.warn("reseed_knowledge: appConfig not available", { action: "reseed_knowledge_error" });
