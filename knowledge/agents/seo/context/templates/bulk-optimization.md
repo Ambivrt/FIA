@@ -17,6 +17,7 @@
 ### 2. Per sida
 
 #### URL: [sidans URL]
+
 - **Nuvarande ranking:** Position för primärt keyword (om känd)
 - **Primärt keyword:** Sökterm sidan bör ranka för
 - **Titel-optimering:** Nuvarande → Föreslagen (max 60 tecken)
@@ -29,6 +30,7 @@
 ### 3. Prioritering
 
 Sidor sorterade efter:
+
 1. Största potentiella trafikvinst
 2. Lägsta insats (quick wins först)
 3. Strategisk betydelse

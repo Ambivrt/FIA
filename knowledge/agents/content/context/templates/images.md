@@ -35,6 +35,7 @@
 ## Kvalitetskontroll
 
 Brand Agent granskar varje genererad bild mot:
+
 1. Färgpalett-överensstämmelse
 2. Varumärkeskänsla och ton
 3. Professionell kvalitet

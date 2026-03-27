@@ -18,6 +18,7 @@
 ### 2. Keyword-kluster (3-5 kluster)
 
 Per kluster:
+
 - **Tema:** Beskrivande namn
 - **Primärt keyword:** Högst prioriterat sökord
 - **Sekundära keywords:** 5-10 relaterade termer
@@ -30,8 +31,8 @@ Per kluster:
 ### 3. Prioriteringsmatris
 
 | Keyword | Sökvolym | Konkurrens | Relevans | Prioritet |
-|---------|----------|------------|----------|-----------|
-| ... | H/M/L | H/M/L | 1-10 | P1/P2/P3 |
+| ------- | -------- | ---------- | -------- | --------- |
+| ...     | H/M/L    | H/M/L      | 1-10     | P1/P2/P3  |
 
 ### 4. Handlingsplan
 

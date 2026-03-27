@@ -10,24 +10,24 @@
 
 ### Firmografiska poäng (max 40)
 
-| Faktor | Poäng | Kriterier |
-|--------|-------|-----------|
-| Bransch-match | 0-15 | Forefronts kärnbranscher: tech, finans, konsult, SaaS |
-| Företagsstorlek | 0-10 | 50-500 anställda (sweet spot), 500+ (enterprise) |
-| Geografi | 0-5 | Sverige > Norden > Europa > Globalt |
-| Beslutsfattarnivå | 0-10 | C-suite: 10, VP: 8, Director: 6, Manager: 4, Övrigt: 2 |
+| Faktor            | Poäng | Kriterier                                              |
+| ----------------- | ----- | ------------------------------------------------------ |
+| Bransch-match     | 0-15  | Forefronts kärnbranscher: tech, finans, konsult, SaaS  |
+| Företagsstorlek   | 0-10  | 50-500 anställda (sweet spot), 500+ (enterprise)       |
+| Geografi          | 0-5   | Sverige > Norden > Europa > Globalt                    |
+| Beslutsfattarnivå | 0-10  | C-suite: 10, VP: 8, Director: 6, Manager: 4, Övrigt: 2 |
 
 ### Beteendepoäng (max 60)
 
-| Aktivitet | Poäng | Förfallstid |
-|-----------|-------|-------------|
-| Besökt pricing/kontakt-sida | +15 | 30 dagar |
-| Laddat ner whitepaper/case | +10 | 60 dagar |
-| Deltagit i event/webinar | +10 | 90 dagar |
-| Öppnat >3 nyhetsbrev | +8 | 30 dagar |
-| Besökt >5 sidor | +5 | 14 dagar |
-| Inkommande förfrågan | +20 | Förfaller ej |
-| Inaktiv >60 dagar | -10 | Reset vid ny aktivitet |
+| Aktivitet                   | Poäng | Förfallstid            |
+| --------------------------- | ----- | ---------------------- |
+| Besökt pricing/kontakt-sida | +15   | 30 dagar               |
+| Laddat ner whitepaper/case  | +10   | 60 dagar               |
+| Deltagit i event/webinar    | +10   | 90 dagar               |
+| Öppnat >3 nyhetsbrev        | +8    | 30 dagar               |
+| Besökt >5 sidor             | +5    | 14 dagar               |
+| Inkommande förfrågan        | +20   | Förfaller ej           |
+| Inaktiv >60 dagar           | -10   | Reset vid ny aktivitet |
 
 ### Poängintervall
 

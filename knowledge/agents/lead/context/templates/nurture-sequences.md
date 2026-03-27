@@ -19,6 +19,7 @@
 ### 2. Per steg i sekvensen
 
 #### Steg N: [Titel]
+
 - **Dag:** Relativ dag i sekvensen (Dag 0, Dag 3, Dag 7...)
 - **Kanal:** Email / LinkedIn / Retargeting
 - **Syfte:** Vad ska detta steg åstadkomma?

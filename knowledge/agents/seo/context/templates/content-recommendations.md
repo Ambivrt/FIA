@@ -17,6 +17,7 @@
 ### 2. Rekommendationer (sorterade efter prioritet)
 
 Per rekommendation:
+
 - **Typ:** Nytt content / Uppdatering / Konsolidering / Borttagning
 - **Målkeyword:** Primärt sökord
 - **Content-format:** Blog post, case study, landing page, whitepaper

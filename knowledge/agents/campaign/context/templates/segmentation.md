@@ -17,21 +17,25 @@
 ### 2. Per segment
 
 #### Demografi & firmografi
+
 - Bransch, företagsstorlek, roll/titel
 - Geografi (Sverige/Norden/internationellt)
 - Beslutsfattarnivå (C-suite, VP, operativ)
 
 #### Beteende
+
 - Hur de interagerar med Forefront idag (webb, event, content, referrals)
 - Purchase stage (awareness, consideration, decision)
 - Content-preferenser (format, kanal, frekvens)
 
 #### Behov & smärtpunkter
+
 - Primärt problem de vill lösa
 - Vad som hindrar dem från att agera
 - Vilken typ av bevis de behöver (case, data, peer validation)
 
 #### Kommunikationsstrategi
+
 - Budskap anpassat till segmentet
 - Tonalitet-justering (mer formell/teknisk/visionär beroende på segment)
 - Rekommenderade kanaler och format
