@@ -5,10 +5,15 @@ import { calculateCostUsd } from "./pricing";
 import { withRetry } from "./retry";
 
 let clientInstance: GoogleGenAI | null = null;
+let clientApiKey: string | null = null;
 
 function getClient(config: AppConfig): GoogleGenAI {
-  if (!clientInstance) {
+  if (!config.geminiApiKey) {
+    throw new Error("GEMINI_API_KEY is not configured. Cannot call Gemini API without a valid API key.");
+  }
+  if (!clientInstance || clientApiKey !== config.geminiApiKey) {
     clientInstance = new GoogleGenAI({ apiKey: config.geminiApiKey });
+    clientApiKey = config.geminiApiKey;
   }
   return clientInstance;
 }
