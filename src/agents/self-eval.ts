@@ -8,7 +8,7 @@
 import { AppConfig } from "../utils/config";
 import { Logger } from "../gateway/logger";
 import { routeRequest, AgentRouting } from "../gateway/router";
-import { SelfEvalConfig, SelfEvalResult, ToolDefinition } from "../llm/types";
+import { SelfEvalConfig, SelfEvalResult, ToolDefinition, VerbosityLevel } from "../llm/types";
 
 const SELF_EVAL_TOOL: ToolDefinition = {
   name: "self_eval_response",
@@ -31,12 +31,21 @@ const SELF_EVAL_TOOL: ToolDefinition = {
   },
 };
 
-function buildSelfEvalPrompt(output: string, criteria: string[]): string {
+const VERBOSITY_INSTRUCTIONS: Record<VerbosityLevel, string> = {
+  minimal: "Returnera bara pass/fail och score. Om issues, beskriv med max 5 ord per issue.",
+  standard: "",
+  detailed:
+    "Ge utförlig feedback med specifika exempel från innehållet och konkreta förbättringsförslag per kriterium.",
+};
+
+function buildSelfEvalPrompt(output: string, criteria: string[], verbosity: VerbosityLevel = "standard"): string {
   const criteriaList = criteria.map((c, i) => `${i + 1}. ${c}`).join("\n");
+  const verbosityNote = VERBOSITY_INSTRUCTIONS[verbosity];
 
   return [
     "Du är en kvalitetsgranskare. Bedöm följande innehåll mot kriterierna nedan.",
     "Använd verktyget self_eval_response för att lämna din bedömning.",
+    ...(verbosityNote ? ["", `## Instruktioner`, verbosityNote] : []),
     "",
     "## Kriterier",
     criteriaList,
@@ -95,8 +104,14 @@ export async function runSelfEval(
   agentSlug: string,
   output: string,
   selfEvalConfig: SelfEvalConfig,
+  verbosity: VerbosityLevel = "standard",
 ): Promise<SelfEvalResult> {
-  const evalPrompt = buildSelfEvalPrompt(output, selfEvalConfig.criteria);
+  // Truncate very long output to avoid wasting tokens on self-eval
+  const MAX_EVAL_CHARS = 5000;
+  const trimmedOutput =
+    output.length > MAX_EVAL_CHARS ? output.slice(0, 2000) + "\n\n[... trimmat ...]\n\n" + output.slice(-2000) : output;
+
+  const evalPrompt = buildSelfEvalPrompt(trimmedOutput, selfEvalConfig.criteria, verbosity);
 
   // Route to the configured (cheaper) model via a synthetic routing
   const evalRouting: AgentRouting = {

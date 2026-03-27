@@ -92,11 +92,14 @@ export function normalizeRoutingEntry(entry: string | RoutingEntry): RoutingEntr
 
 // --- Self-eval types ---
 
+export type VerbosityLevel = "minimal" | "standard" | "detailed";
+
 export interface SelfEvalConfig {
   enabled: boolean;
   model: ModelAlias;
   criteria: string[];
   threshold: number;
+  verbosity?: VerbosityLevel;
 }
 
 export interface SelfEvalResult {

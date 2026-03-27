@@ -8,7 +8,7 @@ import { createApproval, updateTaskStatus } from "../../supabase/task-writer";
 import { logActivity } from "../../supabase/activity-writer";
 import { getSlackApp } from "../../slack/app";
 import { sendEscalation } from "../../slack/handlers";
-import { ToolDefinition } from "../../llm/types";
+import { ToolDefinition, VerbosityLevel } from "../../llm/types";
 
 const BRAND_REVIEW_TOOL: ToolDefinition = {
   name: "brand_review_decision",
@@ -38,6 +38,7 @@ export interface ReviewRequest {
   correlationId?: string;
   imageBase64?: string;
   imageMimeType?: string;
+  verbosity?: VerbosityLevel;
 }
 
 export interface ReviewResult {
@@ -45,6 +46,12 @@ export interface ReviewResult {
   feedback: string;
   escalated: boolean;
 }
+
+const REVIEW_VERBOSITY: Record<VerbosityLevel, string> = {
+  minimal: "Ge kortfattad feedback, max 2-3 meningar. Fokusera på det viktigaste.",
+  standard: "",
+  detailed: "Ge utförlig feedback med specifika citat från innehållet och konkreta förbättringsförslag.",
+};
 
 export class BrandAgent extends BaseAgent {
   readonly name = "Brand Agent";
@@ -69,6 +76,16 @@ export class BrandAgent extends BaseAgent {
   async review(request: ReviewRequest): Promise<ReviewResult> {
     this.cleanupStaleEntries();
 
+    // Truncate very long content to avoid wasting tokens on brand review
+    const MAX_REVIEW_CHARS = 8000;
+    if (request.content.length > MAX_REVIEW_CHARS) {
+      request = {
+        ...request,
+        content:
+          request.content.slice(0, 4000) + "\n\n[... trimmat för granskning ...]\n\n" + request.content.slice(-4000),
+      };
+    }
+
     let response;
 
     if (request.imageBase64) {
@@ -89,6 +106,7 @@ export class BrandAgent extends BaseAgent {
         "",
         "Använd verktyget brand_review_decision för att lämna ditt beslut.",
         "Vid avslag, var specifik om vilka visuella element som behöver ändras.",
+        ...(request.verbosity && REVIEW_VERBOSITY[request.verbosity] ? ["", REVIEW_VERBOSITY[request.verbosity]] : []),
       ].join("\n");
 
       response = await this.callLLMWithImages("default", prompt, {
@@ -102,6 +120,7 @@ export class BrandAgent extends BaseAgent {
         "Granska följande innehåll för varumärkesöverensstämmelse.",
         "Kontrollera: tonalitet, budskapshierarki, visuella riktlinjer och Forefronts varumärkesvärden.",
         "Använd verktyget brand_review_decision för att lämna ditt beslut.",
+        ...(request.verbosity && REVIEW_VERBOSITY[request.verbosity] ? ["", REVIEW_VERBOSITY[request.verbosity]] : []),
         "",
         `Innehållstyp: ${request.taskType}`,
         `Källagent: ${request.agentSlug}`,
