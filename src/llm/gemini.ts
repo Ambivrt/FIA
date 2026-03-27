@@ -63,6 +63,17 @@ export async function callGemini(config: AppConfig, model: string, request: LLMR
       if (controller.signal.aborted) {
         throw new Error(`Gemini API timeout after ${timeoutMs / 1000}s (model: ${model})`);
       }
+
+      // Surface clear message for auth failures (invalid/expired GEMINI_API_KEY)
+      const errMsg = (err as Error).message ?? "";
+      const status = (err as any).status ?? (err as any).statusCode;
+      if (status === 401 || errMsg.includes("UNAUTHENTICATED") || errMsg.includes("invalid authentication")) {
+        throw new Error(
+          `Gemini API autentisering misslyckades (401). Kontrollera att GEMINI_API_KEY i .env är en giltig Google AI Studio API-nyckel. ` +
+            `Originalfel: ${errMsg}`,
+        );
+      }
+
       throw err;
     } finally {
       clearTimeout(timer);
