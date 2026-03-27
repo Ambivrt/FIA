@@ -8,6 +8,7 @@ import { loadAgentManifest } from "../agents/agent-loader";
 import { getAllAgentSlugs } from "../agents/agent-factory";
 import { TriggerConfig } from "../engine/trigger-types";
 import { AppConfig } from "../utils/config";
+import { manuallyFireTrigger } from "../engine/trigger-engine";
 import { seedAllKnowledge, seedAgentKnowledge } from "../knowledge/knowledge-seeder";
 import { checkDriveAuth, setupDriveFolders } from "../mcp/drive-setup";
 import { handleGwsToolUse } from "../mcp/gws";
@@ -280,6 +281,44 @@ export function startCommandListener(
               action: "reseed_knowledge_complete",
             });
             break;
+          }
+
+          case "fire_trigger": {
+            if (!appConfig) {
+              logger.warn("fire_trigger: appConfig not available", { action: "fire_trigger_error" });
+              break;
+            }
+
+            const triggerSlug = cmd.target_slug ?? (p.agent_slug as string);
+            const triggerName = p.trigger_name as string;
+
+            if (!triggerSlug || !triggerName) {
+              logger.warn("fire_trigger: missing agent_slug or trigger_name", { action: "fire_trigger_error" });
+              break;
+            }
+
+            const result = await manuallyFireTrigger(
+              supabase,
+              triggerSlug,
+              triggerName,
+              appConfig.knowledgeDir,
+              logger,
+            );
+
+            await logActivity(supabase, {
+              user_id: cmd.issued_by,
+              action: "trigger_manually_fired",
+              details_json: {
+                agent_slug: triggerSlug,
+                trigger_name: triggerName,
+                success: result.success,
+                message: result.message,
+                source: "dashboard",
+              },
+            });
+
+            await markCommand(supabase, cmd.id, result.success ? "completed" : "failed", result);
+            return; // Already marked
           }
 
           case "drive_setup": {

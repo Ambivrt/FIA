@@ -293,6 +293,71 @@ async function createPendingTrigger(
 }
 
 /**
+ * Manually fire a trigger by name. Used by dashboard "Fire" button.
+ * Creates the downstream task directly (or pending_trigger if requires_approval).
+ */
+export async function manuallyFireTrigger(
+  supabase: SupabaseClient,
+  agentSlug: string,
+  triggerName: string,
+  knowledgeDir: string,
+  logger: Logger,
+): Promise<{ success: boolean; message: string }> {
+  // Look up agent + trigger config
+  const { data: agent } = await supabase
+    .from("agents")
+    .select("id, config_json")
+    .eq("slug", agentSlug)
+    .single();
+
+  if (!agent) return { success: false, message: `Agent '${agentSlug}' not found` };
+
+  const configJson = agent.config_json as Record<string, unknown> | null;
+  const triggers = (configJson?.triggers as TriggerConfig[] | undefined) ?? [];
+  const trigger = triggers.find((t) => t.name === triggerName);
+
+  if (!trigger) return { success: false, message: `Trigger '${triggerName}' not found on ${agentSlug}` };
+
+  // Create a synthetic source task record for the trigger
+  const syntheticTask: TaskRecord = {
+    id: "manual-fire",
+    agent_id: agent.id,
+    type: "manual_trigger",
+    title: `Manual fire: ${triggerName}`,
+    status: "completed",
+    priority: "normal",
+    content_json: null,
+    parent_task_id: null,
+    trigger_source: null,
+  };
+
+  try {
+    if (trigger.requires_approval) {
+      await createPendingTrigger(supabase, syntheticTask, trigger);
+      logger.info(`Manual trigger fire: ${triggerName} → pending approval`, {
+        agent: agentSlug,
+        action: "manual_trigger_pending",
+      });
+      return { success: true, message: `Trigger '${triggerName}' created as pending (requires approval)` };
+    } else {
+      await executeTrigger(supabase, syntheticTask, trigger, knowledgeDir, logger);
+      logger.info(`Manual trigger fire: ${triggerName} → executed`, {
+        agent: agentSlug,
+        action: "manual_trigger_executed",
+      });
+      return { success: true, message: `Trigger '${triggerName}' executed successfully` };
+    }
+  } catch (err) {
+    logger.error(`Manual trigger fire failed: ${(err as Error).message}`, {
+      agent: agentSlug,
+      trigger: triggerName,
+      action: "manual_trigger_error",
+    });
+    return { success: false, message: (err as Error).message };
+  }
+}
+
+/**
  * Walk the parent_task_id chain to determine trigger depth.
  */
 export async function getTriggerDepth(supabase: SupabaseClient, taskId: string): Promise<number> {

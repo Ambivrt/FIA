@@ -5,14 +5,14 @@ import { AppConfig } from "../utils/config";
 import { Logger } from "../gateway/logger";
 import { AgentManifest, resolveAgentFiles, loadSkills } from "./agent-loader";
 import { loadBrandContext } from "../context/context-manager";
-import { buildSystemPrompt, buildTaskPrompt } from "../context/prompt-builder";
+import { buildSystemPrompt, buildTaskPrompt, trimContext } from "../context/prompt-builder";
 import {
   fetchAgentSkills,
   fetchSystemContext,
   fetchTaskContext as fetchTaskCtxFromDb,
 } from "../knowledge/knowledge-reader";
 import { routeRequest, AgentRouting } from "../gateway/router";
-import { LLMResponse, ToolDefinition, PipelineData } from "../llm/types";
+import { LLMResponse, ToolDefinition, PipelineData, VerbosityLevel } from "../llm/types";
 import { createTask, updateTaskStatus, createApproval } from "../supabase/task-writer";
 import { logActivity } from "../supabase/activity-writer";
 import { writeMetric } from "../supabase/metrics-writer";
@@ -106,12 +106,19 @@ export abstract class BaseAgent {
       toolChoice?: { type: "auto" | "any" | "tool"; name?: string };
     },
   ): Promise<LLMResponse> {
+    const maxTokens = this.manifest.max_context_tokens;
     const systemPrompt = await this.getSystemPrompt();
     const taskContext = await this.getTaskContext(taskType);
-    const fullPrompt = buildTaskPrompt(taskContext, userPrompt);
+
+    const trimmedSystem = maxTokens
+      ? trimContext(systemPrompt, Math.floor(maxTokens * 0.6))
+      : systemPrompt;
+    const fullPrompt = maxTokens
+      ? buildTaskPrompt(taskContext, userPrompt, Math.floor(maxTokens * 0.4))
+      : buildTaskPrompt(taskContext, userPrompt);
 
     return routeRequest(this.config, this.logger, this.manifest.routing as AgentRouting, taskType, {
-      systemPrompt,
+      systemPrompt: trimmedSystem,
       userPrompt: fullPrompt,
       tools: options?.tools,
       toolChoice: options?.toolChoice,
@@ -448,7 +455,8 @@ export abstract class BaseAgent {
     try {
       await task.onProgress?.("self_eval", `:mag: Self-eval körs...`, { task_id: taskId });
 
-      const result = await runSelfEval(this.config, this.logger, this.slug, output, selfEvalConfig);
+      const verbosity = this.resolveVerbosity(task.priority, task.type);
+      const result = await runSelfEval(this.config, this.logger, this.slug, output, selfEvalConfig, verbosity);
 
       pipeline.self_eval = {
         ...result,
@@ -475,6 +483,39 @@ export abstract class BaseAgent {
       });
       return null;
     }
+  }
+
+  private static readonly PRIORITY_VERBOSITY: Record<string, VerbosityLevel> = {
+    urgent: "detailed",
+    high: "detailed",
+    normal: "standard",
+    low: "minimal",
+  };
+
+  private static readonly DETAILED_TASK_TYPES = new Set([
+    "press_release",
+    "case_study",
+    "whitepaper",
+    "newsletter",
+  ]);
+
+  /**
+   * Resolve effective verbosity for a task based on agent config, priority, and task type.
+   * Rule: take the most verbose level among agent default, priority mapping, and task type override.
+   */
+  protected resolveVerbosity(taskPriority?: string, taskType?: string): VerbosityLevel {
+    const LEVEL_ORDER: VerbosityLevel[] = ["minimal", "standard", "detailed"];
+    const agentDefault = this.manifest.verbosity ?? "standard";
+    const priorityLevel = BaseAgent.PRIORITY_VERBOSITY[taskPriority ?? "normal"] ?? "standard";
+    const taskTypeLevel = taskType && BaseAgent.DETAILED_TASK_TYPES.has(taskType) ? "detailed" : "minimal";
+
+    const levels: VerbosityLevel[] = [agentDefault, priorityLevel, taskTypeLevel];
+    let maxIdx = 0;
+    for (const level of levels) {
+      const idx = LEVEL_ORDER.indexOf(level);
+      if (idx > maxIdx) maxIdx = idx;
+    }
+    return LEVEL_ORDER[maxIdx];
   }
 
   private getRouteAlias(taskType: string): string {
