@@ -109,9 +109,7 @@ export async function runSelfEval(
   // Truncate very long output to avoid wasting tokens on self-eval
   const MAX_EVAL_CHARS = 5000;
   const trimmedOutput =
-    output.length > MAX_EVAL_CHARS
-      ? output.slice(0, 2000) + "\n\n[... trimmat ...]\n\n" + output.slice(-2000)
-      : output;
+    output.length > MAX_EVAL_CHARS ? output.slice(0, 2000) + "\n\n[... trimmat ...]\n\n" + output.slice(-2000) : output;
 
   const evalPrompt = buildSelfEvalPrompt(trimmedOutput, selfEvalConfig.criteria, verbosity);
 

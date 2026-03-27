@@ -82,9 +82,7 @@ export class BrandAgent extends BaseAgent {
       request = {
         ...request,
         content:
-          request.content.slice(0, 4000) +
-          "\n\n[... trimmat för granskning ...]\n\n" +
-          request.content.slice(-4000),
+          request.content.slice(0, 4000) + "\n\n[... trimmat för granskning ...]\n\n" + request.content.slice(-4000),
       };
     }
 

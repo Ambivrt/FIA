@@ -304,11 +304,7 @@ export async function manuallyFireTrigger(
   logger: Logger,
 ): Promise<{ success: boolean; message: string }> {
   // Look up agent + trigger config
-  const { data: agent } = await supabase
-    .from("agents")
-    .select("id, config_json")
-    .eq("slug", agentSlug)
-    .single();
+  const { data: agent } = await supabase.from("agents").select("id, config_json").eq("slug", agentSlug).single();
 
   if (!agent) return { success: false, message: `Agent '${agentSlug}' not found` };
 

@@ -110,9 +110,7 @@ export abstract class BaseAgent {
     const systemPrompt = await this.getSystemPrompt();
     const taskContext = await this.getTaskContext(taskType);
 
-    const trimmedSystem = maxTokens
-      ? trimContext(systemPrompt, Math.floor(maxTokens * 0.6))
-      : systemPrompt;
+    const trimmedSystem = maxTokens ? trimContext(systemPrompt, Math.floor(maxTokens * 0.6)) : systemPrompt;
     const fullPrompt = maxTokens
       ? buildTaskPrompt(taskContext, userPrompt, Math.floor(maxTokens * 0.4))
       : buildTaskPrompt(taskContext, userPrompt);
@@ -492,12 +490,7 @@ export abstract class BaseAgent {
     low: "minimal",
   };
 
-  private static readonly DETAILED_TASK_TYPES = new Set([
-    "press_release",
-    "case_study",
-    "whitepaper",
-    "newsletter",
-  ]);
+  private static readonly DETAILED_TASK_TYPES = new Set(["press_release", "case_study", "whitepaper", "newsletter"]);
 
   /**
    * Resolve effective verbosity for a task based on agent config, priority, and task type.

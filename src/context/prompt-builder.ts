@@ -27,7 +27,12 @@ export function trimContext(text: string, maxTokens: number): string {
   return trimmed + "\n\n[... trimmat för kontextgräns ...]";
 }
 
-export function buildSystemPrompt(brandContext: string, skills: LoadedSkill[] | string, extraContext?: string, maxTokens?: number): string {
+export function buildSystemPrompt(
+  brandContext: string,
+  skills: LoadedSkill[] | string,
+  extraContext?: string,
+  maxTokens?: number,
+): string {
   const parts = ["# Brand Context\n\n" + brandContext];
 
   if (typeof skills === "string") {
