@@ -54,7 +54,12 @@ export class StrategyAgent extends BaseAgent {
   readonly name = "Strategy Agent";
   readonly slug = "strategy";
 
-  constructor(config: AppConfig, logger: Logger, supabase: SupabaseClient, manifest: AgentManifest) {
+  constructor(
+    config: AppConfig,
+    logger: Logger,
+    supabase: SupabaseClient,
+    manifest: AgentManifest,
+  ) {
     super(config, logger, supabase, manifest);
   }
 
@@ -71,7 +76,9 @@ export class StrategyAgent extends BaseAgent {
 
   private async executeStrategy(task: AgentTask): Promise<AgentResult> {
     const agentRow = await this.getAgentId();
-    const { createTask, updateTaskStatus } = await import("../../supabase/task-writer");
+    const { createTask, updateTaskStatus } = await import(
+      "../../supabase/task-writer"
+    );
     const { logActivity } = await import("../../supabase/activity-writer");
 
     const taskId = task.existingTaskId
@@ -94,123 +101,142 @@ export class StrategyAgent extends BaseAgent {
     const tracker = this.createStepTracker();
 
     try {
-    // Step 1: Researching \u2014 collect data context
-    tracker.startStep("researching");
-    await task.onProgress?.("researching", `:mag: Strategy Agent samlar data...`, {
-      task_id: taskId,
-      task_type: task.type,
-    });
-    await this.setSubStatus(taskId, "researching");
-    const dataContext = await this.callLLMWithTools(
-      task.type,
-      [
-        `Samla in relevant data och kontext f\u00f6r att skapa: ${task.title}`,
+      // Step 1: Researching \u2014 collect data context
+      tracker.startStep("researching");
+      await task.onProgress?.(
+        "researching",
+        `:mag: Strategy Agent samlar data...`,
+        {
+          task_id: taskId,
+          task_type: task.type,
+        },
+      );
+      await this.setSubStatus(taskId, "researching");
+      const dataContext = await this.callLLMWithTools(
+        task.type,
+        [
+          `Samla in relevant data och kontext f\u00f6r att skapa: ${task.title}`,
+          `Typ: ${task.type}`,
+          `Input: ${task.input}`,
+          "",
+          "H\u00e4mta relevant data fr\u00e5n GA4, HubSpot och tillg\u00e4ngliga verktyg.",
+        ].join("\n"),
+      );
+
+      // Step 2: Analyzing \u2014 identify patterns and opportunities
+      tracker.startStep("analyzing");
+      await task.onProgress?.(
+        "analyzing",
+        `:brain: Strategy Agent analyserar data...`,
+        {
+          task_id: taskId,
+        },
+      );
+      await this.setSubStatus(taskId, "analyzing");
+      const analysisPrompt = [
+        `Analysera f\u00f6ljande data och identifiera m\u00f6nster, m\u00f6jligheter och risker.`,
+        `Uppgift: ${task.title} (${task.type})`,
+        "",
+        "--- DATA ---",
+        dataContext.text,
+        "",
+        "Ge en strukturerad analys med:",
+        "1. Nyckelinsikter fr\u00e5n data",
+        "2. Identifierade m\u00f6jligheter",
+        "3. Risker och utmaningar",
+        "4. Rekommenderad riktning",
+      ].join("\n");
+      const analysis = await this.callLLM("default", analysisPrompt);
+
+      // Step 3: Drafting \u2014 create the strategy/plan
+      tracker.startStep("drafting");
+      await task.onProgress?.(
+        "drafting",
+        `:memo: Strategy Agent utformar strategi...`,
+        {
+          task_id: taskId,
+        },
+      );
+      await this.setSubStatus(taskId, "drafting");
+      const draftPrompt = [
+        `Skapa ett komplett utkast baserat p\u00e5 analysen.`,
         `Typ: ${task.type}`,
         `Input: ${task.input}`,
         "",
-        "H\u00e4mta relevant data fr\u00e5n GA4, HubSpot och tillg\u00e4ngliga verktyg.",
-      ].join("\n"),
-    );
+        "--- ANALYS ---",
+        analysis.text,
+        "",
+        "F\u00f6lj mallen f\u00f6r denna task type. Inkludera konkreta KPI:er och m\u00e4tbara m\u00e5l.",
+      ].join("\n");
+      const draft = await this.callLLM(task.type, draftPrompt);
 
-    // Step 2: Analyzing \u2014 identify patterns and opportunities
-    tracker.startStep("analyzing");
-    await task.onProgress?.("analyzing", `:brain: Strategy Agent analyserar data...`, {
-      task_id: taskId,
-    });
-    await this.setSubStatus(taskId, "analyzing");
-    const analysisPrompt = [
-      `Analysera f\u00f6ljande data och identifiera m\u00f6nster, m\u00f6jligheter och risker.`,
-      `Uppgift: ${task.title} (${task.type})`,
-      "",
-      "--- DATA ---",
-      dataContext.text,
-      "",
-      "Ge en strukturerad analys med:",
-      "1. Nyckelinsikter fr\u00e5n data",
-      "2. Identifierade m\u00f6jligheter",
-      "3. Risker och utmaningar",
-      "4. Rekommenderad riktning",
-    ].join("\n");
-    const analysis = await this.callLLM("default", analysisPrompt);
+      // Step 4: Aligning \u2014 check brand, goals, budget alignment
+      tracker.startStep("aligning");
+      await task.onProgress?.(
+        "aligning",
+        `:dart: Strategy Agent kvalitetss\u00e4krar...`,
+        {
+          task_id: taskId,
+        },
+      );
+      await this.setSubStatus(taskId, "aligning");
+      const selfEvalResult = await this.runSelfEval(draft.text);
 
-    // Step 3: Drafting \u2014 create the strategy/plan
-    tracker.startStep("drafting");
-    await task.onProgress?.("drafting", `:memo: Strategy Agent utformar strategi...`, {
-      task_id: taskId,
-    });
-    await this.setSubStatus(taskId, "drafting");
-    const draftPrompt = [
-      `Skapa ett komplett utkast baserat p\u00e5 analysen.`,
-      `Typ: ${task.type}`,
-      `Input: ${task.input}`,
-      "",
-      "--- ANALYS ---",
-      analysis.text,
-      "",
-      "F\u00f6lj mallen f\u00f6r denna task type. Inkludera konkreta KPI:er och m\u00e4tbara m\u00e5l.",
-    ].join("\n");
-    const draft = await this.callLLM(task.type, draftPrompt);
+      tracker.complete();
 
-    // Step 4: Aligning \u2014 check brand, goals, budget alignment
-    tracker.startStep("aligning");
-    await task.onProgress?.("aligning", `:dart: Strategy Agent kvalitetss\u00e4krar...`, {
-      task_id: taskId,
-    });
-    await this.setSubStatus(taskId, "aligning");
-    const selfEvalResult = await this.runSelfEval(draft.text);
-
-    tracker.complete();
-
-    const contentJson: Record<string, unknown> = {
-      data_context: dataContext.text,
-      analysis: analysis.text,
-      output: draft.text,
-      eval_score: selfEvalResult?.score ?? null,
-      eval_pass: selfEvalResult?.pass ?? null,
-      eval_issues: selfEvalResult?.issues ?? [],
-      _steps: tracker.toArray(),
-    };
-
-    // Check escalation rules
-    const escalation = this.checkEscalation(contentJson);
-
-    const totalTokensIn = dataContext.tokensIn + analysis.tokensIn + draft.tokensIn;
-    const totalTokensOut = dataContext.tokensOut + analysis.tokensOut + draft.tokensOut;
-    const totalDuration = dataContext.durationMs + analysis.durationMs + draft.durationMs;
-
-    // Determine review status
-    const targetStatus = this.determineReviewStatus(task.type, escalation);
-
-    if (escalation) {
-      contentJson.escalation = escalation;
-    }
-
-    await updateTaskStatus(this.supabase, taskId, targetStatus, {
-      content_json: contentJson,
-      model_used: draft.model,
-      tokens_used: totalTokensIn + totalTokensOut,
-    });
-
-    await logActivity(this.supabase, {
-      agent_id: agentRow,
-      action: "strategy_completed",
-      details_json: {
-        task_id: taskId,
-        type: task.type,
+      const contentJson: Record<string, unknown> = {
+        data_context: dataContext.text,
+        analysis: analysis.text,
+        output: draft.text,
         eval_score: selfEvalResult?.score ?? null,
-        escalated: !!escalation,
-      },
-    });
+        eval_pass: selfEvalResult?.pass ?? null,
+        eval_issues: selfEvalResult?.issues ?? [],
+        _steps: tracker.toArray(),
+      };
 
-    return {
-      taskId,
-      output: draft.text,
-      model: draft.model,
-      tokensIn: totalTokensIn,
-      tokensOut: totalTokensOut,
-      durationMs: totalDuration,
-      status: "completed",
-    };
+      // Check escalation rules
+      const escalation = this.checkEscalation(contentJson);
+
+      const totalTokensIn =
+        dataContext.tokensIn + analysis.tokensIn + draft.tokensIn;
+      const totalTokensOut =
+        dataContext.tokensOut + analysis.tokensOut + draft.tokensOut;
+      const totalDuration =
+        dataContext.durationMs + analysis.durationMs + draft.durationMs;
+
+      // Determine review status
+      const targetStatus = this.determineReviewStatus(task.type, escalation);
+
+      if (escalation) {
+        contentJson.escalation = escalation;
+      }
+
+      await updateTaskStatus(this.supabase, taskId, targetStatus, {
+        content_json: contentJson,
+        model_used: draft.model,
+        tokens_used: totalTokensIn + totalTokensOut,
+      });
+
+      await logActivity(this.supabase, {
+        agent_id: agentRow,
+        action: "strategy_completed",
+        details_json: {
+          task_id: taskId,
+          type: task.type,
+          eval_score: selfEvalResult?.score ?? null,
+          escalated: !!escalation,
+        },
+      });
+
+      return {
+        taskId,
+        output: draft.text,
+        model: draft.model,
+        tokensIn: totalTokensIn,
+        tokensOut: totalTokensOut,
+        durationMs: totalDuration,
+        status: "completed",
+      };
     } catch (err) {
       const message = (err as Error).message;
       tracker.failStep(message);
@@ -224,11 +250,14 @@ export class StrategyAgent extends BaseAgent {
           details_json: { task_id: taskId, error: message },
         });
       } catch (updateErr) {
-        this.logger.error(`Failed to write error status for task ${taskId}: ${(updateErr as Error).message}`, {
-          agent: this.slug,
-          task_id: taskId,
-          action: "task_error_write_failed",
-        });
+        this.logger.error(
+          `Failed to write error status for task ${taskId}: ${(updateErr as Error).message}`,
+          {
+            agent: this.slug,
+            task_id: taskId,
+            action: "task_error_write_failed",
+          },
+        );
       }
       return {
         taskId,
@@ -248,7 +277,9 @@ export class StrategyAgent extends BaseAgent {
 
   private async executeResearch(task: AgentTask): Promise<AgentResult> {
     const agentRow = await this.getAgentId();
-    const { createTask, updateTaskStatus } = await import("../../supabase/task-writer");
+    const { createTask, updateTaskStatus } = await import(
+      "../../supabase/task-writer"
+    );
     const { logActivity } = await import("../../supabase/activity-writer");
 
     const taskId = task.existingTaskId
@@ -271,82 +302,97 @@ export class StrategyAgent extends BaseAgent {
     const tracker = this.createStepTracker();
 
     try {
-    // Step 1: Researching \u2014 search for information
-    tracker.startStep("researching");
-    await task.onProgress?.("researching", `:mag: Strategy Agent s\u00f6ker information...`, {
-      task_id: taskId,
-      task_type: task.type,
-    });
-    await this.setSubStatus(taskId, "researching");
-    const searchResponse = await this.callLLM(task.type, task.input);
+      // Step 1: Researching \u2014 search for information
+      tracker.startStep("researching");
+      await task.onProgress?.(
+        "researching",
+        `:mag: Strategy Agent s\u00f6ker information...`,
+        {
+          task_id: taskId,
+          task_type: task.type,
+        },
+      );
+      await this.setSubStatus(taskId, "researching");
+      const searchResponse = await this.callLLM(task.type, task.input);
 
-    // Step 2: Analyzing \u2014 summarize and analyze results
-    tracker.startStep("analyzing");
-    await task.onProgress?.("analyzing", `:brain: Strategy Agent analyserar s\u00f6kresultat...`, {
-      task_id: taskId,
-    });
-    await this.setSubStatus(taskId, "analyzing");
-    const summarizePrompt = [
-      `Sammanfatta och analysera f\u00f6ljande s\u00f6kresultat f\u00f6r Forefront.`,
-      `Ursprunglig fr\u00e5ga: ${task.input}`,
-      `Typ: ${task.type}`,
-      "",
-      "--- S\u00d6KRESULTAT ---",
-      searchResponse.text,
-      "",
-      "Ge en strukturerad analys med:",
-      "1. Nyckelinsikter",
-      "2. Relevans f\u00f6r Forefront",
-      "3. Rekommenderade \u00e5tg\u00e4rder",
-      task.type === "competitive_response" ? "4. Allvarlighetsgrad (l\u00e5g/medium/h\u00f6g/kritisk)" : "",
-      task.type === "competitive_response" ? "5. Rekommenderad responstid" : "",
-    ].join("\n");
+      // Step 2: Analyzing \u2014 summarize and analyze results
+      tracker.startStep("analyzing");
+      await task.onProgress?.(
+        "analyzing",
+        `:brain: Strategy Agent analyserar s\u00f6kresultat...`,
+        {
+          task_id: taskId,
+        },
+      );
+      await this.setSubStatus(taskId, "analyzing");
+      const summarizePrompt = [
+        `Sammanfatta och analysera f\u00f6ljande s\u00f6kresultat f\u00f6r Forefront.`,
+        `Ursprunglig fr\u00e5ga: ${task.input}`,
+        `Typ: ${task.type}`,
+        "",
+        "--- S\u00d6KRESULTAT ---",
+        searchResponse.text,
+        "",
+        "Ge en strukturerad analys med:",
+        "1. Nyckelinsikter",
+        "2. Relevans f\u00f6r Forefront",
+        "3. Rekommenderade \u00e5tg\u00e4rder",
+        task.type === "competitive_response"
+          ? "4. Allvarlighetsgrad (l\u00e5g/medium/h\u00f6g/kritisk)"
+          : "",
+        task.type === "competitive_response"
+          ? "5. Rekommenderad responstid"
+          : "",
+      ].join("\n");
 
-    const analysisResponse = await this.callLLM("default", summarizePrompt);
+      const analysisResponse = await this.callLLM("default", summarizePrompt);
 
-    tracker.complete();
+      tracker.complete();
 
-    const contentJson: Record<string, unknown> = {
-      search_results: searchResponse.text,
-      analysis: analysisResponse.text,
-      output: analysisResponse.text,
-      _steps: tracker.toArray(),
-    };
+      const contentJson: Record<string, unknown> = {
+        search_results: searchResponse.text,
+        analysis: analysisResponse.text,
+        output: analysisResponse.text,
+        _steps: tracker.toArray(),
+      };
 
-    // Check escalation rules for competitive_response
-    const escalation = this.checkEscalation(contentJson);
-    if (escalation) {
-      contentJson.escalation = escalation;
-    }
+      // Check escalation rules for competitive_response
+      const escalation = this.checkEscalation(contentJson);
+      if (escalation) {
+        contentJson.escalation = escalation;
+      }
 
-    const targetStatus = this.determineReviewStatus(task.type, escalation);
+      const targetStatus = this.determineReviewStatus(task.type, escalation);
 
-    await updateTaskStatus(this.supabase, taskId, targetStatus, {
-      content_json: contentJson,
-      model_used: analysisResponse.model,
-      tokens_used:
-        searchResponse.tokensIn + searchResponse.tokensOut + analysisResponse.tokensIn + analysisResponse.tokensOut,
-    });
+      await updateTaskStatus(this.supabase, taskId, targetStatus, {
+        content_json: contentJson,
+        model_used: analysisResponse.model,
+        tokens_used:
+          searchResponse.tokensIn +
+          searchResponse.tokensOut +
+          analysisResponse.tokensIn +
+          analysisResponse.tokensOut,
+      });
 
-    await logActivity(this.supabase, {
-      agent_id: agentRow,
-      action: "research_completed",
-      details_json: {
-        task_id: taskId,
-        type: task.type,
-        escalated: !!escalation,
-      },
-    });
+      await logActivity(this.supabase, {
+        agent_id: agentRow,
+        action: "research_completed",
+        details_json: {
+          task_id: taskId,
+          type: task.type,
+          escalated: !!escalation,
+        },
+      });
 
-    return {
-      taskId,
-      output: analysisResponse.text,
-      model: analysisResponse.model,
-      tokensIn: searchResponse.tokensIn + analysisResponse.tokensIn,
-      tokensOut: searchResponse.tokensOut + analysisResponse.tokensOut,
-      durationMs: searchResponse.durationMs + analysisResponse.durationMs,
-      status: "completed",
-    };
+      return {
+        taskId,
+        output: analysisResponse.text,
+        model: analysisResponse.model,
+        tokensIn: searchResponse.tokensIn + analysisResponse.tokensIn,
+        tokensOut: searchResponse.tokensOut + analysisResponse.tokensOut,
+        durationMs: searchResponse.durationMs + analysisResponse.durationMs,
+        status: "completed",
+      };
     } catch (err) {
       const message = (err as Error).message;
       tracker.failStep(message);
@@ -360,11 +406,14 @@ export class StrategyAgent extends BaseAgent {
           details_json: { task_id: taskId, error: message },
         });
       } catch (updateErr) {
-        this.logger.error(`Failed to write error status for task ${taskId}: ${(updateErr as Error).message}`, {
-          agent: this.slug,
-          task_id: taskId,
-          action: "task_error_write_failed",
-        });
+        this.logger.error(
+          `Failed to write error status for task ${taskId}: ${(updateErr as Error).message}`,
+          {
+            agent: this.slug,
+            task_id: taskId,
+            action: "task_error_write_failed",
+          },
+        );
       }
       return {
         taskId,
@@ -382,29 +431,49 @@ export class StrategyAgent extends BaseAgent {
   // Helpers
   // ---------------------------------------------------------------------------
 
-  private async runSelfEval(output: string): Promise<{ pass: boolean; score: number; issues: string[] } | null> {
+  private async runSelfEval(
+    output: string,
+  ): Promise<{ pass: boolean; score: number; issues: string[] } | null> {
     const selfEvalConfig = this.manifest.self_eval;
     if (!selfEvalConfig?.enabled) return null;
-    return runSelfEval(this.config, this.logger, this.slug, output, selfEvalConfig);
+    return runSelfEval(
+      this.config,
+      this.logger,
+      this.slug,
+      output,
+      selfEvalConfig,
+    );
   }
 
-  private async setSubStatus(taskId: string, subStatus: TaskSubStatus): Promise<void> {
-    const { updateTaskSubStatus } = await import("../../supabase/task-writer");
+  private async setSubStatus(
+    taskId: string,
+    subStatus: TaskSubStatus,
+  ): Promise<void> {
+    const { updateTaskSubStatus } = await import(
+      "../../supabase/task-writer"
+    );
     await updateTaskSubStatus(this.supabase, taskId, subStatus);
     this.logger.info(`[strategy] ${taskId} \u2192 sub_status: ${subStatus}`);
   }
 
-  private checkEscalation(contentJson: Record<string, unknown>): { rule: string; message: string } | null {
+  private checkEscalation(
+    contentJson: Record<string, unknown>,
+  ): { rule: string; message: string } | null {
     for (const rule of ESCALATION_RULES) {
       if (rule.check(contentJson)) {
-        this.logger.warn(`[strategy] Escalation triggered: ${rule.name}`);
+        this.logger.warn(
+          `[strategy] Escalation triggered: ${rule.name}`,
+        );
         return { rule: rule.name, message: rule.message };
       }
     }
     return null;
   }
 
-  private determineReviewStatus(taskType: string, escalation: { rule: string; message: string } | null): string {
+  private determineReviewStatus(
+    taskType: string,
+    escalation: { rule: string; message: string } | null,
+  ): string {
     // Escalation always forces review
     if (escalation) return "awaiting_review";
 
@@ -413,7 +482,9 @@ export class StrategyAgent extends BaseAgent {
 
     // Sampled review: 50% chance of review
     if (SAMPLED_REVIEW_TASK_TYPES.includes(taskType)) {
-      return Math.random() < SAMPLED_REVIEW_RATE ? "awaiting_review" : "delivered";
+      return Math.random() < SAMPLED_REVIEW_RATE
+        ? "awaiting_review"
+        : "delivered";
     }
 
     // Default: review
