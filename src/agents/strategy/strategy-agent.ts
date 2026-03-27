@@ -262,6 +262,7 @@ export class StrategyAgent extends BaseAgent {
     const contentJson: Record<string, unknown> = {
       search_results: searchResponse.text,
       analysis: analysisResponse.text,
+      output: analysisResponse.text,
     };
 
     // Check escalation rules for competitive_response

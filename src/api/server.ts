@@ -52,7 +52,8 @@ export function createApiServer(
     res.json(openApiSpec);
   });
 
-  // Rate limiting on all /api routes
+  // Rate limiting on all /api routes (CLI token exempt — trusted admin on localhost)
+  const cliToken = process.env.FIA_CLI_TOKEN;
   app.use(
     "/api",
     rateLimit({
@@ -61,6 +62,10 @@ export function createApiServer(
       standardHeaders: true,
       legacyHeaders: false,
       message: { error: { code: "RATE_LIMIT", message: "Too many requests. Try again later." } },
+      skip: (req) => {
+        if (!cliToken) return false;
+        return req.headers.authorization === `Bearer ${cliToken}`;
+      },
     }),
   );
 

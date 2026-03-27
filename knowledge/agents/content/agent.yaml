@@ -36,6 +36,12 @@ task_context:
     - context/few-shot/case-study-bad.md
   whitepaper:
     - context/templates/whitepaper.md
+  metadata:
+    - context/templates/metadata.md
+  alt_text:
+    - context/templates/alt-text.md
+  images:
+    - context/templates/images.md
 tools:
   - buffer
   - "gws:drive"

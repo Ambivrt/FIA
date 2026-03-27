@@ -17,6 +17,12 @@ system_context:
 task_context:
   seo_audit:
     - context/templates/seo-audit.md
+  keyword_research:
+    - context/templates/keyword-research.md
+  bulk_optimization:
+    - context/templates/bulk-optimization.md
+  content_recommendations:
+    - context/templates/content-recommendations.md
 tools:
   - "gws:drive"
   - "gws:analytics"

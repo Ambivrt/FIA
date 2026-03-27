@@ -13,7 +13,11 @@ system_context:
   - context/review-checklist.md
   - context/few-shot/review-approved.md
   - context/few-shot/review-rejected.md
-task_context: {}
+task_context:
+  default:
+    - context/review-checklist.md
+    - context/few-shot/review-approved.md
+    - context/few-shot/review-rejected.md
 tools: []
 autonomy: autonomous
 escalation_threshold: 3

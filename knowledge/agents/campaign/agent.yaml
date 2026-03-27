@@ -21,6 +21,10 @@ task_context:
     - context/templates/ad-copy.md
   landing_page:
     - context/templates/landing-page.md
+  ab_variants:
+    - context/templates/ab-variants.md
+  segmentation:
+    - context/templates/segmentation.md
 tools:
   - hubspot
   - linkedin
