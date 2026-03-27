@@ -10,6 +10,9 @@ export async function generateImage(
   config: AppConfig,
   request: ImageGenerationRequest,
 ): Promise<ImageGenerationResponse> {
+  if (!config.geminiApiKey) {
+    throw new Error("GEMINI_API_KEY is not configured. Cannot generate images without a valid API key.");
+  }
   const client = new GoogleGenAI({ apiKey: config.geminiApiKey });
 
   return withRetry(async () => {
