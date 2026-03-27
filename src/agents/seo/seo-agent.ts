@@ -20,6 +20,12 @@ export class SeoAgent extends BaseAgent {
       await this.saveKeywordRankings(result.taskId, result.output);
     }
 
+    // Compliance mode: strict forces review, open auto-delivers
+    const complianceMode = this.resolveComplianceMode(task);
+    if (complianceMode === "strict" && result.status !== "error") {
+      result.status = "awaiting_review";
+    }
+
     return result;
   }
 

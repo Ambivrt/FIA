@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { parse as parseYaml } from "yaml";
 
-import { SelfEvalConfig, RoutingEntry, VerbosityLevel } from "../llm/types";
+import { SelfEvalConfig, RoutingEntry, VerbosityLevel, ComplianceMode } from "../llm/types";
 import { TriggerConfig } from "../engine/trigger-types";
 
 export interface AgentManifest {
@@ -24,7 +24,7 @@ export interface AgentManifest {
   score_threshold_mql?: number;
   self_eval?: SelfEvalConfig;
   triggers?: TriggerConfig[];
-  relevance_mode?: "strict" | "balanced" | "open";
+  compliance_mode?: ComplianceMode;
   verbosity?: VerbosityLevel;
   max_context_tokens?: number;
 }

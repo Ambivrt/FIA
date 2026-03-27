@@ -37,6 +37,13 @@ export class LeadAgent extends BaseAgent {
     const result = await super.execute(task);
     if (result.status === "error") return result;
 
+    const complianceMode = this.resolveComplianceMode(task);
+
+    // Open mode: skip Brand review entirely
+    if (complianceMode === "open") {
+      return result;
+    }
+
     // Nurture sequences pass through Brand Agent review
     const brandManifest = loadAgentManifest(this.config.knowledgeDir, "brand");
     const brandAgent = new BrandAgent(this.config, this.logger, this.supabase, brandManifest);
@@ -46,10 +53,16 @@ export class LeadAgent extends BaseAgent {
       agentSlug: this.slug,
       content: result.output,
       taskType: task.type,
+      complianceMode,
     });
 
     if (review.decision !== "approved") {
       result.status = review.escalated ? "escalated" : "awaiting_review";
+    }
+
+    // Strict mode: force review even if brand approved
+    if (complianceMode === "strict" && result.status !== "escalated") {
+      result.status = "awaiting_review";
     }
 
     return result;

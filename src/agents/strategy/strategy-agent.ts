@@ -152,12 +152,18 @@ export class StrategyAgent extends BaseAgent {
       const draft = await this.callLLM(task.type, draftPrompt);
 
       // Step 4: Aligning — check brand, goals, budget alignment
-      tracker.startStep("aligning");
-      await task.onProgress?.("aligning", `:dart: Strategy Agent kvalitetssäkrar...`, {
-        task_id: taskId,
-      });
-      await this.setSubStatus(taskId, "aligning");
-      const selfEvalResult = await this.runSelfEval(draft.text);
+      const complianceMode = this.resolveComplianceMode(task);
+
+      let selfEvalResult: { pass: boolean; score: number; issues: string[] } | null = null;
+      // Open mode: skip self-eval entirely
+      if (complianceMode !== "open") {
+        tracker.startStep("aligning");
+        await task.onProgress?.("aligning", `:dart: Strategy Agent kvalitetssäkrar...`, {
+          task_id: taskId,
+        });
+        await this.setSubStatus(taskId, "aligning");
+        selfEvalResult = await this.runSelfEval(draft.text);
+      }
 
       tracker.complete();
 
@@ -168,6 +174,7 @@ export class StrategyAgent extends BaseAgent {
         eval_score: selfEvalResult?.score ?? null,
         eval_pass: selfEvalResult?.pass ?? null,
         eval_issues: selfEvalResult?.issues ?? [],
+        compliance_mode: complianceMode,
         _steps: tracker.toArray(),
       };
 
@@ -179,7 +186,7 @@ export class StrategyAgent extends BaseAgent {
       const totalDuration = dataContext.durationMs + analysis.durationMs + draft.durationMs;
 
       // Determine review status
-      const targetStatus = this.determineReviewStatus(task.type, escalation);
+      const targetStatus = this.determineReviewStatus(task.type, escalation, complianceMode);
 
       if (escalation) {
         contentJson.escalation = escalation;
@@ -319,7 +326,8 @@ export class StrategyAgent extends BaseAgent {
         contentJson.escalation = escalation;
       }
 
-      const targetStatus = this.determineReviewStatus(task.type, escalation);
+      const complianceModeR = this.resolveComplianceMode(task);
+      const targetStatus = this.determineReviewStatus(task.type, escalation, complianceModeR);
 
       await updateTaskStatus(this.supabase, taskId, targetStatus, {
         content_json: contentJson,
@@ -404,19 +412,27 @@ export class StrategyAgent extends BaseAgent {
     return null;
   }
 
-  private determineReviewStatus(taskType: string, escalation: { rule: string; message: string } | null): string {
-    // Escalation always forces review
+  private determineReviewStatus(
+    taskType: string,
+    escalation: { rule: string; message: string } | null,
+    complianceMode: "strict" | "balanced" | "open" = "balanced",
+  ): string {
+    // Escalation always forces review regardless of compliance mode
     if (escalation) return "awaiting_review";
 
-    // Full review task types always go to review
+    // Strict mode: force review for all tasks
+    if (complianceMode === "strict") return "awaiting_review";
+
+    // Open mode: skip review — deliver directly
+    if (complianceMode === "open") return "delivered";
+
+    // Balanced mode: original logic
     if (FULL_REVIEW_TASK_TYPES.includes(taskType)) return "awaiting_review";
 
-    // Sampled review: 50% chance of review
     if (SAMPLED_REVIEW_TASK_TYPES.includes(taskType)) {
       return Math.random() < SAMPLED_REVIEW_RATE ? "awaiting_review" : "delivered";
     }
 
-    // Default: review
     return "awaiting_review";
   }
 }

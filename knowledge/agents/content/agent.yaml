@@ -47,6 +47,7 @@ tools:
   - "gws:drive"
   - "gws:docs"
 autonomy: autonomous
+compliance_mode: strict
 escalation_threshold: 3
 sample_review_rate: 0.2
 max_iterations: 5

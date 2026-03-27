@@ -20,6 +20,7 @@ task_context:
     - context/few-shot/review-rejected.md
 tools: []
 autonomy: autonomous
+compliance_mode: balanced
 escalation_threshold: 3
 sample_review_rate: 0.0
 max_iterations: 5

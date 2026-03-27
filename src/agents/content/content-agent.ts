@@ -55,8 +55,21 @@ export class ContentAgent extends BaseAgent {
     let result = await super.execute(task);
     if (result.status === "error") return result;
 
+    const complianceMode = this.resolveComplianceMode(task);
+
+    // Open mode: skip all review — deliver directly
+    if (complianceMode === "open") {
+      this.logger.info("Compliance mode 'open': skipping brand review pipeline", {
+        agent: this.slug,
+        task_id: result.taskId,
+        action: "compliance_skip_review",
+      });
+      return result;
+    }
+
     // Pre-review brand screening for high-risk content (catches issues before formal Brand review)
-    if (isHighRiskContent(task.type, this.manifest.sample_review_rate)) {
+    // Skipped in balanced mode — only runs in strict mode
+    if (complianceMode === "strict" && isHighRiskContent(task.type, this.manifest.sample_review_rate)) {
       try {
         await task.onProgress?.("parallel_screening", `:mag: Parallell varumärkesscreening...`, {
           task_id: result.taskId,
@@ -162,6 +175,7 @@ export class ContentAgent extends BaseAgent {
         agentSlug: this.slug,
         content: result.output,
         taskType: task.type,
+        complianceMode,
       });
 
       if (review.decision === "approved") {
@@ -417,6 +431,36 @@ export class ContentAgent extends BaseAgent {
         details_json: { task_id: taskId, cost_sek: costSek },
       });
 
+      const complianceMode = this.resolveComplianceMode(task);
+
+      // Open mode: skip brand review entirely — deliver image directly
+      if (complianceMode === "open") {
+        this.logger.info("Compliance mode 'open': skipping brand review for image", {
+          agent: this.slug,
+          task_id: taskId,
+          action: "compliance_skip_image_review",
+        });
+
+        await updateTaskStatus(this.supabase, taskId, "completed", {
+          content_json: {
+            image_base64: imageBase64,
+            mime_type: response.mimeType,
+          },
+          model_used: response.model,
+          cost_sek: costSek,
+        });
+
+        return {
+          taskId,
+          output: `Image generated (${response.mimeType}) — brand review skipped (compliance: open)`,
+          model: response.model,
+          tokensIn: 0,
+          tokensOut: 0,
+          durationMs: response.durationMs,
+          status: "completed",
+        };
+      }
+
       // Feature B: Brand Agent image review loop
       await updateTaskStatus(this.supabase, taskId, "awaiting_review", {
         content_json: {
@@ -431,7 +475,8 @@ export class ContentAgent extends BaseAgent {
       const brandAgent = new BrandAgent(this.config, this.logger, this.supabase, brandManifest);
 
       let attempts = 0;
-      const maxAttempts = this.manifest.escalation_threshold;
+      // Balanced mode: only 1 review attempt (no re-generation loop)
+      const maxAttempts = complianceMode === "balanced" ? 1 : this.manifest.escalation_threshold;
 
       while (attempts < maxAttempts) {
         this.checkMaxIterations(taskId);
@@ -449,6 +494,7 @@ export class ContentAgent extends BaseAgent {
           taskType: task.type,
           imageBase64,
           imageMimeType: response.mimeType,
+          complianceMode,
         });
 
         if (review.decision === "approved") {

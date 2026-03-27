@@ -30,6 +30,7 @@ tools:
   - linkedin
   - buffer
 autonomy: autonomous
+compliance_mode: strict
 escalation_threshold: 3
 sample_review_rate: 0.33
 max_iterations: 5

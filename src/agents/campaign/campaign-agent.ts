@@ -15,8 +15,10 @@ export class CampaignAgent extends BaseAgent {
   }
 
   async execute(task: AgentTask): Promise<AgentResult> {
-    // Budget enforcement
-    if (this.manifest.budget_limit_sek) {
+    const complianceMode = this.resolveComplianceMode(task);
+
+    // Budget enforcement (skipped in open mode)
+    if (complianceMode !== "open" && this.manifest.budget_limit_sek) {
       const spent = await this.getMonthlySpending();
       if (spent >= this.manifest.budget_limit_sek) {
         await this.pauseWithBudgetWarning(spent);

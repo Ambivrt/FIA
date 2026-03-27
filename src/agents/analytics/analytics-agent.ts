@@ -22,6 +22,14 @@ export class AnalyticsAgent extends BaseAgent {
       await this.extractAndWriteMetrics(task.type, result.output);
     }
 
+    // Compliance mode: strict forces review, open auto-delivers
+    const complianceMode = this.resolveComplianceMode(task);
+    if (complianceMode === "strict" && result.status !== "error") {
+      result.status = "awaiting_review";
+    } else if (complianceMode === "open" && result.status === "awaiting_review") {
+      result.status = "completed";
+    }
+
     return result;
   }
 

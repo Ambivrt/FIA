@@ -12,7 +12,7 @@ import {
   fetchTaskContext as fetchTaskCtxFromDb,
 } from "../knowledge/knowledge-reader";
 import { routeRequest, AgentRouting } from "../gateway/router";
-import { LLMResponse, ToolDefinition, PipelineData, VerbosityLevel } from "../llm/types";
+import { LLMResponse, ToolDefinition, PipelineData, VerbosityLevel, ComplianceMode } from "../llm/types";
 import { createTask, updateTaskStatus, createApproval } from "../supabase/task-writer";
 import { logActivity } from "../supabase/activity-writer";
 import { writeMetric } from "../supabase/metrics-writer";
@@ -527,6 +527,23 @@ export abstract class BaseAgent {
       if (idx > maxIdx) maxIdx = idx;
     }
     return LEVEL_ORDER[maxIdx];
+  }
+
+  /**
+   * Resolve effective compliance mode for a task.
+   * Priority: task override → manifest default → "strict".
+   */
+  protected resolveComplianceMode(task: AgentTask): ComplianceMode {
+    const taskMode = task.content_json?.compliance_mode as string | undefined;
+    if (taskMode && ["strict", "balanced", "open"].includes(taskMode)) {
+      return taskMode as ComplianceMode;
+    }
+    // Backwards compat: also check legacy relevance_mode
+    const legacyMode = task.content_json?.relevance_mode as string | undefined;
+    if (legacyMode && ["strict", "balanced", "open"].includes(legacyMode)) {
+      return legacyMode as ComplianceMode;
+    }
+    return this.manifest.compliance_mode ?? "strict";
   }
 
   private getRouteAlias(taskType: string): string {
