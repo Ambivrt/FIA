@@ -423,10 +423,20 @@ export function startCommandListener(
             const folderId = p.folder_id as string;
             const maxResults = Math.min((p.max_results as number) || 50, 200);
 
+            logger.info("drive_list_folder: calling GWS tool", {
+              action: "drive_list_start",
+              details: { folderId, maxResults },
+            });
+
             const raw = await handleGwsToolUse(
               { toolName: "drive_list_folder_contents", input: { folderId, pageSize: maxResults } },
               appConfig,
             );
+
+            logger.info("drive_list_folder: GWS tool returned", {
+              action: "drive_list_response",
+              details: { responseLength: raw.length },
+            });
 
             let files: unknown[] = [];
             try {
@@ -450,6 +460,11 @@ export function startCommandListener(
             } catch {
               // Return empty list if unparseable
             }
+
+            logger.info("drive_list_folder: parsed files", {
+              action: "drive_list_parsed",
+              details: { fileCount: files.length },
+            });
 
             await markCommand(supabase, cmd.id, "completed", { files });
             return; // Already marked
