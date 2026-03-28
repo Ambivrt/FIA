@@ -47,7 +47,7 @@ export function registerCommands(
 
     switch (subcommand) {
       case "status": {
-        let statusText = ":robot_face: *FIA Gateway v0.5.6*\nGateway is running.";
+        let statusText = ":robot_face: *FIA Gateway v0.6.0*\nGateway is running.";
 
         if (killSwitch) {
           const ks = killSwitch.getStatus();
@@ -1135,7 +1135,7 @@ export function registerCommands(
       case "?":
       default: {
         const helpLines = [
-          "*FIA v0.5.6 Commands:*",
+          "*FIA v0.6.0 Commands:*",
           "",
           "*Översikt:*",
           "  `/fia status` – Systemstatus, agenter, Drive och kill switch",

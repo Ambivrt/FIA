@@ -2,7 +2,7 @@
 
 **AI-agentgateway som ersätter Forefronts marknadsavdelning.**
 
-Sju agentkluster utför operativt marknadsarbete. 1–2 Marketing Orchestrators styr – sätter riktning och godkänner.
+Åtta agentkluster utför operativt marknadsarbete. 1–2 Marketing Orchestrators styr – sätter riktning och godkänner.
 
 ---
 
@@ -73,4 +73,4 @@ FIA nås via tre gränssnitt:
 
 ---
 
-**Version:** 0.5.6 · **Senast uppdaterad:** 2026-03-25
+**Version:** 0.6.0 · **Senast uppdaterad:** 2026-03-28

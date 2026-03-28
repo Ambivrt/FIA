@@ -30,7 +30,7 @@ const program = new Command();
 program
   .name("fia")
   .description("FIA CLI – Terminal interface for Forefront Intelligent Automation")
-  .version("0.5.6")
+  .version("0.6.0")
   .action(() => {
     // Visa banner när fia körs utan kommando
     process.stdout.write(banner());

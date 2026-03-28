@@ -20,9 +20,10 @@ gantt
     Deploy 0.5.5 – Knowledge Library       :done, d055, 2026-03-24, 2026-03-24
 
     Deploy 0.5.6 – Drive Organisation       :done, d056, 2026-03-25, 2026-03-25
+    Deploy 0.6.0 – Version & Docs Update   :done, d060, 2026-03-28, 2026-03-28
 
     section Pågår
-    Gemini caching + GA4 + Content         :active, curr, 2026-03-25, 2026-04-05
+    Gemini caching + GA4 + Content         :active, curr, 2026-03-28, 2026-04-05
 
     section Fas 2
     MCP-wrappers + Content staging         :f2, 2026-04-06, 2026-04-20
@@ -159,6 +160,20 @@ Google Drive-mappstruktur och CLI-verktyg för agenter.
 | MCP isError-detektion   | `gws.ts` kastar errors vid `{ isError: true }` från MCP-verktyg      |
 | MCP svar-parsning       | Folder-ID extraheras ur formaterad text (inte bara enkel JSON)       |
 | OAuth auth-script       | `expiry_date` (timestamp), full `drive`-scope, Desktop App-stöd      |
+
+---
+
+## Deploy 0.6.0 – Version & Docs Update
+
+**Datum:** 2026-03-28
+
+!!! success "Levererat"
+Version bump och dokumentationsuppdatering för alla klienter.
+
+| Leverans      | Detalj                                             |
+| ------------- | -------------------------------------------------- |
+| Version bump  | Gateway, CLI, Slack, OpenAPI, Dashboard till 0.6.0 |
+| Dokumentation | mkdocs, ROADMAP, DASHBOARD_SPEC_SYNC uppdaterade   |
 
 ---
 

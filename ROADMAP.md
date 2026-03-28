@@ -85,6 +85,11 @@
 - [x] Dashboard: PublishedContentPage för external-rollen
 - [x] Uppdaterad Slack help-text med grupperade kommandon
 
+## Klart (Deploy 0.6.0, 2026-03-28)
+
+- [x] Version bump: gateway, CLI, Slack, OpenAPI, Dashboard till 0.6.0
+- [x] Dokumentation uppdaterad till 0.6.0 (mkdocs, ROADMAP, DASHBOARD_SPEC_SYNC)
+
 ## Pågår
 
 - [ ] Gemini context caching
