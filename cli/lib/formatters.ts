@@ -140,7 +140,7 @@ export function banner(): string {
 
   const subtitle = EARTH.stone("  Forefront Intelligent Automation");
   const tagline = EARTH.plum("  Delade visioner. Större ambitioner.");
-  const version = chalk.dim("  v0.5.6");
+  const version = chalk.dim("  v0.6.0");
 
   return [
     "",
