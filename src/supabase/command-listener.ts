@@ -441,7 +441,7 @@ export function startCommandListener(
                   const idx = text.lastIndexOf("\n\n{");
                   inner = idx !== -1 ? JSON.parse(text.slice(idx + 2)) : {};
                 }
-                files = Array.isArray(inner) ? inner : ((inner as Record<string, unknown>).files as unknown[]) ?? [];
+                files = Array.isArray(inner) ? inner : (((inner as Record<string, unknown>).files as unknown[]) ?? []);
               } else if (Array.isArray(parsed)) {
                 files = parsed;
               } else if (parsed.files && Array.isArray(parsed.files)) {
