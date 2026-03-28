@@ -170,10 +170,10 @@ Google Drive-mappstruktur och CLI-verktyg för agenter.
 !!! success "Levererat"
 Version bump och dokumentationsuppdatering för alla klienter.
 
-| Leverans                | Detalj                                                             |
-| ----------------------- | ------------------------------------------------------------------ |
-| Version bump            | Gateway, CLI, Slack, OpenAPI, Dashboard till 0.6.0                 |
-| Dokumentation           | mkdocs, ROADMAP, DASHBOARD_SPEC_SYNC uppdaterade                  |
+| Leverans      | Detalj                                             |
+| ------------- | -------------------------------------------------- |
+| Version bump  | Gateway, CLI, Slack, OpenAPI, Dashboard till 0.6.0 |
+| Dokumentation | mkdocs, ROADMAP, DASHBOARD_SPEC_SYNC uppdaterade   |
 
 ---
 
