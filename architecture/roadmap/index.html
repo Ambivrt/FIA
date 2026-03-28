@@ -1,0 +1,2699 @@
+
+<!doctype html>
+<html lang="sv" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Dokumentation för FIA, AI-agentgateway för marknadsoperationer">
+      
+      
+      
+        <link rel="canonical" href="https://docs.fia.forefront.se/architecture/roadmap/">
+      
+      
+        <link rel="prev" href="../security/">
+      
+      
+        <link rel="next" href="../../gateway/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Roadmap - FIA – Forefront Intelligent Automation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Manrope:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Manrope";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/css/custom.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#roadmap" class="md-skip">
+          Gå till innehållet
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Sidhuvud">
+    <a href="../.." title="FIA – Forefront Intelligent Automation" class="md-header__button md-logo" aria-label="FIA – Forefront Intelligent Automation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            FIA – Forefront Intelligent Automation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Roadmap
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Byt till mörkt läge"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Byt till mörkt läge" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Byt till ljust läge"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Byt till ljust läge" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Sök" placeholder="Sök" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Sök">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Rensa" aria-label="Rensa" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initialiserar sök
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/ambivrt/fia" title="Gå till datakatalog" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ambivrt/fia
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Flikar" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Hem
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Arkitektur
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../gateway/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Gateway
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../interfaces/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Gränssnitt
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../user-guide/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Användarmanual
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="FIA – Forefront Intelligent Automation" class="md-nav__button md-logo" aria-label="FIA – Forefront Intelligent Automation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    FIA – Forefront Intelligent Automation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/ambivrt/fia" title="Gå till datakatalog" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ambivrt/fia
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Arkitektur
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Arkitektur
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Systemöversikt
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agentkluster
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agents-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agentreferens
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Datamodell
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API-kontrakt
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trigger-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trigger Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM-routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Säkerhet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Innehållsförteckning">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Innehållsförteckning
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tidslinje" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tidslinje
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-02-gateway-dashboard-mvp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy 0.2 – Gateway + Dashboard MVP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-05-cli-display-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy 0.5 – CLI + Display Status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-051-task-status-trigger-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy 0.5.1 – Task Status &amp; Trigger Engine
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-052-trigger-konfiguration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy 0.5.2 – Trigger-konfiguration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-055-knowledge-library" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy 0.5.5 – Knowledge Library
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-056-drive-organisation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy 0.5.6 – Drive Organisation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-060-version-docs-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy 0.6.0 – Version &amp; Docs Update
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pagar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pågår
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fas-2-mcp-wrappers-content-staging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fas 2 – MCP-wrappers + Content Staging
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fas-3-feedback-loop-dynamic-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fas 3 – Feedback Loop + Dynamic Review
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../gateway/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gateway
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Gateway
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gateway/setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gateway/deploy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gateway/agents-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent YAML
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gateway/mcp-integrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP-integrationer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gateway/scheduler/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduler
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gateway/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Felsökning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../interfaces/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gränssnitt
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Gränssnitt
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dashboard
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Dashboard
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../interfaces/dashboard/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Översikt
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../interfaces/dashboard/agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agenter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../interfaces/dashboard/approvals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Godkännanden
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../interfaces/dashboard/triggers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Triggers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../interfaces/dashboard/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inställningar
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../interfaces/cli/install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../interfaces/cli/commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kommandon
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../interfaces/cli/realtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Realtid
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Slack
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Slack
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../interfaces/slack/commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kommandon
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../interfaces/slack/channels/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kanaler
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../user-guide/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Användarmanual
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Användarmanual
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kom igång
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/daily-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dagligt arbetsflöde
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/approvals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Godkänna innehåll
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/triggers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Triggers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/kill-switch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Nödstopp
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Innehållsförteckning">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Innehållsförteckning
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tidslinje" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tidslinje
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-02-gateway-dashboard-mvp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy 0.2 – Gateway + Dashboard MVP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-05-cli-display-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy 0.5 – CLI + Display Status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-051-task-status-trigger-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy 0.5.1 – Task Status &amp; Trigger Engine
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-052-trigger-konfiguration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy 0.5.2 – Trigger-konfiguration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-055-knowledge-library" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy 0.5.5 – Knowledge Library
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-056-drive-organisation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy 0.5.6 – Drive Organisation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-060-version-docs-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy 0.6.0 – Version &amp; Docs Update
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pagar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pågår
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fas-2-mcp-wrappers-content-staging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fas 2 – MCP-wrappers + Content Staging
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fas-3-feedback-loop-dynamic-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fas 3 – Feedback Loop + Dynamic Review
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="roadmap">Roadmap<a class="headerlink" href="#roadmap" title="Permanent link">&para;</a></h1>
+<p>FIA utvecklas iterativt i deploy-faser. Projektet drivs av en person med Claude Code (gateway) och Lovable (Dashboard PWA).</p>
+<h2 id="tidslinje">Tidslinje<a class="headerlink" href="#tidslinje" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>gantt
+    title FIA Deploy-historik
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+
+    section Fas 1
+    Deploy 0.2 – Gateway + Dashboard MVP :done, d02, 2026-03-11, 2026-03-15
+
+    section Fas 1.5
+    Deploy 0.5 – CLI + Display Status     :done, d05, 2026-03-18, 2026-03-22
+    Deploy 0.5.1 – Status &amp; Triggers      :done, d051, 2026-03-23, 2026-03-23
+    Deploy 0.5.2 – Trigger Config          :done, d052, 2026-03-23, 2026-03-23
+    Deploy 0.5.5 – Knowledge Library       :done, d055, 2026-03-24, 2026-03-24
+
+    Deploy 0.5.6 – Drive Organisation       :done, d056, 2026-03-25, 2026-03-25
+    Deploy 0.6.0 – Version &amp; Docs Update   :done, d060, 2026-03-28, 2026-03-28
+
+    section Pågår
+    Gemini caching + GA4 + Content         :active, curr, 2026-03-28, 2026-04-05
+
+    section Fas 2
+    MCP-wrappers + Content staging         :f2, 2026-04-06, 2026-04-20
+
+    section Fas 3
+    Feedback loop + Dynamic review         :f3, 2026-04-21, 2026-05-10</code></pre>
+<hr />
+<h2 id="deploy-02-gateway-dashboard-mvp">Deploy 0.2 – Gateway + Dashboard MVP<a class="headerlink" href="#deploy-02-gateway-dashboard-mvp" title="Permanent link">&para;</a></h2>
+<p><strong>Datum:</strong> 2026-03-15 | <strong>Tidsåtgång:</strong> 4 arbetsdagar | <strong>Team:</strong> 1 person + Claude Code + Lovable</p>
+<div class="admonition success">
+<p class="admonition-title">Levererat</p>
+</div>
+<p>Komplett gateway-skelett och fungerande Dashboard PWA med live-data.</p>
+<table>
+<thead>
+<tr>
+<th>Leverans</th>
+<th>Detalj</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gateway-skelett</td>
+<td>Node.js daemon, PM2, TypeScript strict</td>
+</tr>
+<tr>
+<td>Slack-integration</td>
+<td>Bolt SDK, Socket Mode, kommandon</td>
+</tr>
+<tr>
+<td>Supabase-uppsättning</td>
+<td>6 tabeller, RLS, Realtime</td>
+</tr>
+<tr>
+<td>LLM-klienter</td>
+<td>Anthropic SDK (Claude), Gemini, Serper</td>
+</tr>
+<tr>
+<td>Modell-router</td>
+<td>Manifest-driven routing via agent.yaml</td>
+</tr>
+<tr>
+<td>Kontexthantering</td>
+<td>Prompt-builder med system/task-kontext</td>
+</tr>
+<tr>
+<td>Content Agent</td>
+<td>Full textproduktion med Brand Agent-granskning</td>
+</tr>
+<tr>
+<td>Brand Agent</td>
+<td>Vetorätt, alltid Opus, granskningskriterier</td>
+</tr>
+<tr>
+<td>REST API</td>
+<td>Express, intern port 3001</td>
+</tr>
+<tr>
+<td>Schemaläggning</td>
+<td>node-cron, DynamicScheduler</td>
+</tr>
+<tr>
+<td>Kill switch</td>
+<td>Slack + Dashboard, audit trail</td>
+</tr>
+<tr>
+<td>Claude API-migration</td>
+<td>Migrerat från Gemini som primär LLM</td>
+</tr>
+<tr>
+<td>Alla 7 agenter</td>
+<td>Strategy, Content, Campaign, SEO, Lead, Analytics, Brand</td>
+</tr>
+<tr>
+<td>Testsvit</td>
+<td>13 testfiler: router, brand-agent, agent-loader, m.fl.</td>
+</tr>
+<tr>
+<td>Dashboard MVP</td>
+<td>Auth, agentpuls, godkännandekö, kill switch, Realtime</td>
+</tr>
+<tr>
+<td>Self-eval</td>
+<td>Scoring, parallel pre-screening, exponential backoff retry</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="deploy-05-cli-display-status">Deploy 0.5 – CLI + Display Status<a class="headerlink" href="#deploy-05-cli-display-status" title="Permanent link">&para;</a></h2>
+<p><strong>Datum:</strong> 2026-03-22 | <strong>Tidsåtgång:</strong> 4 arbetsdagar</p>
+<div class="admonition success">
+<p class="admonition-title">Levererat</p>
+</div>
+<p>FIA CLI-klient med 11 kommandon och enhetlig display-status i alla tre gränssnitt.</p>
+<table>
+<thead>
+<tr>
+<th>Leverans</th>
+<th>Detalj</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FIA Display Status</td>
+<td><code>src/shared/display-status.ts</code> – 5 statusar med resolve-logik</td>
+</tr>
+<tr>
+<td>FIA CLI</td>
+<td>11 kommandon: status, agents, run, queue, approve, reject, kill, resume, logs, tail, watch, config</td>
+</tr>
+<tr>
+<td>CLI auth middleware</td>
+<td>FIA_CLI_TOKEN-bypass (admin-roll, skippar JWT)</td>
+</tr>
+<tr>
+<td>POST /api/tasks</td>
+<td>Nytt endpoint för task-skapande från CLI/Dashboard</td>
+</tr>
+<tr>
+<td>Status-filter</td>
+<td>Kommaseparerade filter i GET /api/tasks</td>
+</tr>
+<tr>
+<td>Forefront Earth-palett</td>
+<td>Varumärkesfärger i CLI-output</td>
+</tr>
+<tr>
+<td>CLI-tester</td>
+<td>3 testfiler, 25 tester</td>
+</tr>
+<tr>
+<td>gws MCP</td>
+<td>Kopplad till agenter via @alanse/mcp-server-google-workspace</td>
+</tr>
+<tr>
+<td>CI/CD</td>
+<td>GitHub Actions (<code>.github/workflows/ci.yml</code>)</td>
+</tr>
+<tr>
+<td>ESLint + Prettier</td>
+<td><code>eslint.config.mjs</code>, <code>.prettierrc</code></td>
+</tr>
+<tr>
+<td>Teknisk skuld B1–B12</td>
+<td>Alla 12 backend-fixar åtgärdade</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="deploy-051-task-status-trigger-engine">Deploy 0.5.1 – Task Status &amp; Trigger Engine<a class="headerlink" href="#deploy-051-task-status-trigger-engine" title="Permanent link">&para;</a></h2>
+<p><strong>Datum:</strong> 2026-03-23</p>
+<div class="admonition success">
+<p class="admonition-title">Levererat</p>
+</div>
+<p>Utökad statusmodell med 17 statusar och deklarativ trigger engine.</p>
+<table>
+<thead>
+<tr>
+<th>Leverans</th>
+<th>Detalj</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Statusmodell</td>
+<td>17 statusar med statusmaskin och övergångsvalidering</td>
+</tr>
+<tr>
+<td>Trigger Engine</td>
+<td>Deklarativ, 7 triggers i 4 agenter</td>
+</tr>
+<tr>
+<td>pending_triggers</td>
+<td>Ny tabell med godkännandekö i Dashboard</td>
+</tr>
+<tr>
+<td>Task-relationer</td>
+<td><code>parent_task_id</code>, children, lineage</td>
+</tr>
+<tr>
+<td>Dashboard-uppdateringar</td>
+<td>TaskStatusBadge, TriggersPage, task-relationer</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="deploy-052-trigger-konfiguration">Deploy 0.5.2 – Trigger-konfiguration<a class="headerlink" href="#deploy-052-trigger-konfiguration" title="Permanent link">&para;</a></h2>
+<p><strong>Datum:</strong> 2026-03-23</p>
+<div class="admonition success">
+<p class="admonition-title">Levererat</p>
+</div>
+<p>Trigger-konfiguration flyttad till Dashboard med reseed-möjlighet.</p>
+<table>
+<thead>
+<tr>
+<th>Leverans</th>
+<th>Detalj</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Trigger-konfiguration</td>
+<td>Visa, enable/disable, redigera triggers per agent i Dashboard</td>
+</tr>
+<tr>
+<td>config_json.triggers</td>
+<td>Trigger engine läser från Supabase istället för agent.yaml</td>
+</tr>
+<tr>
+<td>Seed-logik</td>
+<td>config_json.triggers seedas vid gateway-startup</td>
+</tr>
+<tr>
+<td>TriggersConfigPage</td>
+<td>Systemövergripande trigger-översikt med filter</td>
+</tr>
+<tr>
+<td>Reseed från YAML</td>
+<td>Dry-run diff + bekräftelsedialog (admin only)</td>
+</tr>
+<tr>
+<td>Nya API-endpoints</td>
+<td>4 nya endpoints för trigger-konfiguration</td>
+</tr>
+<tr>
+<td>React-komponenter</td>
+<td>11 nya komponenter</td>
+</tr>
+<tr>
+<td>i18n</td>
+<td>40+ nya översättningsnycklar</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="deploy-055-knowledge-library">Deploy 0.5.5 – Knowledge Library<a class="headerlink" href="#deploy-055-knowledge-library" title="Permanent link">&para;</a></h2>
+<p><strong>Datum:</strong> 2026-03-24</p>
+<div class="admonition success">
+<p class="admonition-title">Levererat</p>
+</div>
+<p>Knowledge Library med seeder och Dashboard-integration.</p>
+<table>
+<thead>
+<tr>
+<th>Leverans</th>
+<th>Detalj</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Knowledge Library</td>
+<td>Kunskapsseeder: skills, system_context, task_context, few_shot, memory</td>
+</tr>
+<tr>
+<td>Brand context</td>
+<td>Seedas som delad system_context (<code>knowledge/brand/*.md</code>)</td>
+</tr>
+<tr>
+<td>Few-shot-kategorisering</td>
+<td>Few-shot-filer kategoriseras korrekt (inte task_context)</td>
+</tr>
+<tr>
+<td>reseed_knowledge</td>
+<td>Command i command-listener (Dashboard → Gateway)</td>
+</tr>
+<tr>
+<td>Dashboard-knapp</td>
+<td>"Populera från server" (admin only)</td>
+</tr>
+<tr>
+<td>Upsert-fix</td>
+<td>Funktionellt unikt index → vanligt unikt index</td>
+</tr>
+<tr>
+<td>Felhantering</td>
+<td><code>emitCommand</code> returnerar fel för Dashboard-visning</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="deploy-056-drive-organisation">Deploy 0.5.6 – Drive Organisation<a class="headerlink" href="#deploy-056-drive-organisation" title="Permanent link">&para;</a></h2>
+<p><strong>Datum:</strong> 2026-03-25</p>
+<div class="admonition success">
+<p class="admonition-title">Levererat</p>
+</div>
+<p>Google Drive-mappstruktur och CLI-verktyg för agenter.</p>
+<table>
+<thead>
+<tr>
+<th>Leverans</th>
+<th>Detalj</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Drive setup-service</td>
+<td>Idempotent skapande/verifiering av mappar, folder-IDs i Supabase</td>
+</tr>
+<tr>
+<td>CLI-kommando</td>
+<td><code>fia drive setup [--dry-run]</code> + <code>fia drive status</code></td>
+</tr>
+<tr>
+<td>API-endpoints</td>
+<td><code>GET /api/drive/status</code> + <code>POST /api/drive/setup</code></td>
+</tr>
+<tr>
+<td>Agent-kontext</td>
+<td>Auto-genererade <code>drive-folders.md</code> med folder-IDs per agent</td>
+</tr>
+<tr>
+<td>Utökade agentverktyg</td>
+<td><code>gws:drive</code> tillagt på Strategy och SEO agenter</td>
+</tr>
+<tr>
+<td>Deklarativ mappstruktur</td>
+<td><code>src/mcp/drive-structure.ts</code> med trädstruktur och agent→mapp-mapping</td>
+</tr>
+<tr>
+<td>googleapis global auth</td>
+<td><code>ensureGlobalAuth()</code> sätter <code>google.options({ auth })</code> + refresh</td>
+</tr>
+<tr>
+<td>MCP isError-detektion</td>
+<td><code>gws.ts</code> kastar errors vid <code>{ isError: true }</code> från MCP-verktyg</td>
+</tr>
+<tr>
+<td>MCP svar-parsning</td>
+<td>Folder-ID extraheras ur formaterad text (inte bara enkel JSON)</td>
+</tr>
+<tr>
+<td>OAuth auth-script</td>
+<td><code>expiry_date</code> (timestamp), full <code>drive</code>-scope, Desktop App-stöd</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="deploy-060-version-docs-update">Deploy 0.6.0 – Version &amp; Docs Update<a class="headerlink" href="#deploy-060-version-docs-update" title="Permanent link">&para;</a></h2>
+<p><strong>Datum:</strong> 2026-03-28</p>
+<div class="admonition success">
+<p class="admonition-title">Levererat</p>
+</div>
+<p>Version bump och dokumentationsuppdatering för alla klienter.</p>
+<table>
+<thead>
+<tr>
+<th>Leverans</th>
+<th>Detalj</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Version bump</td>
+<td>Gateway, CLI, Slack, OpenAPI, Dashboard till 0.6.0</td>
+</tr>
+<tr>
+<td>Dokumentation</td>
+<td>mkdocs, ROADMAP, DASHBOARD_SPEC_SYNC uppdaterade</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="pagar">Pågår<a class="headerlink" href="#pagar" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Uppgift</th>
+<th>Status</th>
+<th>Beskrivning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gemini context caching</td>
+<td>:material-progress-clock: Pågår</td>
+<td>Cacha system-kontext för minskad latens och kostnad</td>
+</tr>
+<tr>
+<td>GA4 Analytics API</td>
+<td>:material-progress-clock: Pågår</td>
+<td>Anslut Analytics Agent till Google Analytics 4</td>
+</tr>
+<tr>
+<td>10 innehållsenheter</td>
+<td>:material-progress-clock: Pågår</td>
+<td>Producera 10 st publicerbart innehåll</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="fas-2-mcp-wrappers-content-staging">Fas 2 – MCP-wrappers + Content Staging<a class="headerlink" href="#fas-2-mcp-wrappers-content-staging" title="Permanent link">&para;</a></h2>
+<div class="admonition abstract">
+<p class="admonition-title">Planerat</p>
+</div>
+<p>Fullständiga MCP-integrationer och validerad content pipeline.</p>
+<table>
+<thead>
+<tr>
+<th>Uppgift</th>
+<th>Beskrivning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HubSpot MCP</td>
+<td>CRM-integration: kontakter, deals, pipelines</td>
+</tr>
+<tr>
+<td>LinkedIn MCP</td>
+<td>Publicering, analytics, company page</td>
+</tr>
+<tr>
+<td>Buffer MCP</td>
+<td>Social media-schemaläggning och publicering</td>
+</tr>
+<tr>
+<td>Content staging</td>
+<td>Zod-validering av <code>content_json</code> innan publicering</td>
+</tr>
+</tbody>
+</table>
+<p>Alla MCP-wrappers implementeras i <code>src/mcp/</code> med principen tunn wrapper (50–200 rader) och minsta möjliga rättighet.</p>
+<hr />
+<h2 id="fas-3-feedback-loop-dynamic-review">Fas 3 – Feedback Loop + Dynamic Review<a class="headerlink" href="#fas-3-feedback-loop-dynamic-review" title="Permanent link">&para;</a></h2>
+<div class="admonition abstract">
+<p class="admonition-title">Planerat</p>
+</div>
+<p>Självförbättrande system med dynamisk granskningsfrekvens.</p>
+<table>
+<thead>
+<tr>
+<th>Uppgift</th>
+<th>Beskrivning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Feedback loop</td>
+<td>Systematisk insamling och analys av feedback per agent</td>
+</tr>
+<tr>
+<td>Dynamic review rate</td>
+<td><code>sample_review_rate</code> justeras automatiskt baserat på agent-kvalitet</td>
+</tr>
+<tr>
+<td>Few-shot avoid examples</td>
+<td>Underkänt innehåll sparas som negativa few-shot-exempel</td>
+</tr>
+<tr>
+<td>Agent memory evolution</td>
+<td>Agenter uppdaterar sin <code>memory/learnings.json</code> baserat på feedback</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "content.code.copy", "content.code.annotate", "content.tabs.link", "search.suggest"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Kopierat till urklipp", "clipboard.copy": "Kopiera till urklipp", "search.result.more.one": "1 till p\u00e5 denna sida", "search.result.more.other": "# till p\u00e5 denna sida", "search.result.none": "Inga s\u00f6kresultat", "search.result.one": "1 s\u00f6kresultat", "search.result.other": "# s\u00f6kresultat", "search.result.placeholder": "Skriv s\u00f6kord", "search.result.term.missing": "Saknas", "select.version": "V\u00e4lj version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

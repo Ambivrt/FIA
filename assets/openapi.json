@@ -1,0 +1,1309 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "FIA Gateway API",
+    "version": "0.6.0",
+    "description": "REST API för Forefront Intelligent Automation. Internt API – exponeras ej mot internet. Autentisering via JWT (Supabase Auth) eller FIA_CLI_TOKEN."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001",
+      "description": "Lokal gateway"
+    }
+  ],
+  "tags": [
+    {
+      "name": "System",
+      "description": "Hälsokontroll"
+    },
+    {
+      "name": "Agenter",
+      "description": "Agenthantering och konfiguration"
+    },
+    {
+      "name": "Tasks",
+      "description": "Task-hantering och godkännandeflöde"
+    },
+    {
+      "name": "Metrics",
+      "description": "KPI och kostnadsdata"
+    },
+    {
+      "name": "Aktivitet",
+      "description": "Audit trail"
+    },
+    {
+      "name": "Kill Switch",
+      "description": "Nödbroms"
+    },
+    {
+      "name": "Triggers",
+      "description": "Pending triggers och reseed"
+    },
+    {
+      "name": "Knowledge",
+      "description": "Kunskapsbas"
+    },
+    {
+      "name": "Drive",
+      "description": "Google Drive-mappstruktur"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "components": {
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "per_page": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "per_page"
+        ]
+      },
+      "RoutingConfig": {
+        "type": "object",
+        "properties": {
+          "routing": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "claude-opus",
+                    "claude-sonnet",
+                    "gemini-pro",
+                    "gemini-flash",
+                    "nano-banana-2",
+                    "google-search"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "primary": {
+                      "type": "string",
+                      "enum": [
+                        "claude-opus",
+                        "claude-sonnet",
+                        "gemini-pro",
+                        "gemini-flash",
+                        "nano-banana-2",
+                        "google-search"
+                      ]
+                    },
+                    "fallback": {
+                      "type": "string",
+                      "enum": [
+                        "claude-opus",
+                        "claude-sonnet",
+                        "gemini-pro",
+                        "gemini-flash",
+                        "nano-banana-2",
+                        "google-search"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "primary"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "routing"
+        ]
+      },
+      "ToolsConfig": {
+        "type": "object",
+        "properties": {
+          "tools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "tools"
+        ]
+      },
+      "TriggersPatch": {
+        "type": "object",
+        "properties": {
+          "triggers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "requires_approval": {
+                  "type": "boolean"
+                },
+                "condition": {
+                  "type": "object",
+                  "properties": {
+                    "task_type": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      ]
+                    },
+                    "output_field": {
+                      "type": "string"
+                    },
+                    "output_value": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      ]
+                    },
+                    "score_field": {
+                      "type": "string"
+                    },
+                    "score_above": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  }
+                },
+                "action": {
+                  "type": "object",
+                  "properties": {
+                    "target_agent": {
+                      "type": "string"
+                    },
+                    "task_type": {
+                      "type": "string"
+                    },
+                    "priority": {
+                      "type": "string",
+                      "enum": [
+                        "urgent",
+                        "high",
+                        "normal",
+                        "low"
+                      ]
+                    },
+                    "context_fields": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "channel": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "triggers"
+        ]
+      },
+      "ReseedRequest": {
+        "type": "object",
+        "properties": {
+          "confirm": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateTask": {
+        "type": "object",
+        "properties": {
+          "agent_slug": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "normal",
+              "high",
+              "urgent"
+            ],
+            "default": "normal"
+          }
+        },
+        "required": [
+          "agent_slug",
+          "type"
+        ]
+      },
+      "ApproveTask": {
+        "type": "object",
+        "properties": {
+          "feedback": {
+            "type": "string"
+          }
+        }
+      },
+      "RejectTask": {
+        "type": "object",
+        "properties": {
+          "feedback": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "feedback"
+        ]
+      },
+      "RevisionRequest": {
+        "type": "object",
+        "properties": {
+          "feedback": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "feedback"
+        ]
+      },
+      "StatusChange": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "KillSwitchAction": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "activate",
+              "deactivate"
+            ]
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "KnowledgeReseed": {
+        "type": "object",
+        "properties": {
+          "confirm": {
+            "type": "boolean"
+          },
+          "agent_slug": {
+            "type": "string"
+          }
+        }
+      },
+      "DriveSetup": {
+        "type": "object",
+        "properties": {
+          "dry_run": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "TriggerReject": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      }
+    },
+    "parameters": {},
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Supabase JWT eller FIA_CLI_TOKEN"
+      }
+    }
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Hälsokontroll",
+        "tags": [
+          "System"
+        ],
+        "responses": {
+          "200": {
+            "description": "Systemet lever"
+          }
+        }
+      }
+    },
+    "/api/agents": {
+      "get": {
+        "summary": "Lista alla agenter",
+        "description": "Returnerar alla agenter med display_status och tasks_today.",
+        "tags": [
+          "Agenter"
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista av agenter med daglig statistik"
+          },
+          "500": {
+            "description": "Internt fel"
+          }
+        }
+      }
+    },
+    "/api/agents/{slug}/pause": {
+      "post": {
+        "summary": "Pausa en agent",
+        "tags": [
+          "Agenter"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "slug",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agent pausad"
+          },
+          "404": {
+            "description": "Agent ej hittad"
+          }
+        }
+      }
+    },
+    "/api/agents/{slug}/resume": {
+      "post": {
+        "summary": "Återuppta en pausad agent",
+        "tags": [
+          "Agenter"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "slug",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agent återupptagen"
+          },
+          "404": {
+            "description": "Agent ej hittad"
+          }
+        }
+      }
+    },
+    "/api/agents/{slug}/routing": {
+      "patch": {
+        "summary": "Uppdatera routing-konfiguration",
+        "description": "Ändra modellval per uppgiftstyp. Kräver admin-roll.",
+        "tags": [
+          "Agenter"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "slug",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoutingConfig"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Routing uppdaterad"
+          },
+          "404": {
+            "description": "Agent ej hittad"
+          }
+        }
+      }
+    },
+    "/api/agents/{slug}/tools": {
+      "patch": {
+        "summary": "Uppdatera verktyg",
+        "description": "Ändra MCP-verktyg för en agent. Kräver admin-roll.",
+        "tags": [
+          "Agenter"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "slug",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolsConfig"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verktyg uppdaterade"
+          },
+          "404": {
+            "description": "Agent ej hittad"
+          }
+        }
+      }
+    },
+    "/api/agents/{slug}/triggers": {
+      "get": {
+        "summary": "Hämta triggers för en agent",
+        "tags": [
+          "Agenter"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "slug",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista av triggers"
+          },
+          "404": {
+            "description": "Agent ej hittad"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Uppdatera trigger-konfiguration",
+        "description": "Ändra enabled, requires_approval, condition eller action på triggers.",
+        "tags": [
+          "Agenter"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "slug",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TriggersPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Triggers uppdaterade"
+          },
+          "400": {
+            "description": "Valideringsfel"
+          },
+          "404": {
+            "description": "Trigger ej hittad"
+          }
+        }
+      }
+    },
+    "/api/agents/{slug}/triggers/reseed": {
+      "post": {
+        "summary": "Reseed triggers från agent.yaml",
+        "description": "Skriver över dashboard-konfiguration med YAML-filen. Stöder dry_run (confirm: false).",
+        "tags": [
+          "Agenter"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "slug",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReseedRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reseed utförd eller dry-run diff"
+          },
+          "404": {
+            "description": "Agent ej hittad"
+          }
+        }
+      }
+    },
+    "/api/tasks": {
+      "get": {
+        "summary": "Lista tasks",
+        "description": "Filtrering på status (kommaseparerat), agent_slug, type, priority. Stöder paginering och sortering.",
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "agent_slug",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "type",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "priority",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "per_page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginerad lista med tasks"
+          }
+        }
+      },
+      "post": {
+        "summary": "Skapa ny task",
+        "description": "Skapar en task i kön. Kräver orchestrator, admin eller operator.",
+        "tags": [
+          "Tasks"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTask"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Task skapad"
+          },
+          "404": {
+            "description": "Agent ej hittad"
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}": {
+      "get": {
+        "summary": "Hämta en task",
+        "description": "Returnerar task med tillhörande approvals.",
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task med approvals"
+          },
+          "404": {
+            "description": "Task ej hittad"
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/approve": {
+      "post": {
+        "summary": "Godkänn en task",
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveTask"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Task godkänd"
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/reject": {
+      "post": {
+        "summary": "Avslå en task",
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectTask"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Task avslagen"
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/revision": {
+      "post": {
+        "summary": "Begär revision av en task",
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Revision begärd"
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/status": {
+      "post": {
+        "summary": "Ändra taskstatus",
+        "description": "Generell statusändring med validering mot statusmaskin.",
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusChange"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status ändrad"
+          },
+          "400": {
+            "description": "Ogiltig övergång"
+          },
+          "404": {
+            "description": "Task ej hittad"
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/children": {
+      "get": {
+        "summary": "Hämta child tasks",
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista av child tasks"
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/lineage": {
+      "get": {
+        "summary": "Hämta task lineage",
+        "description": "Returnerar ancestors och children (max 5 nivåer upp).",
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ancestors och children"
+          }
+        }
+      }
+    },
+    "/api/metrics": {
+      "get": {
+        "summary": "Hämta metrics",
+        "description": "Filtrering på category, period, from, to.",
+        "tags": [
+          "Metrics"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "category",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "period",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista av metrics"
+          }
+        }
+      }
+    },
+    "/api/metrics/summary": {
+      "get": {
+        "summary": "KPI-sammanfattning",
+        "description": "Returnerar content_this_week, approval_rate, pending_approvals, cost_mtd_sek, cost_trend.",
+        "tags": [
+          "Metrics"
+        ],
+        "responses": {
+          "200": {
+            "description": "KPI-sammanfattning"
+          }
+        }
+      }
+    },
+    "/api/activity": {
+      "get": {
+        "summary": "Aktivitetslogg",
+        "description": "Audit trail med filtrering på agent, action, datum, sökning. Paginerad.",
+        "tags": [
+          "Aktivitet"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "agent_slug",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "action",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "to",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "per_page",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginerad aktivitetslogg"
+          }
+        }
+      }
+    },
+    "/api/kill-switch/status": {
+      "get": {
+        "summary": "Kill switch-status",
+        "tags": [
+          "Kill Switch"
+        ],
+        "responses": {
+          "200": {
+            "description": "Kill switch-status"
+          }
+        }
+      }
+    },
+    "/api/kill-switch": {
+      "post": {
+        "summary": "Aktivera/deaktivera kill switch",
+        "tags": [
+          "Kill Switch"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KillSwitchAction"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Kill switch uppdaterad"
+          }
+        }
+      }
+    },
+    "/api/triggers/pending": {
+      "get": {
+        "summary": "Lista pending triggers",
+        "tags": [
+          "Triggers"
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista av pending triggers"
+          }
+        }
+      }
+    },
+    "/api/triggers/{id}/approve": {
+      "post": {
+        "summary": "Godkänn en pending trigger",
+        "description": "Skapar downstream task och uppdaterar trigger-status.",
+        "tags": [
+          "Triggers"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trigger godkänd, ny task skapad"
+          },
+          "404": {
+            "description": "Trigger ej hittad"
+          }
+        }
+      }
+    },
+    "/api/triggers/{id}/reject": {
+      "post": {
+        "summary": "Avslå en pending trigger",
+        "tags": [
+          "Triggers"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TriggerReject"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Trigger avslagen"
+          },
+          "404": {
+            "description": "Trigger ej hittad"
+          }
+        }
+      }
+    },
+    "/api/triggers/reseed": {
+      "post": {
+        "summary": "Reseed alla agenters triggers",
+        "description": "Skriver över alla agenters trigger-konfiguration från agent.yaml. Stöder dry_run.",
+        "tags": [
+          "Triggers"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReseedRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reseed utförd eller dry-run diff"
+          }
+        }
+      }
+    },
+    "/api/knowledge/reseed": {
+      "post": {
+        "summary": "Reseed kunskapsbas",
+        "description": "Seedar knowledge items från disk till Supabase. Stöder dry_run och enskild agent.",
+        "tags": [
+          "Knowledge"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnowledgeReseed"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reseed utförd eller dry-run diff"
+          }
+        }
+      }
+    },
+    "/api/drive/status": {
+      "get": {
+        "summary": "Visa Drive-mappstruktur",
+        "description": "Returnerar aktuell folder map med folder-IDs och antal konfigurerade mappar.",
+        "tags": [
+          "Drive"
+        ],
+        "responses": {
+          "200": {
+            "description": "Drive-status med folder map"
+          }
+        }
+      }
+    },
+    "/api/drive/setup": {
+      "post": {
+        "summary": "Skapa Drive-mappstruktur",
+        "description": "Skapar FIA:s mappstruktur på Google Drive. Idempotent – hoppar över befintliga mappar. Kräver admin-roll.",
+        "tags": [
+          "Drive"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriveSetup"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Setup-resultat med skapade/befintliga/felaktiga mappar"
+          },
+          "500": {
+            "description": "Drive auth saknas eller setup misslyckades"
+          }
+        }
+      }
+    }
+  }
+}
