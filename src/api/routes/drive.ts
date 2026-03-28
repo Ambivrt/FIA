@@ -63,7 +63,7 @@ export function driveRoutes(supabase: SupabaseClient, config: AppConfig, logger:
       const raw = await handleGwsToolUse(
         {
           toolName: "drive_list_folder_contents",
-          input: { folder_id: folderId, max_results: maxResults },
+          input: { folderId, pageSize: maxResults },
         },
         config,
       );
@@ -74,7 +74,15 @@ export function driveRoutes(supabase: SupabaseClient, config: AppConfig, logger:
         // Handle MCP response format: { content: [{ text: "..." }] }
         if (parsed.content && Array.isArray(parsed.content)) {
           const text = parsed.content.map((c: { text?: string }) => c.text ?? "").join("");
-          files = JSON.parse(text);
+          let inner: Record<string, unknown> | unknown[];
+          try {
+            inner = JSON.parse(text);
+          } catch {
+            // ResponseFormatter prepends human-readable text before JSON
+            const idx = text.lastIndexOf("\n\n{");
+            inner = idx !== -1 ? JSON.parse(text.slice(idx + 2)) : {};
+          }
+          files = Array.isArray(inner) ? inner : ((inner as Record<string, unknown>).files as unknown[]) ?? [];
         } else if (Array.isArray(parsed)) {
           files = parsed;
         } else if (parsed.files && Array.isArray(parsed.files)) {
@@ -102,7 +110,7 @@ export function driveRoutes(supabase: SupabaseClient, config: AppConfig, logger:
       const raw = await handleGwsToolUse(
         {
           toolName: "drive_get_metadata",
-          input: { file_id: fileId },
+          input: { fileId },
         },
         config,
       );
@@ -112,7 +120,13 @@ export function driveRoutes(supabase: SupabaseClient, config: AppConfig, logger:
         const parsed = JSON.parse(raw);
         if (parsed.content && Array.isArray(parsed.content)) {
           const text = parsed.content.map((c: { text?: string }) => c.text ?? "").join("");
-          metadata = JSON.parse(text);
+          try {
+            metadata = JSON.parse(text);
+          } catch {
+            // ResponseFormatter prepends human-readable text before JSON
+            const idx = text.lastIndexOf("\n\n{");
+            metadata = idx !== -1 ? JSON.parse(text.slice(idx + 2)) : {};
+          }
         } else {
           metadata = parsed;
         }
