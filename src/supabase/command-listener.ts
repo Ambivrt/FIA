@@ -424,7 +424,7 @@ export function startCommandListener(
             const maxResults = Math.min((p.max_results as number) || 50, 200);
 
             const raw = await handleGwsToolUse(
-              { toolName: "drive_list_folder_contents", input: { folder_id: folderId, max_results: maxResults } },
+              { toolName: "drive_list_folder_contents", input: { folderId, pageSize: maxResults } },
               appConfig,
             );
 
@@ -433,7 +433,15 @@ export function startCommandListener(
               const parsed = JSON.parse(raw);
               if (parsed.content && Array.isArray(parsed.content)) {
                 const text = parsed.content.map((c: { text?: string }) => c.text ?? "").join("");
-                files = JSON.parse(text);
+                let inner: Record<string, unknown> | unknown[];
+                try {
+                  inner = JSON.parse(text);
+                } catch {
+                  // ResponseFormatter prepends human-readable text before JSON
+                  const idx = text.lastIndexOf("\n\n{");
+                  inner = idx !== -1 ? JSON.parse(text.slice(idx + 2)) : {};
+                }
+                files = Array.isArray(inner) ? inner : (((inner as Record<string, unknown>).files as unknown[]) ?? []);
               } else if (Array.isArray(parsed)) {
                 files = parsed;
               } else if (parsed.files && Array.isArray(parsed.files)) {
