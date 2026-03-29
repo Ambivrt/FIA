@@ -643,6 +643,106 @@ export function agentRoutes(supabase: SupabaseClient, killSwitch: KillSwitch, co
     },
   );
 
+  // POST /api/agents/:slug/tools/reseed – admin only
+  router.post(
+    "/:slug/tools/reseed",
+    requirePermission("knowledge_reseed"),
+    validateBody(reseedSchema),
+    async (req, res) => {
+      try {
+        const slug = req.params.slug as string;
+        const confirm = req.body?.confirm === true;
+
+        const { data: agent, error: fetchErr } = await supabase
+          .from("agents")
+          .select("id, config_json")
+          .eq("slug", slug)
+          .single();
+
+        if (fetchErr || !agent) {
+          res.status(404).json({ error: { code: "NOT_FOUND", message: `Agent '${slug}' not found.` } });
+          return;
+        }
+
+        const current = (agent.config_json as Record<string, unknown>) ?? {};
+        const currentTools = (current.tools as string[]) ?? [];
+
+        // Load YAML tools
+        let yamlTools: string[] = [];
+        if (config) {
+          try {
+            const manifest = loadAgentManifest(config.knowledgeDir, slug);
+            yamlTools = manifest.tools ?? [];
+          } catch {
+            // No manifest or invalid
+          }
+        }
+
+        // Compute diff
+        const changes: Array<{ tool: string; diff: string }> = [];
+        for (const yt of yamlTools) {
+          if (!currentTools.includes(yt)) {
+            changes.push({ tool: yt, diff: "Ny i YAML (läggs till)" });
+          }
+        }
+        for (const ct of currentTools) {
+          if (!yamlTools.includes(ct)) {
+            changes.push({ tool: ct, diff: "Finns bara i dashboard (tas bort)" });
+          }
+        }
+
+        if (!confirm) {
+          res.json({
+            dry_run: true,
+            agents: [
+              {
+                slug,
+                current_tool_count: currentTools.length,
+                yaml_tool_count: yamlTools.length,
+                changes,
+              },
+            ],
+          });
+          return;
+        }
+
+        // Perform reseed
+        const previousTools = currentTools;
+        const adminOverrides = new Set((current._admin_overrides as string[]) ?? []);
+        adminOverrides.delete("tools");
+        const merged = {
+          ...current,
+          tools: yamlTools,
+          _yaml_tools: yamlTools,
+          _admin_overrides: [...adminOverrides],
+        };
+
+        const { error } = await supabase.from("agents").update({ config_json: merged }).eq("id", agent.id);
+        if (error) throw error;
+
+        await logActivity(supabase, {
+          agent_id: agent.id,
+          user_id: getDbUserId(req),
+          action: "tools_config_reseeded",
+          details_json: {
+            scope: "single",
+            agents_reseeded: [slug],
+            previous_tools: previousTools,
+          },
+        });
+
+        res.json({
+          dry_run: false,
+          reseeded: [slug],
+          unchanged: [],
+          message: `Agent '${slug}' tools reseedade från agent.yaml.`,
+        });
+      } catch (err) {
+        res.status(500).json({ error: { code: "INTERNAL", message: (err as Error).message } });
+      }
+    },
+  );
+
   // POST /api/agents/:slug/triggers/reseed – admin only
   router.post(
     "/:slug/triggers/reseed",
