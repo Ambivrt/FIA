@@ -480,17 +480,8 @@ describe("toolNameToCliArgs — CLI fallback mapping", () => {
       ]);
     });
     it("maps calendar_create_event", () => {
-      expect(
-        toolNameToCliArgs("calendar_create_event", { summary: "Meeting", start: "2026-01-01T10:00:00" }),
-      ).toEqual([
-        "calendar",
-        "events",
-        "insert",
-        "--summary",
-        "Meeting",
-        "--start",
-        "2026-01-01T10:00:00",
-      ]);
+      const result = toolNameToCliArgs("calendar_create_event", { summary: "Mtg", start: "2026-01-01T10:00:00" });
+      expect(result).toEqual(["calendar", "events", "insert", "--summary", "Mtg", "--start", "2026-01-01T10:00:00"]);
     });
     it("maps calendar_update_event", () => {
       expect(toolNameToCliArgs("calendar_update_event", { eventId: "ev1", summary: "Updated" })).toEqual([
