@@ -8,7 +8,8 @@
  * Denna modul mappar dessa referenser till konkreta verktyg och handlers.
  */
 
-import { execFile } from "child_process";
+import { execFile, execSync } from "child_process";
+import { existsSync } from "fs";
 import { promisify } from "util";
 import path from "path";
 import { ToolDefinition, ToolUseResult } from "../llm/types";
@@ -243,15 +244,12 @@ async function tryGwsCli(toolUse: ToolUseResult, config: AppConfig): Promise<str
 
 /** Resolve gws binary path — local node_modules, then PATH. */
 function resolveGwsBin(): string | null {
-  const fs = require("fs");
-
   // Try local node_modules first
   const localBin = path.join(process.cwd(), "node_modules", ".bin", "gws");
-  if (fs.existsSync(localBin)) return localBin;
+  if (existsSync(localBin)) return localBin;
 
   // Try PATH via which/where
   try {
-    const { execSync } = require("child_process");
     const globalBin = execSync(process.platform === "win32" ? "where gws" : "which gws", {
       encoding: "utf-8",
       timeout: 5_000,
@@ -329,7 +327,7 @@ const CLI_MAP: Record<string, CliMapping> = {
   },
   drive_create_folder: {
     args: ["drive", "files", "create"],
-    transformInput: (input) => {
+    transformInput: () => {
       // Inject folder MIME type so Drive creates a folder, not a file
       return ["--mime-type", "application/vnd.google-apps.folder"];
     },
