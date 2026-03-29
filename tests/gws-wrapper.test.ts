@@ -234,9 +234,13 @@ describe("toolNameToCliArgs — CLI fallback mapping", () => {
     it("maps drive_create_folder with folder mime-type", () => {
       const result = toolNameToCliArgs("drive_create_folder", { name: "Reports" });
       expect(result).toEqual([
-        "drive", "files", "create",
-        "--mime-type", "application/vnd.google-apps.folder",
-        "--name", "Reports",
+        "drive",
+        "files",
+        "create",
+        "--mime-type",
+        "application/vnd.google-apps.folder",
+        "--name",
+        "Reports",
       ]);
     });
 
@@ -248,19 +252,43 @@ describe("toolNameToCliArgs — CLI fallback mapping", () => {
 
   describe("Docs tools (9)", () => {
     it("maps gdocs_create", () => {
-      expect(toolNameToCliArgs("gdocs_create", { title: "My Doc" })).toEqual(["docs", "documents", "create", "--title", "My Doc"]);
+      expect(toolNameToCliArgs("gdocs_create", { title: "My Doc" })).toEqual([
+        "docs",
+        "documents",
+        "create",
+        "--title",
+        "My Doc",
+      ]);
     });
 
     it("maps gdocs_read", () => {
-      expect(toolNameToCliArgs("gdocs_read", { documentId: "doc123" })).toEqual(["docs", "documents", "get", "--document-id", "doc123"]);
+      expect(toolNameToCliArgs("gdocs_read", { documentId: "doc123" })).toEqual([
+        "docs",
+        "documents",
+        "get",
+        "--document-id",
+        "doc123",
+      ]);
     });
 
     it("maps gdocs_get_metadata", () => {
-      expect(toolNameToCliArgs("gdocs_get_metadata", { documentId: "doc123" })).toEqual(["docs", "documents", "get", "--document-id", "doc123"]);
+      expect(toolNameToCliArgs("gdocs_get_metadata", { documentId: "doc123" })).toEqual([
+        "docs",
+        "documents",
+        "get",
+        "--document-id",
+        "doc123",
+      ]);
     });
 
     it("maps gdocs_list_documents with mime-type filter", () => {
-      expect(toolNameToCliArgs("gdocs_list_documents", {})).toEqual(["drive", "files", "list", "--q", "mimeType='application/vnd.google-apps.document'"]);
+      expect(toolNameToCliArgs("gdocs_list_documents", {})).toEqual([
+        "drive",
+        "files",
+        "list",
+        "--q",
+        "mimeType='application/vnd.google-apps.document'",
+      ]);
     });
 
     it("maps gdocs_insert_text with batchUpdate body", () => {
@@ -273,7 +301,12 @@ describe("toolNameToCliArgs — CLI fallback mapping", () => {
     });
 
     it("maps gdocs_update_text with delete+insert body", () => {
-      const result = toolNameToCliArgs("gdocs_update_text", { documentId: "doc1", text: "New", startIndex: 10, endIndex: 20 });
+      const result = toolNameToCliArgs("gdocs_update_text", {
+        documentId: "doc1",
+        text: "New",
+        startIndex: 10,
+        endIndex: 20,
+      });
       const body = JSON.parse(result![result!.indexOf("--request-body") + 1]);
       expect(body.requests).toHaveLength(2);
       expect(body.requests[0].deleteContentRange.range.startIndex).toBe(10);
@@ -294,61 +327,184 @@ describe("toolNameToCliArgs — CLI fallback mapping", () => {
     });
 
     it("maps gdocs_export with file-id and mime-type", () => {
-      expect(toolNameToCliArgs("gdocs_export", { documentId: "doc1", mimeType: "text/plain" })).toEqual(["drive", "files", "export", "--file-id", "doc1", "--mime-type", "text/plain"]);
+      expect(toolNameToCliArgs("gdocs_export", { documentId: "doc1", mimeType: "text/plain" })).toEqual([
+        "drive",
+        "files",
+        "export",
+        "--file-id",
+        "doc1",
+        "--mime-type",
+        "text/plain",
+      ]);
     });
   });
 
   describe("Sheets tools (6)", () => {
     it("maps gsheets_read", () => {
-      expect(toolNameToCliArgs("gsheets_read", { spreadsheetId: "ss1", range: "A1:B2" })).toEqual(["sheets", "spreadsheets", "values", "get", "--spreadsheet-id", "ss1", "--range", "A1:B2"]);
+      expect(toolNameToCliArgs("gsheets_read", { spreadsheetId: "ss1", range: "A1:B2" })).toEqual([
+        "sheets",
+        "spreadsheets",
+        "values",
+        "get",
+        "--spreadsheet-id",
+        "ss1",
+        "--range",
+        "A1:B2",
+      ]);
     });
     it("maps gsheets_list_sheets", () => {
-      expect(toolNameToCliArgs("gsheets_list_sheets", { spreadsheetId: "ss1" })).toEqual(["sheets", "spreadsheets", "get", "--spreadsheet-id", "ss1"]);
+      expect(toolNameToCliArgs("gsheets_list_sheets", { spreadsheetId: "ss1" })).toEqual([
+        "sheets",
+        "spreadsheets",
+        "get",
+        "--spreadsheet-id",
+        "ss1",
+      ]);
     });
     it("maps gsheets_create_spreadsheet", () => {
-      expect(toolNameToCliArgs("gsheets_create_spreadsheet", { title: "Budget" })).toEqual(["sheets", "spreadsheets", "create", "--title", "Budget"]);
+      expect(toolNameToCliArgs("gsheets_create_spreadsheet", { title: "Budget" })).toEqual([
+        "sheets",
+        "spreadsheets",
+        "create",
+        "--title",
+        "Budget",
+      ]);
     });
     it("maps gsheets_update_cell", () => {
-      expect(toolNameToCliArgs("gsheets_update_cell", { spreadsheetId: "ss1", range: "A1" })).toEqual(["sheets", "spreadsheets", "values", "update", "--spreadsheet-id", "ss1", "--range", "A1"]);
+      expect(toolNameToCliArgs("gsheets_update_cell", { spreadsheetId: "ss1", range: "A1" })).toEqual([
+        "sheets",
+        "spreadsheets",
+        "values",
+        "update",
+        "--spreadsheet-id",
+        "ss1",
+        "--range",
+        "A1",
+      ]);
     });
     it("maps gsheets_append_data", () => {
-      expect(toolNameToCliArgs("gsheets_append_data", { spreadsheetId: "ss1", range: "A1" })).toEqual(["sheets", "spreadsheets", "values", "append", "--spreadsheet-id", "ss1", "--range", "A1"]);
+      expect(toolNameToCliArgs("gsheets_append_data", { spreadsheetId: "ss1", range: "A1" })).toEqual([
+        "sheets",
+        "spreadsheets",
+        "values",
+        "append",
+        "--spreadsheet-id",
+        "ss1",
+        "--range",
+        "A1",
+      ]);
     });
     it("maps gsheets_batch_update", () => {
-      expect(toolNameToCliArgs("gsheets_batch_update", { spreadsheetId: "ss1" })).toEqual(["sheets", "spreadsheets", "batchUpdate", "--spreadsheet-id", "ss1"]);
+      expect(toolNameToCliArgs("gsheets_batch_update", { spreadsheetId: "ss1" })).toEqual([
+        "sheets",
+        "spreadsheets",
+        "batchUpdate",
+        "--spreadsheet-id",
+        "ss1",
+      ]);
     });
   });
 
   describe("Gmail tools (4)", () => {
     it("maps gmail_search_messages", () => {
-      expect(toolNameToCliArgs("gmail_search_messages", { query: "from:boss", max_results: 10 })).toEqual(["gmail", "users", "messages", "list", "--q", "from:boss", "--max-results", "10"]);
+      expect(toolNameToCliArgs("gmail_search_messages", { query: "from:boss", max_results: 10 })).toEqual([
+        "gmail",
+        "users",
+        "messages",
+        "list",
+        "--q",
+        "from:boss",
+        "--max-results",
+        "10",
+      ]);
     });
     it("maps gmail_get_message", () => {
-      expect(toolNameToCliArgs("gmail_get_message", { messageId: "msg123" })).toEqual(["gmail", "users", "messages", "get", "--id", "msg123"]);
+      expect(toolNameToCliArgs("gmail_get_message", { messageId: "msg123" })).toEqual([
+        "gmail",
+        "users",
+        "messages",
+        "get",
+        "--id",
+        "msg123",
+      ]);
     });
     it("maps gmail_send_message", () => {
-      expect(toolNameToCliArgs("gmail_send_message", { to: "a@b.com", subject: "Hi", body: "Hello" })).toEqual(["gmail", "users", "messages", "send", "--to", "a@b.com", "--subject", "Hi", "--body", "Hello"]);
+      expect(toolNameToCliArgs("gmail_send_message", { to: "a@b.com", subject: "Hi", body: "Hello" })).toEqual([
+        "gmail",
+        "users",
+        "messages",
+        "send",
+        "--to",
+        "a@b.com",
+        "--subject",
+        "Hi",
+        "--body",
+        "Hello",
+      ]);
     });
     it("maps gmail_draft_message", () => {
-      expect(toolNameToCliArgs("gmail_draft_message", { to: "a@b.com", subject: "Draft" })).toEqual(["gmail", "users", "drafts", "create", "--to", "a@b.com", "--subject", "Draft"]);
+      expect(toolNameToCliArgs("gmail_draft_message", { to: "a@b.com", subject: "Draft" })).toEqual([
+        "gmail",
+        "users",
+        "drafts",
+        "create",
+        "--to",
+        "a@b.com",
+        "--subject",
+        "Draft",
+      ]);
     });
   });
 
   describe("Calendar tools (5)", () => {
     it("maps calendar_list_events", () => {
-      expect(toolNameToCliArgs("calendar_list_events", { calendarId: "primary", timeMin: "2026-01-01" })).toEqual(["calendar", "events", "list", "--calendar-id", "primary", "--time-min", "2026-01-01"]);
+      expect(toolNameToCliArgs("calendar_list_events", { calendarId: "primary", timeMin: "2026-01-01" })).toEqual([
+        "calendar",
+        "events",
+        "list",
+        "--calendar-id",
+        "primary",
+        "--time-min",
+        "2026-01-01",
+      ]);
     });
     it("maps calendar_get_event", () => {
-      expect(toolNameToCliArgs("calendar_get_event", { calendarId: "primary", eventId: "ev1" })).toEqual(["calendar", "events", "get", "--calendar-id", "primary", "--event-id", "ev1"]);
+      expect(toolNameToCliArgs("calendar_get_event", { calendarId: "primary", eventId: "ev1" })).toEqual([
+        "calendar",
+        "events",
+        "get",
+        "--calendar-id",
+        "primary",
+        "--event-id",
+        "ev1",
+      ]);
     });
     it("maps calendar_create_event", () => {
-      expect(toolNameToCliArgs("calendar_create_event", { summary: "Meeting", start: "2026-01-01T10:00:00" })).toEqual(["calendar", "events", "insert", "--summary", "Meeting", "--start", "2026-01-01T10:00:00"]);
+      expect(
+        toolNameToCliArgs("calendar_create_event", { summary: "Meeting", start: "2026-01-01T10:00:00" }),
+      ).toEqual(["calendar", "events", "insert", "--summary", "Meeting", "--start", "2026-01-01T10:00:00"]);
     });
     it("maps calendar_update_event", () => {
-      expect(toolNameToCliArgs("calendar_update_event", { eventId: "ev1", summary: "Updated" })).toEqual(["calendar", "events", "patch", "--event-id", "ev1", "--summary", "Updated"]);
+      expect(toolNameToCliArgs("calendar_update_event", { eventId: "ev1", summary: "Updated" })).toEqual([
+        "calendar",
+        "events",
+        "patch",
+        "--event-id",
+        "ev1",
+        "--summary",
+        "Updated",
+      ]);
     });
     it("maps calendar_delete_event", () => {
-      expect(toolNameToCliArgs("calendar_delete_event", { calendarId: "primary", eventId: "ev1" })).toEqual(["calendar", "events", "delete", "--calendar-id", "primary", "--event-id", "ev1"]);
+      expect(toolNameToCliArgs("calendar_delete_event", { calendarId: "primary", eventId: "ev1" })).toEqual([
+        "calendar",
+        "events",
+        "delete",
+        "--calendar-id",
+        "primary",
+        "--event-id",
+        "ev1",
+      ]);
     });
   });
 
@@ -358,20 +514,47 @@ describe("toolNameToCliArgs — CLI fallback mapping", () => {
     });
 
     it("skips undefined and null input values", () => {
-      expect(toolNameToCliArgs("drive_list_files", { query: undefined, max_results: null, name: "" })).toEqual(["drive", "files", "list"]);
+      expect(toolNameToCliArgs("drive_list_files", { query: undefined, max_results: null, name: "" })).toEqual([
+        "drive",
+        "files",
+        "list",
+      ]);
     });
 
     it("covers all 32 curated tools", () => {
       const all = [
-        "drive_list_files", "drive_search", "drive_read_file", "drive_get_metadata",
-        "drive_create_file", "drive_upload_file", "drive_create_folder", "drive_list_folder_contents",
-        "gdocs_create", "gdocs_read", "gdocs_get_metadata", "gdocs_list_documents",
-        "gdocs_insert_text", "gdocs_update_text", "gdocs_append_text", "gdocs_replace_text", "gdocs_export",
-        "gsheets_read", "gsheets_list_sheets", "gsheets_create_spreadsheet",
-        "gsheets_update_cell", "gsheets_append_data", "gsheets_batch_update",
-        "gmail_search_messages", "gmail_get_message", "gmail_send_message", "gmail_draft_message",
-        "calendar_list_events", "calendar_get_event", "calendar_create_event",
-        "calendar_update_event", "calendar_delete_event",
+        "drive_list_files",
+        "drive_search",
+        "drive_read_file",
+        "drive_get_metadata",
+        "drive_create_file",
+        "drive_upload_file",
+        "drive_create_folder",
+        "drive_list_folder_contents",
+        "gdocs_create",
+        "gdocs_read",
+        "gdocs_get_metadata",
+        "gdocs_list_documents",
+        "gdocs_insert_text",
+        "gdocs_update_text",
+        "gdocs_append_text",
+        "gdocs_replace_text",
+        "gdocs_export",
+        "gsheets_read",
+        "gsheets_list_sheets",
+        "gsheets_create_spreadsheet",
+        "gsheets_update_cell",
+        "gsheets_append_data",
+        "gsheets_batch_update",
+        "gmail_search_messages",
+        "gmail_get_message",
+        "gmail_send_message",
+        "gmail_draft_message",
+        "calendar_list_events",
+        "calendar_get_event",
+        "calendar_create_event",
+        "calendar_update_event",
+        "calendar_delete_event",
       ];
       for (const tool of all) {
         expect(toolNameToCliArgs(tool, {})).not.toBeNull();
