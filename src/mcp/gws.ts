@@ -8,7 +8,8 @@
  * Denna modul mappar dessa referenser till konkreta verktyg och handlers.
  */
 
-import { execFile } from "child_process";
+import { execFile, execSync } from "child_process";
+import { existsSync } from "fs";
 import { promisify } from "util";
 import path from "path";
 import { ToolDefinition, ToolUseResult } from "../llm/types";
@@ -241,52 +242,371 @@ async function tryGwsCli(toolUse: ToolUseResult, config: AppConfig): Promise<str
   }
 }
 
-/** Resolve gws binary path — local node_modules or global. */
+/** Resolve gws binary path — local node_modules, then PATH. */
 function resolveGwsBin(): string | null {
+  // Try local node_modules first
+  const localBin = path.join(process.cwd(), "node_modules", ".bin", "gws");
+  if (existsSync(localBin)) return localBin;
+
+  // Try PATH via which/where
   try {
-    const localBin = path.join(process.cwd(), "node_modules", ".bin", "gws");
-    return localBin;
+    const globalBin = execSync(process.platform === "win32" ? "where gws" : "which gws", {
+      encoding: "utf-8",
+      timeout: 5_000,
+    }).trim();
+    if (globalBin) return globalBin.split("\n")[0];
   } catch {
-    return null;
+    // gws not found in PATH
   }
+
+  return null;
 }
+
+// ---------------------------------------------------------------------------
+// CLI command mapping — maps all 32 curated tool names to gws CLI args
+// ---------------------------------------------------------------------------
+
+interface CliMapping {
+  /** Base gws CLI subcommand args, e.g. ["drive", "files", "list"] */
+  args: string[];
+  /**
+   * Optional input transformer — mutates the input before flag generation.
+   * Can inject extra flags, rename fields, or build request bodies.
+   * Returns extra flags to prepend before the auto-generated ones.
+   */
+  transformInput?: (input: Record<string, unknown>) => string[];
+}
+
+const CLI_MAP: Record<string, CliMapping> = {
+  // --- Drive (8) ---
+  drive_list_files: { args: ["drive", "files", "list"] },
+  drive_search: {
+    args: ["drive", "files", "list"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.query) {
+        flags.push("--q", String(input.query));
+        delete input.query;
+      }
+      return flags;
+    },
+  },
+  drive_read_file: {
+    args: ["drive", "files", "export"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.file_id) {
+        flags.push("--file-id", String(input.file_id));
+        delete input.file_id;
+      }
+      return flags;
+    },
+  },
+  drive_get_metadata: {
+    args: ["drive", "files", "get"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.file_id) {
+        flags.push("--file-id", String(input.file_id));
+        delete input.file_id;
+      }
+      return flags;
+    },
+  },
+  drive_create_file: { args: ["drive", "files", "create"] },
+  drive_upload_file: {
+    args: ["drive", "files", "create"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.filePath) {
+        flags.push("--upload", String(input.filePath));
+        delete input.filePath;
+      }
+      return flags;
+    },
+  },
+  drive_create_folder: {
+    args: ["drive", "files", "create"],
+    transformInput: () => {
+      // Inject folder MIME type so Drive creates a folder, not a file
+      return ["--mime-type", "application/vnd.google-apps.folder"];
+    },
+  },
+  drive_list_folder_contents: {
+    args: ["drive", "files", "list"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.folderId) {
+        flags.push("--q", `'${String(input.folderId)}' in parents`);
+        delete input.folderId;
+      }
+      return flags;
+    },
+  },
+
+  // --- Docs (9) ---
+  gdocs_create: { args: ["docs", "documents", "create"] },
+  gdocs_read: {
+    args: ["docs", "documents", "get"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.documentId) {
+        flags.push("--document-id", String(input.documentId));
+        delete input.documentId;
+      }
+      return flags;
+    },
+  },
+  gdocs_get_metadata: {
+    args: ["docs", "documents", "get"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.documentId) {
+        flags.push("--document-id", String(input.documentId));
+        delete input.documentId;
+      }
+      return flags;
+    },
+  },
+  gdocs_list_documents: {
+    args: ["drive", "files", "list"],
+    transformInput: () => {
+      return ["--q", "mimeType='application/vnd.google-apps.document'"];
+    },
+  },
+  gdocs_insert_text: {
+    args: ["docs", "documents", "batchUpdate"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.documentId) {
+        flags.push("--document-id", String(input.documentId));
+        delete input.documentId;
+      }
+      const insertIndex = input.index !== undefined ? Number(input.index) : 1;
+      delete input.index;
+      const text = String(input.text ?? "");
+      delete input.text;
+      flags.push(
+        "--request-body",
+        JSON.stringify({ requests: [{ insertText: { location: { index: insertIndex }, text } }] }),
+      );
+      return flags;
+    },
+  },
+  gdocs_update_text: {
+    args: ["docs", "documents", "batchUpdate"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.documentId) {
+        flags.push("--document-id", String(input.documentId));
+        delete input.documentId;
+      }
+      const startIndex = Number(input.startIndex ?? 0);
+      const endIndex = Number(input.endIndex ?? 0);
+      const text = String(input.text ?? "");
+      delete input.startIndex;
+      delete input.endIndex;
+      delete input.text;
+      flags.push(
+        "--request-body",
+        JSON.stringify({
+          requests: [
+            { deleteContentRange: { range: { startIndex, endIndex } } },
+            { insertText: { location: { index: startIndex }, text } },
+          ],
+        }),
+      );
+      return flags;
+    },
+  },
+  gdocs_append_text: {
+    args: ["docs", "documents", "batchUpdate"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.documentId) {
+        flags.push("--document-id", String(input.documentId));
+        delete input.documentId;
+      }
+      const text = String(input.text ?? "");
+      delete input.text;
+      // endOfSegmentLocation appends to end of body
+      flags.push("--request-body", JSON.stringify({ requests: [{ insertText: { endOfSegmentLocation: {}, text } }] }));
+      return flags;
+    },
+  },
+  gdocs_replace_text: {
+    args: ["docs", "documents", "batchUpdate"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.documentId) {
+        flags.push("--document-id", String(input.documentId));
+        delete input.documentId;
+      }
+      const find = String(input.find ?? "");
+      const replaceWith = String(input.replaceWith ?? "");
+      delete input.find;
+      delete input.replaceWith;
+      flags.push(
+        "--request-body",
+        JSON.stringify({
+          requests: [{ replaceAllText: { containsText: { text: find, matchCase: true }, replaceText: replaceWith } }],
+        }),
+      );
+      return flags;
+    },
+  },
+  gdocs_export: {
+    args: ["drive", "files", "export"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.documentId) {
+        flags.push("--file-id", String(input.documentId));
+        delete input.documentId;
+      }
+      if (input.mimeType) {
+        flags.push("--mime-type", String(input.mimeType));
+        delete input.mimeType;
+      }
+      return flags;
+    },
+  },
+
+  // --- Sheets (6) ---
+  gsheets_read: { args: ["sheets", "spreadsheets", "values", "get"] },
+  gsheets_list_sheets: { args: ["sheets", "spreadsheets", "get"] },
+  gsheets_create_spreadsheet: { args: ["sheets", "spreadsheets", "create"] },
+  gsheets_update_cell: { args: ["sheets", "spreadsheets", "values", "update"] },
+  gsheets_append_data: { args: ["sheets", "spreadsheets", "values", "append"] },
+  gsheets_batch_update: { args: ["sheets", "spreadsheets", "batchUpdate"] },
+
+  // --- Gmail (4) ---
+  gmail_search_messages: {
+    args: ["gmail", "users", "messages", "list"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.query) {
+        flags.push("--q", String(input.query));
+        delete input.query;
+      }
+      if (input.max_results) {
+        flags.push("--max-results", String(input.max_results));
+        delete input.max_results;
+      }
+      return flags;
+    },
+  },
+  gmail_get_message: {
+    args: ["gmail", "users", "messages", "get"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.messageId) {
+        flags.push("--id", String(input.messageId));
+        delete input.messageId;
+      }
+      return flags;
+    },
+  },
+  gmail_send_message: { args: ["gmail", "users", "messages", "send"] },
+  gmail_draft_message: { args: ["gmail", "users", "drafts", "create"] },
+
+  // --- Calendar (5) ---
+  calendar_list_events: {
+    args: ["calendar", "events", "list"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.calendarId) {
+        flags.push("--calendar-id", String(input.calendarId));
+        delete input.calendarId;
+      }
+      return flags;
+    },
+  },
+  calendar_get_event: {
+    args: ["calendar", "events", "get"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.calendarId) {
+        flags.push("--calendar-id", String(input.calendarId));
+        delete input.calendarId;
+      }
+      if (input.eventId) {
+        flags.push("--event-id", String(input.eventId));
+        delete input.eventId;
+      }
+      return flags;
+    },
+  },
+  calendar_create_event: {
+    args: ["calendar", "events", "insert"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.calendarId) {
+        flags.push("--calendar-id", String(input.calendarId));
+        delete input.calendarId;
+      }
+      return flags;
+    },
+  },
+  calendar_update_event: {
+    args: ["calendar", "events", "patch"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.calendarId) {
+        flags.push("--calendar-id", String(input.calendarId));
+        delete input.calendarId;
+      }
+      if (input.eventId) {
+        flags.push("--event-id", String(input.eventId));
+        delete input.eventId;
+      }
+      return flags;
+    },
+  },
+  calendar_delete_event: {
+    args: ["calendar", "events", "delete"],
+    transformInput: (input) => {
+      const flags: string[] = [];
+      if (input.calendarId) {
+        flags.push("--calendar-id", String(input.calendarId));
+        delete input.calendarId;
+      }
+      if (input.eventId) {
+        flags.push("--event-id", String(input.eventId));
+        delete input.eventId;
+      }
+      return flags;
+    },
+  },
+};
 
 /**
  * Map MCP tool names to gws CLI arguments.
  * "drive_list_files" → ["drive", "files", "list"]
  * "gdocs_create" → ["docs", "documents", "create"]
+ *
+ * Exported for testing.
  */
-function toolNameToCliArgs(toolName: string, input: Record<string, unknown>): string[] | null {
-  const CLI_MAP: Record<string, string[]> = {
-    drive_list_files: ["drive", "files", "list"],
-    drive_search: ["drive", "files", "list"],
-    drive_read_file: ["drive", "files", "get"],
-    drive_get_metadata: ["drive", "files", "get"],
-    drive_create_file: ["drive", "files", "create"],
-    drive_upload_file: ["drive", "files", "create"],
-    drive_create_folder: ["drive", "files", "create"],
-    drive_list_folder_contents: ["drive", "files", "list"],
-    gdocs_create: ["docs", "documents", "create"],
-    gdocs_read: ["docs", "documents", "get"],
-    gdocs_list_documents: ["drive", "files", "list"],
-    gsheets_read: ["sheets", "spreadsheets", "values", "get"],
-    gsheets_create_spreadsheet: ["sheets", "spreadsheets", "create"],
-    gsheets_update_cell: ["sheets", "spreadsheets", "values", "update"],
-    gsheets_append_data: ["sheets", "spreadsheets", "values", "append"],
-  };
+export function toolNameToCliArgs(toolName: string, input: Record<string, unknown>): string[] | null {
+  const mapping = CLI_MAP[toolName];
+  if (!mapping) return null;
 
-  const baseArgs = CLI_MAP[toolName];
-  if (!baseArgs) return null;
+  // Clone input so transformers can safely mutate
+  const inputCopy = { ...input };
 
-  // Append input parameters as CLI flags
-  const flags: string[] = [];
-  for (const [key, value] of Object.entries(input)) {
+  // Run optional input transformer to get extra flags
+  const extraFlags = mapping.transformInput ? mapping.transformInput(inputCopy) : [];
+
+  // Append remaining input parameters as CLI flags
+  const autoFlags: string[] = [];
+  for (const [key, value] of Object.entries(inputCopy)) {
     if (value !== undefined && value !== null && value !== "") {
-      flags.push(`--${camelToKebab(key)}`, String(value));
+      // Skip arrays/objects — they were already handled by transformer or need special treatment
+      if (typeof value === "object") continue;
+      autoFlags.push(`--${camelToKebab(key)}`, String(value));
     }
   }
 
-  return [...baseArgs, ...flags];
+  return [...mapping.args, ...extraFlags, ...autoFlags];
 }
 
 function camelToKebab(str: string): string {
