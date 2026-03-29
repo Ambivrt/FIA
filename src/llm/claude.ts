@@ -80,8 +80,9 @@ export async function callClaude(config: AppConfig, model: string, request: LLMR
 
       const tokensIn = response.usage.input_tokens;
       const tokensOut = response.usage.output_tokens;
-      const cacheCreationInputTokens = (response.usage as Record<string, number>).cache_creation_input_tokens ?? 0;
-      const cacheReadInputTokens = (response.usage as Record<string, number>).cache_read_input_tokens ?? 0;
+      const usage = response.usage as unknown as Record<string, number>;
+      const cacheCreationInputTokens = usage.cache_creation_input_tokens ?? 0;
+      const cacheReadInputTokens = usage.cache_read_input_tokens ?? 0;
 
       return {
         text,
