@@ -50,6 +50,8 @@ export interface LLMResponse {
   model: string;
   tokensIn: number;
   tokensOut: number;
+  cacheCreationInputTokens?: number;
+  cacheReadInputTokens?: number;
   durationMs: number;
   costUsd: number;
   toolUse?: ToolUseResult;

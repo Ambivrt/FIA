@@ -1,6 +1,6 @@
 {
   "name": "fia-gateway",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "FIA – Forefront Intelligent Automation: AI-agent gateway for marketing operations",
   "main": "dist/index.js",
   "bin": {
