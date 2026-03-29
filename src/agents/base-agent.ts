@@ -400,6 +400,8 @@ export abstract class BaseAgent {
         model: response.model,
         tokens_in: accumulatedTokensIn,
         tokens_out: accumulatedTokensOut,
+        cache_read_tokens: response.cacheReadInputTokens,
+        cache_creation_tokens: response.cacheCreationInputTokens,
         cost_usd: accumulatedCostUsd,
         duration_ms: accumulatedDurationMs,
         status: "success",

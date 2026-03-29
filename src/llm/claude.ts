@@ -41,10 +41,15 @@ export async function callClaude(config: AppConfig, model: string, request: LLMR
       }
       userContent.push({ type: "text", text: request.userPrompt });
 
+      // Use cache_control on system prompt for prompt caching
+      const systemContent: Anthropic.TextBlockParam[] = request.systemPrompt
+        ? [{ type: "text" as const, text: request.systemPrompt, cache_control: { type: "ephemeral" as const } }]
+        : [];
+
       const createParams: Anthropic.MessageCreateParamsNonStreaming = {
         model,
         max_tokens: request.maxTokens ?? 4096,
-        system: request.systemPrompt ?? "",
+        system: systemContent,
         messages: [{ role: "user", content: userContent }],
         temperature: request.temperature ?? 0.7,
       };
@@ -75,14 +80,18 @@ export async function callClaude(config: AppConfig, model: string, request: LLMR
 
       const tokensIn = response.usage.input_tokens;
       const tokensOut = response.usage.output_tokens;
+      const cacheCreationInputTokens = (response.usage as Record<string, number>).cache_creation_input_tokens ?? 0;
+      const cacheReadInputTokens = (response.usage as Record<string, number>).cache_read_input_tokens ?? 0;
 
       return {
         text,
         model,
         tokensIn,
         tokensOut,
+        cacheCreationInputTokens: cacheCreationInputTokens || undefined,
+        cacheReadInputTokens: cacheReadInputTokens || undefined,
         durationMs: Date.now() - start,
-        costUsd: calculateCostUsd(model, tokensIn, tokensOut),
+        costUsd: calculateCostUsd(model, tokensIn, tokensOut, cacheCreationInputTokens, cacheReadInputTokens),
         toolUse,
       };
     } catch (err) {

@@ -23,10 +23,27 @@ const FLAT_PRICING: Record<string, number> = {
   "google-custom-search": 0.001, // per search
 };
 
-export function calculateCostUsd(model: string, tokensIn: number, tokensOut: number): number {
+export function calculateCostUsd(
+  model: string,
+  tokensIn: number,
+  tokensOut: number,
+  cacheCreationInputTokens?: number,
+  cacheReadInputTokens?: number,
+): number {
   const pricing = TOKEN_PRICING[model];
   if (pricing) {
-    return (tokensIn / 1_000_000) * pricing.inputPer1MTokens + (tokensOut / 1_000_000) * pricing.outputPer1MTokens;
+    // Non-cached input tokens = total input minus any cached tokens
+    const cachedRead = cacheReadInputTokens ?? 0;
+    const cachedCreation = cacheCreationInputTokens ?? 0;
+    const regularInput = tokensIn - cachedRead - cachedCreation;
+
+    const inputCost = (regularInput / 1_000_000) * pricing.inputPer1MTokens;
+    const outputCost = (tokensOut / 1_000_000) * pricing.outputPer1MTokens;
+    // Cache read = 10% of input price, cache creation = 125% of input price
+    const cacheReadCost = (cachedRead / 1_000_000) * pricing.inputPer1MTokens * 0.1;
+    const cacheCreationCost = (cachedCreation / 1_000_000) * pricing.inputPer1MTokens * 1.25;
+
+    return inputCost + outputCost + cacheReadCost + cacheCreationCost;
   }
 
   // Flat-rate model

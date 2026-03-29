@@ -15,6 +15,8 @@ export interface LogEntry {
   output_summary?: string;
   tokens_in?: number;
   tokens_out?: number;
+  cache_read_tokens?: number;
+  cache_creation_tokens?: number;
   cost_usd?: number;
   duration_ms?: number;
   status?: "success" | "error" | "escalated";
