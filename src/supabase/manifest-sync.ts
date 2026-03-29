@@ -20,6 +20,7 @@ export interface AgentConfigJson {
   triggers?: TriggerConfig[];
   _yaml_triggers?: TriggerConfig[];
   _yaml_routing?: Record<string, string | { primary: string; fallback?: string }>;
+  _yaml_tools?: string[];
   _manifest_version: string;
   _admin_overrides?: string[];
   compliance_mode?: "strict" | "balanced" | "open";
@@ -52,6 +53,7 @@ export function extractConfigJson(manifest: AgentManifest): AgentConfigJson {
   config._yaml_triggers = yamlTriggers;
 
   config._yaml_routing = manifest.routing;
+  config._yaml_tools = manifest.tools;
 
   return config;
 }
@@ -79,9 +81,10 @@ export function mergeConfigJson(
   }
   delete merged.relevance_mode;
 
-  // Always overwrite _yaml_triggers and _yaml_routing with latest YAML (for dashboard diff)
+  // Always overwrite _yaml_* with latest YAML (for dashboard diff)
   merged._yaml_triggers = manifestConfig._yaml_triggers;
   merged._yaml_routing = manifestConfig._yaml_routing;
+  merged._yaml_tools = manifestConfig._yaml_tools;
 
   // Preserve the admin overrides list
   if (adminOverrides.length > 0) {
