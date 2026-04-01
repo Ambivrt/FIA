@@ -1,4 +1,4 @@
-// fia integrations – Visa status for alla MCP-integrationer
+// fia integrations – Visa status for alla integrationer
 
 import { Command } from "commander";
 import chalk from "chalk";
@@ -13,16 +13,12 @@ interface IntegrationHealth {
   message?: string;
 }
 
-interface IntegrationsResponse {
-  integrations: IntegrationHealth[];
-}
-
 function statusBadge(status: IntegrationHealth["status"]): string {
   switch (status) {
     case "connected":
       return chalk.green("● Ansluten");
     case "disconnected":
-      return chalk.yellow("○ Frakopplad");
+      return chalk.yellow("○ Fråkopplad");
     case "error":
       return chalk.red("✗ Fel");
     case "not_configured":
@@ -33,19 +29,19 @@ function statusBadge(status: IntegrationHealth["status"]): string {
 export function registerIntegrationsCommand(program: Command): void {
   program
     .command("integrations")
-    .description("Show status for all MCP integrations")
+    .description("Show integration status")
     .action(async () => {
-      const { data } = await apiGet<IntegrationsResponse>("/api/integrations/status");
+      const { data } = await apiGet<IntegrationHealth[]>("/api/integrations/status");
 
       process.stdout.write(GRADIENT.orange.bold("Integrationer") + "\n\n");
 
       const table = new Table({
-        head: [chalk.bold("Tjanst"), chalk.bold("Status"), chalk.bold("Detaljer")],
+        head: [chalk.bold("Tjänst"), chalk.bold("Status"), chalk.bold("Detaljer")],
         style: { head: [], border: [] },
         colWidths: [22, 20, 40],
       });
 
-      for (const integration of data.integrations) {
+      for (const integration of data) {
         table.push([
           EARTH.forest(integration.label),
           statusBadge(integration.status),
@@ -56,8 +52,8 @@ export function registerIntegrationsCommand(program: Command): void {
       process.stdout.write(table.toString() + "\n");
 
       // Summary
-      const connected = data.integrations.filter((i) => i.status === "connected").length;
-      const total = data.integrations.length;
+      const connected = data.filter((i) => i.status === "connected").length;
+      const total = data.length;
       process.stdout.write("\n" + EARTH.stone(`${connected}/${total} integrationer anslutna`) + "\n");
     });
 }
