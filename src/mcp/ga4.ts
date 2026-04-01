@@ -172,7 +172,7 @@ export async function handleGa4ToolUse(toolUse: ToolUseResult, config: AppConfig
 
   const { google } = await import("googleapis");
   const analyticsData = google.analyticsdata({ version: "v1beta", auth: authClient as any });
-  const analyticsAdmin = google.analyticsadmin({ version: "v1beta", auth: authClient as any });
+  const analyticsAdmin = google.analyticsadmin({ version: "v1alpha", auth: authClient as any });
   const input = toolUse.input;
 
   switch (toolUse.toolName) {
@@ -190,7 +190,7 @@ export async function handleGa4ToolUse(toolUse: ToolUseResult, config: AppConfig
             ? (input.dimensions as string[]).map((d) => ({ name: d }))
             : undefined,
           metrics: (input.metrics as string[]).map((m) => ({ name: m })),
-          limit: input.limit ? Number(input.limit) : 100,
+          limit: input.limit ? String(input.limit) : "100",
         },
       });
       return JSON.stringify(res.data, null, 2);
