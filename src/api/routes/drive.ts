@@ -60,6 +60,11 @@ export function driveRoutes(supabase: SupabaseClient, config: AppConfig, logger:
     const maxResults = Math.min(parseInt(req.query.max_results as string) || 50, 200);
 
     try {
+      logger.info("drive folders contents: calling GWS tool", {
+        action: "drive_list_start",
+        details: { folderId, maxResults },
+      });
+
       const raw = await handleGwsToolUse(
         {
           toolName: "drive_list_folder_contents",
@@ -67,6 +72,11 @@ export function driveRoutes(supabase: SupabaseClient, config: AppConfig, logger:
         },
         config,
       );
+
+      logger.info("drive folders contents: GWS tool returned", {
+        action: "drive_list_response",
+        details: { responseLength: raw.length },
+      });
 
       let files: unknown[] = [];
       try {
