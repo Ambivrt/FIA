@@ -24,6 +24,7 @@ import { registerCronCommand } from "./commands/cron";
 import { registerDriveCommand } from "./commands/drive";
 import { registerCostsCommand } from "./commands/costs";
 import { registerKnowledgeCommand } from "./commands/knowledge";
+import { registerIntegrationsCommand } from "./commands/integrations";
 
 const program = new Command();
 
@@ -57,6 +58,7 @@ registerCronCommand(program);
 registerDriveCommand(program);
 registerCostsCommand(program);
 registerKnowledgeCommand(program);
+registerIntegrationsCommand(program);
 
 // Globalt felhantering
 program.exitOverride();

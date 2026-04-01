@@ -25,6 +25,7 @@ import { formatSlackStatus } from "./status-formatter";
 import { resolveSlackUser, checkSlackPermission } from "./auth";
 import { hasPermission, type Permission } from "../api/permissions";
 import { loadFolderMap, getAllFolderPaths, checkDriveAuth, setupDriveFolders } from "../mcp/drive-setup";
+import { checkIntegrationHealth, IntegrationStatusCode } from "../mcp/integration-status";
 
 export function registerCommands(
   app: App,
@@ -132,6 +133,27 @@ export function registerCommands(
           } catch {
             statusText += "\n:warning: Google Drive: _Kunde inte hämta status_";
           }
+        }
+
+        // Integration status
+        try {
+          const integrations = await checkIntegrationHealth(config);
+          const INTEGRATION_EMOJI: Record<IntegrationStatusCode, string> = {
+            connected: ":white_check_mark:",
+            disconnected: ":warning:",
+            error: ":x:",
+            not_configured: ":grey_question:",
+          };
+          const active = integrations.filter((i) => i.status !== "not_configured");
+          if (active.length > 0) {
+            statusText += "\n\n*Integrationer:*";
+            for (const i of active) {
+              statusText += `\n${INTEGRATION_EMOJI[i.status]} ${i.label}`;
+              if (i.message) statusText += ` — _${i.message}_`;
+            }
+          }
+        } catch {
+          // Integration check failed silently
         }
 
         // Show caller's role if mapped

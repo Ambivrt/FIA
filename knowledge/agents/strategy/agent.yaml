@@ -55,7 +55,7 @@ task_context:
 
 tools:
   - "gws:drive"
-  - "gws:analytics"
+  - ga4
   - "gws:calendar"
   - "gws:sheets"
   - hubspot
