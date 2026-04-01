@@ -10,24 +10,34 @@ import { AppConfig } from "../utils/config";
 let _oauthInitialized = false;
 let _serviceAccountClient: unknown | null = null;
 
+const AUTH_TIMEOUT_MS = 10_000;
+
 /**
  * Ensure the googleapis global auth is set via OAuth2 (workspace user).
  * Used by GWS tools (Drive, Docs, Sheets, Gmail, Calendar).
+ * Includes a 10s timeout to prevent hangs during auth initialization.
  */
 export async function ensureOAuthGlobalAuth(): Promise<void> {
   if (_oauthInitialized) return;
   try {
-    const { google } = await import("googleapis");
-    // @ts-expect-error — no type declarations for MCP package internals
-    const authMod = await import("@alanse/mcp-server-google-workspace/dist/auth.js");
-    const authClient = await authMod.loadCredentialsQuietly();
-    if (authClient) {
-      google.options({ auth: authClient });
-      authMod.setupTokenRefresh();
-      _oauthInitialized = true;
-    }
+    await Promise.race([
+      (async () => {
+        const { google } = await import("googleapis");
+        // @ts-expect-error — no type declarations for MCP package internals
+        const authMod = await import("@alanse/mcp-server-google-workspace/dist/auth.js");
+        const authClient = await authMod.loadCredentialsQuietly();
+        if (authClient) {
+          google.options({ auth: authClient });
+          authMod.setupTokenRefresh();
+          _oauthInitialized = true;
+        }
+      })(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("GWS auth initialization timed out")), AUTH_TIMEOUT_MS),
+      ),
+    ]);
   } catch {
-    // Auth not available — tools will fail with descriptive errors
+    // Auth not available or timed out — tools will fail with descriptive errors
   }
 }
 

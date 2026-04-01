@@ -143,6 +143,8 @@ export async function buildGwsToolDefinitions(agentTools: string[]): Promise<Too
  * Execute a GWS tool_use call from the LLM.
  * Tries the MCP package handler first, falls back to gws CLI.
  */
+const TOOL_TIMEOUT_MS = 15_000;
+
 export async function handleGwsToolUse(toolUse: ToolUseResult, config: AppConfig): Promise<string> {
   // Try MCP package handler first
   const allTools = await loadMcpTools();
@@ -150,7 +152,15 @@ export async function handleGwsToolUse(toolUse: ToolUseResult, config: AppConfig
 
   if (tool) {
     try {
-      const result = await tool.handler(toolUse.input);
+      const result = await Promise.race([
+        tool.handler(toolUse.input),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error(`GWS tool "${toolUse.toolName}" timed out after ${TOOL_TIMEOUT_MS}ms`)),
+            TOOL_TIMEOUT_MS,
+          ),
+        ),
+      ]);
 
       // MCP tools return { content: [...], isError: true } on failure without throwing
       if (result && typeof result === "object" && (result as Record<string, unknown>).isError) {
