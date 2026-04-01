@@ -24,10 +24,11 @@ task_context:
   anomaly_detection:
     - context/templates/anomaly-detection.md
 tools:
-  - "gws:analytics"
+  - ga4
   - "gws:sheets"
   - "gws:drive"
   - hubspot
+  - workvivo
 autonomy: autonomous
 compliance_mode: balanced
 escalation_threshold: 3

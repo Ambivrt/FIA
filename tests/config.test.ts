@@ -107,6 +107,8 @@ describe("loadConfig", () => {
       "linkedinAccessToken",
       "ga4CredentialsPath",
       "bufferAccessToken",
+      "workvivoApiKey",
+      "workvivoBaseUrl",
       "gatewayApiPort",
       "usdToSek",
       "queueMaxConcurrency",

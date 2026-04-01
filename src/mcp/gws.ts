@@ -14,6 +14,7 @@ import { promisify } from "util";
 import path from "path";
 import { ToolDefinition, ToolUseResult } from "../llm/types";
 import { AppConfig } from "../utils/config";
+import { ensureOAuthGlobalAuth } from "./google-auth";
 
 const execFileAsync = promisify(execFile);
 
@@ -29,44 +30,11 @@ interface GwsTool {
 }
 
 let _cachedTools: GwsTool[] | null = null;
-let _authInitialized = false;
-
-/**
- * Ensure the googleapis global auth is set before calling any tool.
- * The MCP package's loadCredentialsQuietly() creates an OAuth2 client but
- * does NOT call google.options({ auth }), so tools like google.drive("v3")
- * run unauthenticated. We fix that here.
- */
-const AUTH_TIMEOUT_MS = 10_000;
-
-async function ensureGlobalAuth(): Promise<void> {
-  if (_authInitialized) return;
-  try {
-    await Promise.race([
-      (async () => {
-        const { google } = await import("googleapis");
-        // @ts-expect-error — no type declarations for MCP package internals
-        const authMod = await import("@alanse/mcp-server-google-workspace/dist/auth.js");
-        const authClient = await authMod.loadCredentialsQuietly();
-        if (authClient) {
-          google.options({ auth: authClient });
-          authMod.setupTokenRefresh();
-          _authInitialized = true;
-        }
-      })(),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("GWS auth initialization timed out")), AUTH_TIMEOUT_MS),
-      ),
-    ]);
-  } catch {
-    // Auth not available or timed out — tools will fail with descriptive errors
-  }
-}
 
 async function loadMcpTools(): Promise<GwsTool[]> {
   if (_cachedTools) return _cachedTools;
   try {
-    await ensureGlobalAuth();
+    await ensureOAuthGlobalAuth();
     const mod = await import("@alanse/mcp-server-google-workspace/dist/tools/index.js");
     _cachedTools = (mod.tools ?? []) as GwsTool[];
     return _cachedTools;

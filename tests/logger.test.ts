@@ -29,6 +29,8 @@ function makeTempConfig(): AppConfig {
     gatewayApiPort: 3001,
     usdToSek: 10.5,
     queueMaxConcurrency: 3,
+    workvivoApiKey: "",
+    workvivoBaseUrl: "https://api.workvivo.com/v2",
   };
 }
 
